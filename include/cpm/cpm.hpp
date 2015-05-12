@@ -8,6 +8,23 @@
 #ifndef CPM_CPM_HPP
 #define CPM_CPM_HPP
 
+#define STRINGIFY(x) #x
+#define TO_STRING(x) STRINGIFY(x)
+
+#if defined(__clang__)
+#define COMPILER "clang"
+#define COMPILER_FULL "clang-" TO_STRING(__clang_major__) "." TO_STRING(__clang_minor__) "." TO_STRING(__clang_patchlevel__)
+#elif defined(__ICC) || defined(__INTEL_COMPILER)
+#define COMPILER "icc"
+#define COMPILER_FULL "icc-" TO_STRING(_INTEL_COMPILER)
+#elif defined(__GNUC__) || defined(__GNUG__)
+#define COMPILER "gcc"
+#define COMPILER_FULL "gcc-" TO_STRING(__GNUC__) "." TO_STRING(__GNUC_MINOR__) "." TO_STRING(__GNUC_PATCHLEVEL__)
+#else
+#define COMPILER "unknown"
+#define COMPILER_FULL "unknown"
+#endif
+
 namespace cpm {
 
 typedef std::chrono::steady_clock timer_clock;
@@ -90,6 +107,7 @@ struct benchmark {
             std::cout << "Start CPM benchmarks" << std::endl;
             std::cout << "   Each test is warmed-up " << warmup << " times" << std::endl;
             std::cout << "   Each test is repeated " << repeat << " times" << std::endl;
+            std::cout << "   Compiler " << COMPILER_FULL << std::endl;
             std::cout << std::endl;
         }
     }
