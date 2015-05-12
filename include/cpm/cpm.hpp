@@ -16,7 +16,7 @@
 #define COMPILER_FULL "clang-" TO_STRING(__clang_major__) "." TO_STRING(__clang_minor__) "." TO_STRING(__clang_patchlevel__)
 #elif defined(__ICC) || defined(__INTEL_COMPILER)
 #define COMPILER "icc"
-#define COMPILER_FULL "icc-" TO_STRING(_INTEL_COMPILER)
+#define COMPILER_FULL "icc-" TO_STRING(__INTEL_COMPILER)
 #elif defined(__GNUC__) || defined(__GNUG__)
 #define COMPILER "gcc"
 #define COMPILER_FULL "gcc-" TO_STRING(__GNUC__) "." TO_STRING(__GNUC_MINOR__) "." TO_STRING(__GNUC_PATCHLEVEL__)
