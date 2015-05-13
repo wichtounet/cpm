@@ -16,6 +16,7 @@
 #include "duration.hpp"
 #include "random.hpp"
 #include "policy.hpp"
+#include "io.hpp"
 
 namespace cpm {
 
@@ -203,6 +204,10 @@ private:
     std::size_t measures = 0;
     std::size_t runs = 0;
 
+    std::string folder;
+    std::string tag;
+    bool folder_ok = false;
+
     std::vector<measure_data> results;
     std::vector<section_data> section_results;
 
@@ -211,10 +216,58 @@ public:
     std::size_t repeat = 50;
 
     bool standard_report = true;
+    bool auto_save = true;
+    bool auto_mkdir = true;
+
+    benchmark(std::string f = ".", std::string t = "") : folder(f), tag(t) {
+        //Get absolute cwd
+        if(folder == "" || folder == "."){
+            folder = get_cwd();
+        }
+
+        //Make it absolute
+        if(folder.front() != '/'){
+            folder = make_absolute(folder);
+        }
+
+        //Ensure that the results folder exists
+        if(!folder_exists(folder)){
+            if(auto_mkdir){
+                if(mkdir(folder.c_str(), 0777)){
+                    std::cout << "Failed to create the folder" << std::endl;
+                } else {
+                    folder_ok = true;
+                }
+            } else {
+                std::cout << "Warning: The given folder does not exist or is not a folder" << std::endl;
+            }
+        } else {
+            folder_ok = true;
+        }
+
+        //Make sure the folder ends with /
+        if(folder_ok && folder.back() != '/'){
+            folder += "/";
+        }
+
+        std::cout << folder << std::endl;
+
+        //If no tag is provided, select one that does not yet exists
+        if(folder_ok && tag.empty()){
+            tag = get_free_file(folder);
+        }
+    }
 
     void start(){
         if(standard_report){
             std::cout << "Start CPM benchmarks" << std::endl;
+            if(!folder_ok){
+                std::cout << "   Impossible to save the results (invalid folder)" << std::endl;
+            } else if(auto_save){
+                std::cout << "   Results will be automatically saved in " << folder << tag << std::endl;
+            } else {
+                std::cout << "   Results will be saved on-demand in " << folder << tag << std::endl;
+            }
             std::cout << "   Each test is warmed-up " << warmup << " times" << std::endl;
             std::cout << "   Each test is repeated " << repeat << " times" << std::endl;
             std::cout << "   Compiler " << COMPILER_FULL << std::endl;

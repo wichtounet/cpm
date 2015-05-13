@@ -10,7 +10,7 @@ struct test { std::size_t d; };
 void randomize(test&){}
 
 int main(){
-    cpm::benchmark<> bench;
+    cpm::benchmark<> bench("./results");
 
     bench.start();
 
