@@ -1,4 +1,4 @@
-#include "../cpm/include/cpm/cpm.hpp"
+#include "cpm/cpm.hpp"
 
 #include <thread>
 
