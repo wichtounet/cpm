@@ -90,7 +90,7 @@ enum class stop_policy {
 };
 
 template<std::size_t S, std::size_t E, std::size_t A, std::size_t M, stop_policy SP>
-struct cmp_policy {
+struct cpm_policy {
     static constexpr const std::size_t start = S;
     static constexpr const std::size_t end = E;
     static constexpr const std::size_t add = A;
@@ -98,9 +98,9 @@ struct cmp_policy {
     static constexpr const stop_policy stop = SP;
 };
 
-using std_stop_policy = cmp_policy<10, 1000000, 0, 10, stop_policy::STOP>;
-using std_timeout_policy = cmp_policy<10, 1000, 0, 10, stop_policy::TIMEOUT>;
-using std_global_timeout_policy = cmp_policy<10, 5000, 0, 10, stop_policy::GLOBAL_TIMEOUT>;
+using std_stop_policy = cpm_policy<10, 1000000, 0, 10, stop_policy::STOP>;
+using std_timeout_policy = cpm_policy<10, 1000, 0, 10, stop_policy::TIMEOUT>;
+using std_global_timeout_policy = cpm_policy<10, 5000, 0, 10, stop_policy::GLOBAL_TIMEOUT>;
 
 template<typename DefaultPolicy = std_stop_policy>
 struct benchmark;
