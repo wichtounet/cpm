@@ -111,6 +111,11 @@ private:
     std::string name;
     Bench& bench;
 
+    //TODO This datastructure is probably not ideal
+    std::vector<std::string> names;
+    std::vector<std::size_t> sizes;
+    std::vector<std::vector<std::size_t>> results;
+
 public:
     section(std::string name, Bench& bench) : name(std::move(name)), bench(bench) {}
 
@@ -154,12 +159,71 @@ public:
     }
 
     ~section(){
-        //TODO Report
+        if(bench.standard_report){
+            std::vector<int> widths(1 + results.size(), 4);
+
+            for(std::size_t i = 0; i < sizes.size(); ++i){
+                auto s = sizes[i];
+
+                widths[0] = std::max(widths[0], static_cast<int>(std::to_string(s).size()));
+            }
+
+            widths[0] = std::max(widths[0], static_cast<int>(name.size()));
+
+            for(std::size_t i = 0; i < results.size(); ++i){
+                for(auto d : results[i]){
+                    widths[i+1] = std::max(widths[i+1], static_cast<int>(us_duration_str(d).size()));
+                }
+            }
+
+            for(std::size_t i = 0; i < names.size(); ++i){
+                widths[i+1] = std::max(widths[i+1], static_cast<int>(names[i].size()));
+            }
+
+            std::size_t tot_width = 1 + std::accumulate(widths.begin(), widths.end(), 0) + 3 * (1 + names.size());
+
+            std::cout << " " << std::string(tot_width, '-') << std::endl;;
+
+            printf(" | %*s | ", widths[0], name.c_str());
+            for(std::size_t i = 0; i < names.size(); ++i){
+                printf("%*s | ", widths[i+1], names[i].c_str());
+            }
+            printf("\n");
+
+            std::cout << " " << std::string(tot_width, '-') << std::endl;;
+
+            for(std::size_t i = 0; i < sizes.size(); ++i){
+                auto s = sizes[i];
+
+                printf(" | %*ld | ", widths[0], s);
+
+                for(std::size_t r = 0; r < results.size(); ++r){
+                    if(i < results[r].size()){
+                        printf("%*s | ", widths[r+1], us_duration_str(results[r][i]).c_str());
+                    } else {
+                        printf("%*s | ", widths[r+1], "*");
+                    }
+                }
+
+                printf("\n");
+            }
+
+            std::cout << " " << std::string(tot_width, '-') << std::endl;;
+        }
     }
 
 private:
     void report(const std::string& title, std::size_t d, std::size_t duration){
-        std::cout << "SUB: " << title << "(" << d << ") took " << us_duration_str(duration) << "\n";
+        if(names.empty() || names.back() != title){
+            names.push_back(title);
+            results.emplace_back();
+        }
+
+        if(names.size() == 1){
+            sizes.push_back(d);
+        }
+
+        results.back().push_back(duration);
     }
 };
 
