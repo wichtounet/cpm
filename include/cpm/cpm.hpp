@@ -148,12 +148,6 @@ struct benchmark {
         return {std::move(name), *this};
     }
 
-    void report(const std::string& title, std::size_t d, std::size_t duration){
-        if(standard_report){
-            std::cout << title << "(" << d << ") took " << us_duration_str(duration) << "\n";
-        }
-    }
-
     //Measure simple functor (no randomization)
 
     template<typename Policy = std_stop_policy, typename Functor>
@@ -338,6 +332,12 @@ private:
         runs += warmup + repeat;
 
         return duration_acc / repeat;
+    }
+
+    void report(const std::string& title, std::size_t d, std::size_t duration){
+        if(standard_report){
+            std::cout << title << "(" << d << ") took " << us_duration_str(duration) << "\n";
+        }
     }
 };
 
