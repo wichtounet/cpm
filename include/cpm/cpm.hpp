@@ -151,7 +151,7 @@ public:
     void measure_global(const std::string& title, Functor functor, T&... references){
         bench.template policy_run<Policy>(
             [&title, &functor, &references..., this](std::size_t d){
-                auto duration = bench.measure_only_global(functor, references...);
+                auto duration = bench.measure_only_global(functor, d, references...);
                 report(title, d, duration);
                 return duration;
             }
@@ -325,7 +325,7 @@ public:
     void measure_global(const std::string& title, Functor functor, T&... references){
         policy_run<Policy>(
             [&title, &functor, &references..., this](std::size_t d){
-                auto duration = measure_only_global(functor, references...);
+                auto duration = measure_only_global(functor, d, references...);
                 report(title, d, duration);
                 return duration;
             }
@@ -431,13 +431,13 @@ private:
     }
 
     template<typename Functor, typename... T>
-    std::size_t measure_only_global(Functor& functor, T&... references){
+    std::size_t measure_only_global(Functor& functor, std::size_t d, T&... references){
         ++measures;
 
         for(std::size_t i = 0; i < warmup; ++i){
             using cpm::randomize;
             randomize(references...);
-            functor();
+            functor(d);
         }
 
         std::size_t duration_acc = 0;
@@ -446,7 +446,7 @@ private:
             using cpm::randomize;
             randomize(references...);
             auto start_time = timer_clock::now();
-            functor();
+            functor(d);
             auto end_time = timer_clock::now();
             auto duration = std::chrono::duration_cast<microseconds>(end_time - start_time);
             duration_acc += duration.count();
