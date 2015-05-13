@@ -261,7 +261,7 @@ public:
         final_file = folder + tag + ".cpm";
     }
 
-    void start(){
+    void begin(){
         if(standard_report){
             std::cout << "Start CPM benchmarks" << std::endl;
             if(!folder_ok){
@@ -279,6 +279,10 @@ public:
     }
 
     ~benchmark(){
+        end(auto_save);
+    }
+
+    void end(bool save = true){
         if(standard_report){
             std::cout << std::endl;
             std::cout << "End of CPM benchmarks" << std::endl;
@@ -286,6 +290,10 @@ public:
             std::cout << "   "  << measures << " measures have been taken" << std::endl;
             std::cout << "   "  << runs << " functors calls" << std::endl;
             std::cout << std::endl;
+        }
+
+        if(save){
+            save();
         }
     }
 
@@ -364,6 +372,10 @@ public:
     }
 
 private:
+    void save(){
+        //TODO Write file
+    }
+
     template<typename Policy, typename M>
     void policy_run(M measure){
         ++tests;
