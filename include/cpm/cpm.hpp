@@ -197,12 +197,32 @@ public:
 
                 printf(" | %*ld | ", widths[0], s);
 
+                std::size_t max = 0;
+                std::size_t min = std::numeric_limits<int>::max();
+
                 for(std::size_t r = 0; r < results.size(); ++r){
                     if(i < results[r].size()){
-                        printf("%*s | ", widths[r+1], us_duration_str(results[r][i]).c_str());
-                    } else {
-                        printf("%*s | ", widths[r+1], "*");
+                        max = std::max(max, results[r][i]);
+                        min = std::min(min, results[r][i]);
                     }
+                }
+
+                for(std::size_t r = 0; r < results.size(); ++r){
+                    if(i < results[r].size()){
+                        if(results[r][i] == min){
+                            std::cout << "\033[0;32m";
+                        } else if(results[r][i] == max){
+                            std::cout << "\033[0;31m";
+                        }
+
+                        printf("%*s", widths[r+1], us_duration_str(results[r][i]).c_str());
+                    } else {
+                        std::cout << "\033[0;31m";
+                        printf("%*s", widths[r+1], "*");
+                    }
+
+                    //Reset the color
+                    std::cout << "" << '\033' << "[" << 0 << ";" << 30 << 47 << "m | ";
                 }
 
                 printf("\n");
