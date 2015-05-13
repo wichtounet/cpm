@@ -206,6 +206,7 @@ private:
 
     std::string folder;
     std::string tag;
+    std::string final_file;
     bool folder_ok = false;
 
     std::vector<measure_data> results;
@@ -256,6 +257,8 @@ public:
         if(folder_ok && tag.empty()){
             tag = get_free_file(folder);
         }
+
+        final_file = folder + tag + ".cpm";
     }
 
     void start(){
@@ -264,9 +267,9 @@ public:
             if(!folder_ok){
                 std::cout << "   Impossible to save the results (invalid folder)" << std::endl;
             } else if(auto_save){
-                std::cout << "   Results will be automatically saved in " << folder << tag << std::endl;
+                std::cout << "   Results will be automatically saved in " << final_file << std::endl;
             } else {
-                std::cout << "   Results will be saved on-demand in " << folder << tag << std::endl;
+                std::cout << "   Results will be saved on-demand in " << final_file << std::endl;
             }
             std::cout << "   Each test is warmed-up " << warmup << " times" << std::endl;
             std::cout << "   Each test is repeated " << repeat << " times" << std::endl;
