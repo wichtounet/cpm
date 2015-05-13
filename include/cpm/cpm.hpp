@@ -102,22 +102,73 @@ using std_stop_policy = cmp_policy<10, 1000000, 0, 10, stop_policy::STOP>;
 using std_timeout_policy = cmp_policy<10, 1000, 0, 10, stop_policy::TIMEOUT>;
 using std_global_timeout_policy = cmp_policy<10, 5000, 0, 10, stop_policy::GLOBAL_TIMEOUT>;
 
+template<typename DefaultPolicy = std_stop_policy>
 struct benchmark;
 
-template<typename Policy>
+template<typename Bench, typename Policy>
 struct section {
+private:
     std::string name;
-    benchmark& bench;
+    Bench& bench;
 
-    section(std::string name, benchmark& bench) : name(std::move(name)), bench(bench) {}
+public:
+    section(std::string name, Bench& bench) : name(std::move(name)), bench(bench) {}
+
+    //Measure simple functor (no randomization)
+
+    template<typename Functor>
+    void measure_simple(const std::string& title, Functor functor){
+        bench.template policy_run<Policy>(
+            [&title, &functor, this](std::size_t d){
+                auto duration = bench.measure_only_simple(functor, d);
+                report(title, d, duration);
+                return duration;
+            }
+        );
+    }
+
+    //Measure with two-pass functors (init and functor)
+
+    template<typename Init, typename Functor>
+    void measure_two_pass(const std::string& title, Init init, Functor functor){
+        bench.template policy_run<Policy>(
+            [&title, &functor, &init, this](std::size_t d){
+                auto duration = bench.measure_only_two_pass(init, functor, d);
+                report(title, d, duration);
+                return duration;
+            }
+        );
+    }
+
+    //measure a function with global references
+
+    template<typename Functor, typename... T>
+    void measure_global(const std::string& title, Functor functor, T&... references){
+        bench.template policy_run<Policy>(
+            [&title, &functor, &references..., this](std::size_t d){
+                auto duration = bench.measure_only_global(functor, references...);
+                report(title, d, duration);
+                return duration;
+            }
+        );
+    }
 
     ~section(){
         //TODO Report
     }
+
+private:
+    void report(const std::string& title, std::size_t d, std::size_t duration){
+        std::cout << "SUB: " << title << "(" << d << ") took " << us_duration_str(duration) << "\n";
+    }
 };
 
+template<typename DefaultPolicy>
 struct benchmark {
 private:
+    template<typename Bench, typename Policy>
+    friend class section;
+
     std::size_t tests = 0;
     std::size_t measures = 0;
     std::size_t runs = 0;
@@ -149,14 +200,14 @@ public:
         }
     }
 
-    template<typename Policy = std_stop_policy>
-    section<Policy> multi(std::string name){
+    template<typename Policy = DefaultPolicy>
+    section<benchmark<DefaultPolicy>, Policy> multi(std::string name){
         return {std::move(name), *this};
     }
 
     //Measure simple functor (no randomization)
 
-    template<typename Policy = std_stop_policy, typename Functor>
+    template<typename Policy = DefaultPolicy, typename Functor>
     void measure_simple(const std::string& title, Functor functor){
         policy_run<Policy>(
             [&title, &functor, this](std::size_t d){
@@ -169,7 +220,7 @@ public:
 
     //Measure with two-pass functors (init and functor)
 
-    template<typename Policy = std_stop_policy, typename Init, typename Functor>
+    template<typename Policy = DefaultPolicy, typename Init, typename Functor>
     void measure_two_pass(const std::string& title, Init init, Functor functor){
         policy_run<Policy>(
             [&title, &functor, &init, this](std::size_t d){
@@ -182,7 +233,7 @@ public:
 
     //measure a function with global references
 
-    template<typename Policy = std_stop_policy, typename Functor, typename... T>
+    template<typename Policy = DefaultPolicy, typename Functor, typename... T>
     void measure_global(const std::string& title, Functor functor, T&... references){
         policy_run<Policy>(
             [&title, &functor, &references..., this](std::size_t d){
