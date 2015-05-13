@@ -160,6 +160,10 @@ public:
 
     ~section(){
         if(bench.standard_report){
+            if(names.empty()){
+                return;
+            }
+
             std::vector<int> widths(1 + results.size(), 4);
 
             for(std::size_t i = 0; i < sizes.size(); ++i){
