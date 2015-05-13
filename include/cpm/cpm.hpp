@@ -9,98 +9,20 @@
 #define CPM_CPM_HPP
 
 #include <iostream>
-#include <chrono>
-#include <random>
 #include <utility>
 #include <functional>
 
-#define STRINGIFY(x) #x
-#define TO_STRING(x) STRINGIFY(x)
-
-#if defined(__clang__)
-#define COMPILER "clang"
-#define COMPILER_FULL "clang-" TO_STRING(__clang_major__) "." TO_STRING(__clang_minor__) "." TO_STRING(__clang_patchlevel__)
-#elif defined(__ICC) || defined(__INTEL_COMPILER)
-#define COMPILER "icc"
-#define COMPILER_FULL "icc-" TO_STRING(__INTEL_COMPILER)
-#elif defined(__GNUC__) || defined(__GNUG__)
-#define COMPILER "gcc"
-#define COMPILER_FULL "gcc-" TO_STRING(__GNUC__) "." TO_STRING(__GNUC_MINOR__) "." TO_STRING(__GNUC_PATCHLEVEL__)
-#else
-#define COMPILER "unknown"
-#define COMPILER_FULL "unknown"
-#endif
+#include "compiler.hpp"
+#include "duration.hpp"
+#include "random.hpp"
+#include "policy.hpp"
 
 namespace cpm {
-
-typedef std::chrono::steady_clock timer_clock;
-typedef std::chrono::milliseconds milliseconds;
-typedef std::chrono::microseconds microseconds;
-
-inline std::string us_duration_str(std::size_t duration_us){
-    double duration = duration_us;
-
-    if(duration > 1000 * 1000){
-        return std::to_string(duration / 1000.0 / 1000.0) + "s";
-    } else if(duration > 1000){
-        return std::to_string(duration / 1000.0) + "ms";
-    } else {
-        return std::to_string(duration_us) + "us";
-    } }
-
-template<typename T>
-void randomize_double(T& container){
-    static std::default_random_engine rand_engine(std::time(nullptr));
-    static std::uniform_real_distribution<double> real_distribution(-1000.0, 1000.0);
-    static auto generator = std::bind(real_distribution, rand_engine);
-
-    for(auto& v : container){
-        v = generator();
-    }
-}
-
-void randomize(){}
-
-template<typename T1, typename std::enable_if_t<std::is_convertible<double, typename T1::value_type>::value, int> = 42 >
-void randomize(T1& container){
-    randomize_double(container);
-}
-
-template<typename T1, typename... TT, typename std::enable_if_t<std::is_convertible<double, typename T1::value_type>::value, int> = 42 >
-void randomize(T1& container, TT&... containers){
-    randomize_double(container);
-    randomize(containers...);
-}
 
 template<typename Tuple, typename Functor, std::size_t... I, typename... Args>
 inline void call_with_data(Tuple& data, Functor functor, std::index_sequence<I...> /*indices*/, Args... args){
     functor(args..., std::get<I>(data)...);
 }
-
-template<typename Tuple, std::size_t... I>
-inline void randomize_each(Tuple& data, std::index_sequence<I...> /*indices*/){
-    using cpm::randomize;
-    randomize(std::get<I>(data)...);
-}
-
-enum class stop_policy {
-    TIMEOUT,
-    GLOBAL_TIMEOUT,
-    STOP
-};
-
-template<std::size_t S, std::size_t E, std::size_t A, std::size_t M, stop_policy SP>
-struct cpm_policy {
-    static constexpr const std::size_t start = S;
-    static constexpr const std::size_t end = E;
-    static constexpr const std::size_t add = A;
-    static constexpr const std::size_t mul = M;
-    static constexpr const stop_policy stop = SP;
-};
-
-using std_stop_policy = cpm_policy<10, 1000000, 0, 10, stop_policy::STOP>;
-using std_timeout_policy = cpm_policy<10, 1000, 0, 10, stop_policy::TIMEOUT>;
-using std_global_timeout_policy = cpm_policy<10, 5000, 0, 10, stop_policy::GLOBAL_TIMEOUT>;
 
 template<typename DefaultPolicy = std_stop_policy>
 struct benchmark;
