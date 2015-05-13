@@ -12,6 +12,8 @@ void randomize(test&){}
 int main(){
     cpm::benchmark<> bench;
 
+    bench.start();
+
     bench.measure_simple("simple_a", [](std::size_t d){ std::this_thread::sleep_for(d * 1_ns ); });
     bench.measure_simple("simple_b", [](std::size_t d){ std::this_thread::sleep_for(d * 2_ns ); });
 
