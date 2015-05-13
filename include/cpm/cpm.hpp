@@ -157,10 +157,10 @@ public:
     //Measure simple functor (no randomization)
 
     template<typename Policy = std_stop_policy, typename Functor>
-    void measure_simple(const std::string& title, Functor&& functor){
+    void measure_simple(const std::string& title, Functor functor){
         policy_run<Policy>(
             [&title, &functor, this](std::size_t d){
-                auto duration = measure_only_simple(std::forward<Functor>(functor), d);
+                auto duration = measure_only_simple(functor, d);
                 report(title, d, duration);
                 return duration;
             }
@@ -170,10 +170,10 @@ public:
     //Measure with two-pass functors (init and functor)
 
     template<typename Policy = std_stop_policy, typename Init, typename Functor>
-    void measure_two_pass(const std::string& title, Init&& init, Functor&& functor){
+    void measure_two_pass(const std::string& title, Init init, Functor functor){
         policy_run<Policy>(
             [&title, &functor, &init, this](std::size_t d){
-                auto duration = measure_only_two_pass(std::forward<Init>(init), std::forward<Functor>(functor), d);
+                auto duration = measure_only_two_pass(init, functor, d);
                 report(title, d, duration);
                 return duration;
             }
@@ -183,10 +183,10 @@ public:
     //measure a function with global references
 
     template<typename Policy = std_stop_policy, typename Functor, typename... T>
-    void measure_global(const std::string& title, Functor&& functor, T&... references){
+    void measure_global(const std::string& title, Functor functor, T&... references){
         policy_run<Policy>(
             [&title, &functor, &references..., this](std::size_t d){
-                auto duration = measure_only_global(std::forward<Functor>(functor), references...);
+                auto duration = measure_only_global(functor, references...);
                 report(title, d, duration);
                 return duration;
             }
@@ -196,7 +196,7 @@ public:
     //Measure and return the duration of a simple functor
 
     template<typename Functor>
-    std::size_t measure_once(Functor&& functor){
+    std::size_t measure_once(Functor functor){
         auto start_time = timer_clock::now();
         functor();
         auto end_time = timer_clock::now();
@@ -207,7 +207,7 @@ public:
 
 private:
     template<typename Policy, typename M>
-    void policy_run(M&& measure){
+    void policy_run(M measure){
         ++tests;
 
         if(Policy::stop == stop_policy::STOP){
@@ -239,7 +239,7 @@ private:
     }
 
     template<typename Functor, typename... Args>
-    std::size_t measure_only_simple(Functor functor, Args... args){
+    std::size_t measure_only_simple(Functor& functor, Args... args){
         ++measures;
 
         for(std::size_t i = 0; i < warmup; ++i){
@@ -262,7 +262,7 @@ private:
     }
 
     template<typename Init, typename Functor, typename... Args>
-    std::size_t measure_only_two_pass(Init&& init, Functor functor, Args... args){
+    std::size_t measure_only_two_pass(Init& init, Functor& functor, Args... args){
         ++measures;
 
         auto data = init(args...);
@@ -292,7 +292,7 @@ private:
     }
 
     template<typename Functor, typename... T>
-    std::size_t measure_only_global(Functor&& functor, T&... references){
+    std::size_t measure_only_global(Functor& functor, T&... references){
         ++measures;
 
         for(std::size_t i = 0; i < warmup; ++i){
