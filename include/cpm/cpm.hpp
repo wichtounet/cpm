@@ -158,9 +158,11 @@ public:
 
     template<typename Policy = std_stop_policy, typename Functor>
     void measure_simple(const std::string& title, Functor&& functor){
-        policy_run<Policy>(title,
-            [&functor, this](std::size_t d){
-                return measure_only_simple(std::forward<Functor>(functor), d);
+        policy_run<Policy>(
+            [&title, &functor, this](std::size_t d){
+                auto duration = measure_only_simple(std::forward<Functor>(functor), d);
+                report(title, d, duration);
+                return duration;
             }
         );
     }
@@ -169,9 +171,11 @@ public:
 
     template<typename Policy = std_stop_policy, typename Init, typename Functor>
     void measure_two_pass(const std::string& title, Init&& init, Functor&& functor){
-        policy_run<Policy>(title,
-            [&functor, &init, this](std::size_t d){
-                return measure_only_two_pass(std::forward<Init>(init), std::forward<Functor>(functor), d);
+        policy_run<Policy>(
+            [&title, &functor, &init, this](std::size_t d){
+                auto duration = measure_only_two_pass(std::forward<Init>(init), std::forward<Functor>(functor), d);
+                report(title, d, duration);
+                return duration;
             }
         );
     }
@@ -180,9 +184,11 @@ public:
 
     template<typename Policy = std_stop_policy, typename Functor, typename... T>
     void measure_global(const std::string& title, Functor&& functor, T&... references){
-        policy_run<Policy>(title,
-            [&functor, &references..., this](std::size_t d){
-                return measure_only_global(std::forward<Functor>(functor), references...);
+        policy_run<Policy>(
+            [&title, &functor, &references..., this](std::size_t d){
+                auto duration = measure_only_global(std::forward<Functor>(functor), references...);
+                report(title, d, duration);
+                return duration;
             }
         );
     }
@@ -200,9 +206,8 @@ public:
     }
 
 private:
-
     template<typename Policy, typename M>
-    void policy_run(const std::string& title, M&& measure){
+    void policy_run(M&& measure){
         ++tests;
 
         if(Policy::stop == stop_policy::STOP){
@@ -210,8 +215,6 @@ private:
 
             while(d <= Policy::end){
                 auto duration = measure(d);
-
-                report(title, d, duration);
 
                 d = d * Policy::mul + Policy::add;
             }
@@ -225,8 +228,6 @@ private:
 
             while(true){
                 auto duration = measure(d);
-
-                report(title, d, duration);
 
                 if(((duration * repeat) / 1000) > Policy::end){
                     break;
