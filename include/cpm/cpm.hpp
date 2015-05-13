@@ -148,6 +148,12 @@ struct benchmark {
         return {std::move(name), *this};
     }
 
+    void report(const std::string& title, std::size_t d, std::size_t duration){
+        if(standard_report){
+            std::cout << title << "(" << d << ") took " << us_duration_str(duration) << "\n";
+        }
+    }
+
     //Measure simple functor (no randomization)
 
     template<typename Policy = std_stop_policy, typename Functor>
@@ -160,9 +166,7 @@ struct benchmark {
             while(d <= Policy::end){
                 auto duration = measure_only_simple(std::forward<Functor>(functor), d);
 
-                if(standard_report){
-                    std::cout << title << "(" << d << ") took " << us_duration_str(duration) << "\n";
-                }
+                report(title, d, duration);
 
                 d = d * Policy::mul + Policy::add;
             }
@@ -177,9 +181,7 @@ struct benchmark {
             while(true){
                 auto duration = measure_only_simple(std::forward<Functor>(functor), d);
 
-                if(standard_report){
-                    std::cout << title << "(" << d << ") took " << us_duration_str(duration) << "\n";
-                }
+                report(title, d, duration);
 
                 if(((duration * repeat) / 1000) > Policy::end){
                     break;
@@ -202,9 +204,7 @@ struct benchmark {
             while(d <= Policy::end){
                 auto duration = measure_only_two_pass(std::forward<Init>(init), std::forward<Functor>(functor), d);
 
-                if(standard_report){
-                    std::cout << title << "(" << d << ") took " << us_duration_str(duration) << "\n";
-                }
+                report(title, d, duration);
 
                 d = d * Policy::mul + Policy::add;
             }
@@ -219,9 +219,7 @@ struct benchmark {
             while(true){
                 auto duration = measure_only_two_pass(std::forward<Init>(init), std::forward<Functor>(functor), d);
 
-                if(standard_report){
-                    std::cout << title << "(" << d << ") took " << us_duration_str(duration) << "\n";
-                }
+                report(title, d, duration);
 
                 if(((duration * repeat) / 1000) > Policy::end){
                     break;
@@ -240,9 +238,9 @@ struct benchmark {
 
         auto duration = measure_only_global(std::forward<Functor>(functor), references...);
 
-        if(standard_report){
-            std::cout << title << " took " << us_duration_str(duration) << "\n";
-        }
+        report(title, 0, duration);
+
+        //TODO Expand to support policy
     }
 
     //Measure and return the duration of a simple functor
