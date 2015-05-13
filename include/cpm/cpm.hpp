@@ -117,6 +117,12 @@ struct section {
 };
 
 struct benchmark {
+private:
+    std::size_t tests = 0;
+    std::size_t measures = 0;
+    std::size_t runs = 0;
+
+public:
     std::size_t warmup = 10;
     std::size_t repeat = 50;
 
@@ -152,89 +158,33 @@ struct benchmark {
 
     template<typename Policy = std_stop_policy, typename Functor>
     void measure_simple(const std::string& title, Functor&& functor){
-        ++tests;
-
-        if(Policy::stop == stop_policy::STOP){
-            std::size_t d = Policy::start;
-
-            while(d <= Policy::end){
-                auto duration = measure_only_simple(std::forward<Functor>(functor), d);
-
-                report(title, d, duration);
-
-                d = d * Policy::mul + Policy::add;
+        policy_run<Policy>(title,
+            [&functor, this](std::size_t d){
+                return measure_only_simple(std::forward<Functor>(functor), d);
             }
-        } else if(Policy::stop == stop_policy::TIMEOUT || Policy::stop == stop_policy::GLOBAL_TIMEOUT){
-            std::size_t d = Policy::start;
-
-            std::size_t mul = 1;
-            if(Policy::stop == stop_policy::GLOBAL_TIMEOUT){
-                mul = repeat;
-            }
-
-            while(true){
-                auto duration = measure_only_simple(std::forward<Functor>(functor), d);
-
-                report(title, d, duration);
-
-                if(((duration * repeat) / 1000) > Policy::end){
-                    break;
-                }
-
-                d = d * Policy::mul + Policy::add;
-            }
-        }
+        );
     }
 
     //Measure with two-pass functors (init and functor)
 
     template<typename Policy = std_stop_policy, typename Init, typename Functor>
     void measure_two_pass(const std::string& title, Init&& init, Functor&& functor){
-        ++tests;
-
-        if(Policy::stop == stop_policy::STOP){
-            std::size_t d = Policy::start;
-
-            while(d <= Policy::end){
-                auto duration = measure_only_two_pass(std::forward<Init>(init), std::forward<Functor>(functor), d);
-
-                report(title, d, duration);
-
-                d = d * Policy::mul + Policy::add;
+        policy_run<Policy>(title,
+            [&functor, &init, this](std::size_t d){
+                return measure_only_two_pass(std::forward<Init>(init), std::forward<Functor>(functor), d);
             }
-        } else if(Policy::stop == stop_policy::TIMEOUT || Policy::stop == stop_policy::GLOBAL_TIMEOUT){
-            std::size_t d = Policy::start;
-
-            std::size_t mul = 1;
-            if(Policy::stop == stop_policy::GLOBAL_TIMEOUT){
-                mul = repeat;
-            }
-
-            while(true){
-                auto duration = measure_only_two_pass(std::forward<Init>(init), std::forward<Functor>(functor), d);
-
-                report(title, d, duration);
-
-                if(((duration * repeat) / 1000) > Policy::end){
-                    break;
-                }
-
-                d = d * Policy::mul + Policy::add;
-            }
-        }
+        );
     }
 
     //measure a function with global references
 
-    template<typename Functor, typename... T>
+    template<typename Policy = std_stop_policy, typename Functor, typename... T>
     void measure_global(const std::string& title, Functor&& functor, T&... references){
-        ++tests;
-
-        auto duration = measure_only_global(std::forward<Functor>(functor), references...);
-
-        report(title, 0, duration);
-
-        //TODO Expand to support policy
+        policy_run<Policy>(title,
+            [&functor, &references..., this](std::size_t d){
+                return measure_only_global(std::forward<Functor>(functor), references...);
+            }
+        );
     }
 
     //Measure and return the duration of a simple functor
@@ -250,9 +200,42 @@ struct benchmark {
     }
 
 private:
-    std::size_t tests = 0;
-    std::size_t measures = 0;
-    std::size_t runs = 0;
+
+    template<typename Policy, typename M>
+    void policy_run(const std::string& title, M&& measure){
+        ++tests;
+
+        if(Policy::stop == stop_policy::STOP){
+            std::size_t d = Policy::start;
+
+            while(d <= Policy::end){
+                auto duration = measure(d);
+
+                report(title, d, duration);
+
+                d = d * Policy::mul + Policy::add;
+            }
+        } else if(Policy::stop == stop_policy::TIMEOUT || Policy::stop == stop_policy::GLOBAL_TIMEOUT){
+            std::size_t d = Policy::start;
+
+            std::size_t mul = 1;
+            if(Policy::stop == stop_policy::GLOBAL_TIMEOUT){
+                mul = repeat;
+            }
+
+            while(true){
+                auto duration = measure(d);
+
+                report(title, d, duration);
+
+                if(((duration * repeat) / 1000) > Policy::end){
+                    break;
+                }
+
+                d = d * Policy::mul + Policy::add;
+            }
+        }
+    }
 
     template<typename Functor, typename... Args>
     std::size_t measure_only_simple(Functor functor, Args... args){
