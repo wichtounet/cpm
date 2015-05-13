@@ -8,6 +8,12 @@
 #ifndef CPM_CPM_HPP
 #define CPM_CPM_HPP
 
+#include <iostream>
+#include <chrono>
+#include <random>
+#include <utility>
+#include <functional>
+
 #define STRINGIFY(x) #x
 #define TO_STRING(x) STRINGIFY(x)
 
@@ -125,8 +131,8 @@ struct benchmark {
 
     //Measure simple functor (no randomization)
 
-    template<typename Policy = std_stop_policy, typename Init, typename Functor>
-    void measure_simple(const std::string& title, Init&& init, Functor&& functor){
+    template<typename Policy = std_stop_policy, typename Functor>
+    void measure_simple(const std::string& title, Functor&& functor){
         ++tests;
 
         if(Policy::stop == stop_policy::STOP){
@@ -150,7 +156,7 @@ struct benchmark {
             }
 
             while(true){
-                auto duration = measure_only_two_pass(std::forward<Functor>(functor), d);
+                auto duration = measure_only_simple(std::forward<Functor>(functor), d);
 
                 if(standard_report){
                     std::cout << title << "(" << d << ") took " << us_duration_str(duration) << "\n";
