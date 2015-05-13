@@ -102,6 +102,20 @@ using std_stop_policy = cmp_policy<10, 1000000, 0, 10, stop_policy::STOP>;
 using std_timeout_policy = cmp_policy<10, 1000, 0, 10, stop_policy::TIMEOUT>;
 using std_global_timeout_policy = cmp_policy<10, 5000, 0, 10, stop_policy::GLOBAL_TIMEOUT>;
 
+struct benchmark;
+
+template<typename Policy>
+struct section {
+    std::string name;
+    benchmark& bench;
+
+    section(std::string name, benchmark& bench) : name(std::move(name)), bench(bench) {}
+
+    ~section(){
+        //TODO Report
+    }
+};
+
 struct benchmark {
     std::size_t warmup = 10;
     std::size_t repeat = 50;
@@ -127,6 +141,11 @@ struct benchmark {
             std::cout << "   "  << runs << " functors calls" << std::endl;
             std::cout << std::endl;
         }
+    }
+
+    template<typename Policy = std_stop_policy>
+    section<Policy> multi(std::string name){
+        return {std::move(name), *this};
     }
 
     //Measure simple functor (no randomization)
