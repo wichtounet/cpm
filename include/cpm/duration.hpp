@@ -9,12 +9,16 @@
 #define CPM_DURATION_HPP
 
 #include <chrono>
+#include <ctime>
 
 namespace cpm {
 
-typedef std::chrono::steady_clock timer_clock;
-typedef std::chrono::milliseconds milliseconds;
-typedef std::chrono::microseconds microseconds;
+using timer_clock = std::chrono::steady_clock;
+using wall_clock = std::chrono::system_clock;
+using wall_time_point = wall_clock::time_point;
+using seconds = std::chrono::seconds;
+using millseconds = std::chrono::milliseconds;
+using microseconds = std::chrono::microseconds;
 
 inline std::string us_duration_str(std::size_t duration_us){
     double duration = duration_us;

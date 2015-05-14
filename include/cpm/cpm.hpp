@@ -10,6 +10,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <utility>
 #include <functional>
 
@@ -215,6 +216,7 @@ private:
     bool folder_ok = false;
 
     std::string operating_system;
+    wall_time_point start_time;
 
     std::vector<measure_data> results;
     std::vector<section_data> section_results;
@@ -279,6 +281,9 @@ public:
             std::cout << "Warning: Failed to detect operating system" << std::endl; 
             operating_system = "unknown";
         }
+
+        //Store the time
+        start_time = wall_clock::now();
     }
 
     void begin(){
@@ -293,6 +298,10 @@ public:
             }
             std::cout << "   Each test is warmed-up " << warmup << " times" << std::endl;
             std::cout << "   Each test is repeated " << repeat << " times" << std::endl;
+
+            auto time = wall_clock::to_time_t(start_time);
+            std::cout << "   Time " << std::ctime(&time) << std::endl;
+
             std::cout << "   Compiler " << COMPILER_FULL << std::endl;
             std::cout << "   Operating System " << operating_system << std::endl;
             std::cout << std::endl;
@@ -395,6 +404,15 @@ public:
 private:
 
     void save(){
+        auto time = wall_clock::to_time_t(start_time);
+        std::stringstream ss;
+        ss << std::ctime(&time);
+        auto time_str = ss.str();
+
+        if(time_str.back() == '\n'){
+            time_str.pop_back();
+        }
+
         std::ofstream stream(final_file);
 
         stream << "{\n";
@@ -405,7 +423,9 @@ private:
         write_value(stream, indent, "tag", tag);
         write_value(stream, indent, "compiler", COMPILER_FULL);
         write_value(stream, indent, "os", operating_system);
-        write_value(stream, indent, "time", "TODO");
+
+        write_value(stream, indent, "time", time_str);
+        write_value(stream, indent, "timestamp", std::chrono::duration_cast<seconds>(start_time.time_since_epoch()).count());
 
         start_array(stream, indent, "results");
 
