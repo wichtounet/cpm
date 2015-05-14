@@ -8,6 +8,7 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <algorithm>
 
 #include <stdio.h>
 #include <dirent.h>
@@ -32,7 +33,7 @@ inline auto end(rapidjson::Value& value){
 namespace {
 
 std::string dark_unica_theme = 
-#include "theme.inc"
+#include "dark_unica.inc"
 ;
 
 rapidjson::Document read_document(const std::string& folder, const std::string& file){
@@ -93,6 +94,9 @@ std::vector<rapidjson::Document> read(const std::string& source_folder){
         documents.push_back(read_document(source_folder, entry->d_name));
     }
 
+    std::sort(documents.begin(), documents.end(), 
+        [](rapidjson::Document& lhs, rapidjson::Document& rhs){ return lhs["timestamp"].GetInt() < rhs["timestamp"].GetInt(); });
+
     return documents;
 }
 
@@ -108,17 +112,12 @@ int main(){
         std::cout << "Unable to read any files" << std::endl;
         return -1;
     }
-
-    std::size_t most_recent = 0;
-    for(std::size_t i = 1; i < documents.size(); ++i){
-        auto& doc = documents[i];
-
-        if(documents[i]["timestamp"].GetInt() > documents[most_recent]["timestamp"].GetInt()){
-            most_recent = i;
-        }
+    
+    for(auto& doc : documents){
+        std::cout << doc["timestamp"].GetInt() << std::endl;
     }
 
-    auto& doc = documents[most_recent];
+    auto& doc = documents.front();
 
     std::ofstream stream(target_file);
 

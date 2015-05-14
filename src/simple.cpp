@@ -9,7 +9,7 @@
 
 #include <thread>
 
-constexpr const double factor = 0.8;
+constexpr const double factor = 1.1;
 
 constexpr std::chrono::nanoseconds operator ""_ns(unsigned long long us){
     return std::chrono::nanoseconds(us);
