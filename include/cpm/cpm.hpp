@@ -18,6 +18,7 @@
 #include "random.hpp"
 #include "policy.hpp"
 #include "io.hpp"
+#include "json.hpp"
 
 namespace cpm {
 
@@ -374,6 +375,7 @@ public:
     }
 
 private:
+
     void save(){
         std::ofstream stream(final_file);
 
@@ -381,127 +383,75 @@ private:
 
         std::size_t indent = 2;
 
-        stream << std::string(indent, ' ') << "\"name\": \"" << name << "\",\n";
-        stream << std::string(indent, ' ') << "\"tag\": \"" << tag << "\",\n";
-        stream << std::string(indent, ' ') << "\"compiler\": \"" << COMPILER_FULL << "\",\n";
-        stream << std::string(indent, ' ') << "\"os\": \"" << "TODO" << "\",\n";
-        stream << std::string(indent, ' ') << "\"time\": \"" << "TODO" << "\",\n";
+        write_value(stream, indent, "name", name);
+        write_value(stream, indent, "tag", tag);
+        write_value(stream, indent, "compiler", COMPILER_FULL);
+        write_value(stream, indent, "os", "TODO");
+        write_value(stream, indent, "time", "TODO");
 
-        stream << std::string(indent, ' ') << "\"results\": " << "[" << "\n";
-
-        indent += 2;
+        start_array(stream, indent, "results");
 
         for(std::size_t i = 0; i < results.size(); ++i){
             auto& result = results[i];
 
-            stream << std::string(indent, ' ') << "{" << "\n";
-            indent += 2;
+            start_sub(stream, indent);
 
-            stream << std::string(indent, ' ') << "\"title\": \"" << result.title << "\",\n";
-            stream << std::string(indent, ' ') << "\"results\": " << "[" << "\n";
-            indent += 2;
+            write_value(stream, indent, "title", result.title);
+            start_array(stream, indent, "results");
 
             for(std::size_t j = 0; j < result.results.size(); ++j){
                 auto& sub = result.results[j];
 
-                stream << std::string(indent, ' ') << "{" << "\n";
-                indent += 2;
+                start_sub(stream, indent);
 
-                stream << std::string(indent, ' ') << "\"size\": \"" << sub.first << "\",\n";
-                stream << std::string(indent, ' ') << "\"duration\": \"" << sub.second << "\"\n";
+                write_value(stream, indent, "size", sub.first);
+                write_value(stream, indent, "duration", sub.second, false);
 
-                indent -= 2;
-
-                if(j < result.results.size() - 1){
-                    stream << std::string(indent, ' ') << "}," << "\n";
-                } else {
-                    stream << std::string(indent, ' ') << "}" << "\n";
-                }
+                close_sub(stream, indent, j < result.results.size() - 1);
             }
 
-            indent -= 2;
-            stream << std::string(indent, ' ') << "]" << "\n";
-
-            indent -= 2;
-
-            if(i < results.size() - 1){
-                stream << std::string(indent, ' ') << "}," << "\n";
-            } else {
-                stream << std::string(indent, ' ') << "}" << "\n";
-            }
+            close_array(stream, indent, false);
+            close_sub(stream, indent, i < results.size() - 1);
         }
 
-        indent -= 2;
+        close_array(stream, indent, true);
 
-        stream << std::string(indent, ' ') << "]," << "\n";
-
-        stream << std::string(indent, ' ') << "\"sections\": " << "[" << "\n";
-
-        indent += 2;
+        start_array(stream, indent, "sections");
 
         for(std::size_t i = 0; i < section_results.size(); ++i){
             auto& section = section_results[i];
 
-            stream << std::string(indent, ' ') << "{" << "\n";
-            indent += 2;
+            start_sub(stream, indent);
 
-            stream << std::string(indent, ' ') << "\"name\": \"" << section.name << "\",\n";
-            stream << std::string(indent, ' ') << "\"results\": " << "[" << "\n";
-            indent += 2;
+            write_value(stream, indent, "name", section.name);
+            start_array(stream, indent, "results");
 
             for(std::size_t j = 0; j < section.names.size(); ++j){
                 auto& name = section.names[j];
 
-                stream << std::string(indent, ' ') << "{" << "\n";
-                indent += 2;
+                start_sub(stream, indent);
 
-                stream << std::string(indent, ' ') << "\"name\": \"" << name << "\",\n";
-                stream << std::string(indent, ' ') << "\"results\": " << "[" << "\n";
-                indent += 2;
+                write_value(stream, indent, "name", name);
+                start_array(stream, indent, "results");
 
                 for(std::size_t k = 0; k < section.results[j].size(); ++k){
-                    stream << std::string(indent, ' ') << "{" << "\n";
-                    indent += 2;
+                    start_sub(stream, indent);
 
-                    stream << std::string(indent, ' ') << "\"size\": \"" << section.sizes[k] << "\",\n";
-                    stream << std::string(indent, ' ') << "\"duration\": \"" << section.results[j][k] << "\"\n";
+                    write_value(stream, indent, "size", section.sizes[k]);
+                    write_value(stream, indent, "duration", section.results[j][k], false);
 
-                    indent -= 2;
-
-                    if(j < section.names.size() - 1){
-                        stream << std::string(indent, ' ') << "}," << "\n";
-                    } else {
-                        stream << std::string(indent, ' ') << "}" << "\n";
-                    }
+                    close_sub(stream, indent, k < section.results[j].size() - 1);
                 }
 
-                indent -= 2;
-                stream << std::string(indent, ' ') << "]" << "\n";
-
-                indent -= 2;
-
-                if(j < section.names.size() - 1){
-                    stream << std::string(indent, ' ') << "}," << "\n";
-                } else {
-                    stream << std::string(indent, ' ') << "}" << "\n";
-                }
+                close_array(stream, indent, false);
+                close_sub(stream, indent, j < section.names.size() - 1);
             }
 
-            indent -= 2;
-            stream << std::string(indent, ' ') << "]" << "\n";
-
-            indent -= 2;
-
-            if(i < section_results.size() - 1){
-                stream << std::string(indent, ' ') << "}," << "\n";
-            } else {
-                stream << std::string(indent, ' ') << "}" << "\n";
-            }
+            close_array(stream, indent, false);
+            close_sub(stream, indent, i < section_results.size() - 1);
         }
 
-        indent -= 2;
-
-        stream << std::string(indent, ' ') << "]" << "\n";
+        close_array(stream, indent, false);
 
         stream << "}";
     }
