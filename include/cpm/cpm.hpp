@@ -9,6 +9,7 @@
 #define CPM_CPM_HPP
 
 #include <iostream>
+#include <fstream>
 #include <utility>
 #include <functional>
 
@@ -204,6 +205,7 @@ private:
     std::size_t measures = 0;
     std::size_t runs = 0;
 
+    const std::string name;
     std::string folder;
     std::string tag;
     std::string final_file;
@@ -220,7 +222,7 @@ public:
     bool auto_save = true;
     bool auto_mkdir = true;
 
-    benchmark(std::string f = ".", std::string t = "") : folder(f), tag(t) {
+    benchmark(std::string name, std::string f = ".", std::string t = "") : name(std::move(name)), folder(std::move(f)), tag(std::move(t)) {
         //Get absolute cwd
         if(folder == "" || folder == "."){
             folder = get_cwd();
@@ -373,7 +375,135 @@ public:
 
 private:
     void save(){
-        //TODO Write file
+        std::ofstream stream(final_file);
+
+        stream << "{\n";
+
+        std::size_t indent = 2;
+
+        stream << std::string(indent, ' ') << "\"name\": \"" << name << "\",\n";
+        stream << std::string(indent, ' ') << "\"tag\": \"" << tag << "\",\n";
+        stream << std::string(indent, ' ') << "\"compiler\": \"" << COMPILER_FULL << "\",\n";
+        stream << std::string(indent, ' ') << "\"os\": \"" << "TODO" << "\",\n";
+        stream << std::string(indent, ' ') << "\"time\": \"" << "TODO" << "\",\n";
+
+        stream << std::string(indent, ' ') << "\"results\": " << "[" << "\n";
+
+        indent += 2;
+
+        for(std::size_t i = 0; i < results.size(); ++i){
+            auto& result = results[i];
+
+            stream << std::string(indent, ' ') << "{" << "\n";
+            indent += 2;
+
+            stream << std::string(indent, ' ') << "\"title\": \"" << result.title << "\",\n";
+            stream << std::string(indent, ' ') << "\"results\": " << "[" << "\n";
+            indent += 2;
+
+            for(std::size_t j = 0; j < result.results.size(); ++j){
+                auto& sub = result.results[j];
+
+                stream << std::string(indent, ' ') << "{" << "\n";
+                indent += 2;
+
+                stream << std::string(indent, ' ') << "\"size\": \"" << sub.first << "\",\n";
+                stream << std::string(indent, ' ') << "\"duration\": \"" << sub.second << "\"\n";
+
+                indent -= 2;
+
+                if(j < result.results.size() - 1){
+                    stream << std::string(indent, ' ') << "}," << "\n";
+                } else {
+                    stream << std::string(indent, ' ') << "}" << "\n";
+                }
+            }
+
+            indent -= 2;
+            stream << std::string(indent, ' ') << "]" << "\n";
+
+            indent -= 2;
+
+            if(i < results.size() - 1){
+                stream << std::string(indent, ' ') << "}," << "\n";
+            } else {
+                stream << std::string(indent, ' ') << "}" << "\n";
+            }
+        }
+
+        indent -= 2;
+
+        stream << std::string(indent, ' ') << "]," << "\n";
+
+        stream << std::string(indent, ' ') << "\"sections\": " << "[" << "\n";
+
+        indent += 2;
+
+        for(std::size_t i = 0; i < section_results.size(); ++i){
+            auto& section = section_results[i];
+
+            stream << std::string(indent, ' ') << "{" << "\n";
+            indent += 2;
+
+            stream << std::string(indent, ' ') << "\"name\": \"" << section.name << "\",\n";
+            stream << std::string(indent, ' ') << "\"results\": " << "[" << "\n";
+            indent += 2;
+
+            for(std::size_t j = 0; j < section.names.size(); ++j){
+                auto& name = section.names[j];
+
+                stream << std::string(indent, ' ') << "{" << "\n";
+                indent += 2;
+
+                stream << std::string(indent, ' ') << "\"name\": \"" << name << "\",\n";
+                stream << std::string(indent, ' ') << "\"results\": " << "[" << "\n";
+                indent += 2;
+
+                for(std::size_t k = 0; k < section.results[j].size(); ++k){
+                    stream << std::string(indent, ' ') << "{" << "\n";
+                    indent += 2;
+
+                    stream << std::string(indent, ' ') << "\"size\": \"" << section.sizes[k] << "\",\n";
+                    stream << std::string(indent, ' ') << "\"duration\": \"" << section.results[j][k] << "\"\n";
+
+                    indent -= 2;
+
+                    if(j < section.names.size() - 1){
+                        stream << std::string(indent, ' ') << "}," << "\n";
+                    } else {
+                        stream << std::string(indent, ' ') << "}" << "\n";
+                    }
+                }
+
+                indent -= 2;
+                stream << std::string(indent, ' ') << "]" << "\n";
+
+                indent -= 2;
+
+                if(j < section.names.size() - 1){
+                    stream << std::string(indent, ' ') << "}," << "\n";
+                } else {
+                    stream << std::string(indent, ' ') << "}" << "\n";
+                }
+            }
+
+            indent -= 2;
+            stream << std::string(indent, ' ') << "]" << "\n";
+
+            indent -= 2;
+
+            if(i < section_results.size() - 1){
+                stream << std::string(indent, ' ') << "}," << "\n";
+            } else {
+                stream << std::string(indent, ' ') << "}" << "\n";
+            }
+        }
+
+        indent -= 2;
+
+        stream << std::string(indent, ' ') << "]" << "\n";
+
+        stream << "}";
     }
 
     template<typename Policy, typename M>

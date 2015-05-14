@@ -71,7 +71,7 @@ inline std::string get_free_file(const std::string& base_folder){
     struct stat buffer;
     do {
         ++result_name;
-        result_folder = base_folder + std::to_string(result_name);
+        result_folder = base_folder + std::to_string(result_name) + ".cpm";
     } while(stat(result_folder.c_str(), &buffer) == 0);
 
     return std::to_string(result_name);
