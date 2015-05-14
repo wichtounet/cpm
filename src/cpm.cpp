@@ -7,6 +7,10 @@
 
 #include <iostream>
 #include <fstream>
+#include <vector>
+
+#include <stdio.h>
+#include <dirent.h>
 
 #include "rapidjson/document.h"
 #include "rapidjson/filereadstream.h"
@@ -31,8 +35,8 @@ std::string dark_unica_theme =
 #include "theme.inc"
 ;
 
-rapidjson::Document read_document(const std::string& source_file){
-    FILE* pFile = fopen(source_file.c_str(), "rb");
+rapidjson::Document read_document(const std::string& folder, const std::string& file){
+    FILE* pFile = fopen((folder + "/" + file).c_str(), "rb");
     char buffer[65536];
 
     rapidjson::FileReadStream is(pFile, buffer, sizeof(buffer));
@@ -71,13 +75,50 @@ void information(std::ostream& stream, rapidjson::Document& doc){
     stream << "</ul>" << std::endl;
 }
 
+std::vector<rapidjson::Document> read(const std::string& source_folder){
+    std::vector<rapidjson::Document> documents;
+
+    struct dirent* entry;
+    DIR* dp = opendir(source_folder.c_str());
+
+    if(!dp){
+        return documents;
+    }
+
+    while((entry = readdir(dp))){
+        if(std::string(entry->d_name) == "." || std::string(entry->d_name) == ".."){
+            continue;
+        }
+
+        documents.push_back(read_document(source_folder, entry->d_name));
+    }
+
+    return documents;
+}
+
 } //end of anonymous namespace
 
 int main(){
-    std::string source_file = "results/1.cpm";
+    std::string source_folder = "results";
     std::string target_file = "reports/index.html";
 
-    auto doc = read_document(source_file);
+    auto documents = read(source_folder);
+
+    if(documents.empty()){
+        std::cout << "Unable to read any files" << std::endl;
+        return -1;
+    }
+
+    std::size_t most_recent = 0;
+    for(std::size_t i = 1; i < documents.size(); ++i){
+        auto& doc = documents[i];
+
+        if(documents[i]["timestamp"].GetInt() > documents[most_recent]["timestamp"].GetInt()){
+            most_recent = i;
+        }
+    }
+
+    auto& doc = documents[most_recent];
 
     std::ofstream stream(target_file);
 
@@ -92,15 +133,17 @@ int main(){
 
     std::size_t id = 1;
     for(auto& result : doc["results"]){
-        stream << "<h2>" << result["title"].GetString() << "</h2>" << std::endl;
+        stream << "<h2 style=\"clear:both\">" << result["title"].GetString() << "</h2>" << std::endl;
 
-        stream << "<div id=\"chart_" << id << "\" style=\"min-width: 310px; max-width:700px; height: 400px; margin: 0 auto\"></div>" << std::endl;
+        //1. Generate the last run graph
+
+        stream << "<div id=\"chart_" << id << "\" style=\"float:left; width:600px; height: 400px; margin: 5 auto; padding-right: 10px; \"></div>" << std::endl;
 
         stream << "<script>" << std::endl;
 
         stream << "$(function () {" << std::endl;
         stream << "$('#chart_" << id << "').highcharts({" << std::endl;
-        stream << "title: { text: '" << result["title"].GetString() << "', x: -20 }," << std::endl;
+        stream << "title: { text: 'Last run: " << result["title"].GetString() << "', x: -20 }," << std::endl;
 
         stream << "xAxis: { categories: [" << std::endl;
 
@@ -142,18 +185,81 @@ int main(){
         stream << "</script>" << std::endl;
 
         ++id;
-    }
-    
-    for(auto& section : doc["sections"]){
-        stream << "<h2>" << section["name"].GetString() << "</h2>" << std::endl;
 
-        stream << "<div id=\"chart_" << id << "\" style=\"min-width: 310px; max-width:700px; height: 400px; margin: 0 auto\"></div>" << std::endl;
+        //2. Generate the time series graph
+
+        stream << "<div id=\"chart_" << id << "\" style=\"float:left; width:600px; height: 400px; margin: 5 auto\"></div>" << std::endl;
 
         stream << "<script>" << std::endl;
 
         stream << "$(function () {" << std::endl;
         stream << "$('#chart_" << id << "').highcharts({" << std::endl;
-        stream << "title: { text: '" << section["name"].GetString() << "', x: -20 }," << std::endl;
+        stream << "title: { text: 'Time: " << result["title"].GetString() << "', x: -20 }," << std::endl;
+
+        stream << "xAxis: { type: 'datetime', title: { text: 'Date' } }," << std::endl;
+
+        stream << "yAxis: {" << std::endl;
+        stream << "title: { text: 'Time [us]' }," << std::endl;
+        stream << "plotLines: [{ value: 0, width: 1, color: '#808080'}]" << std::endl;
+        stream << "}," << std::endl;
+
+        stream << "tooltip: { valueSuffix: 'us' }," << std::endl;
+
+        stream << "series: [" << std::endl;
+
+        comma = "";
+
+        //TODO Add option to generate only one size
+
+        for(auto& r : result["results"]){
+            stream << comma << "{" << std::endl;
+
+            stream << "name: '" << r["size"].GetInt() << "'," << std::endl;
+            stream << "data: [";
+
+            std::string inner_comma = "";
+
+            for(auto& document : documents){
+                for(auto& o_result : document["results"]){
+                    if(std::string(o_result["title"].GetString()) == std::string(result["title"].GetString())){
+                        for(auto& o_rr : o_result["results"]){
+                            if(o_rr["size"].GetInt() == r["size"].GetInt()){
+                                stream << inner_comma << "[" << document["timestamp"].GetInt() * 1000 << ",";
+                                stream << o_rr["duration"].GetInt() << "]";
+                                inner_comma = ",";
+                            }
+                        }
+                    }
+                }
+            }
+
+            stream << "]" << std::endl;
+            stream << "}" << std::endl;
+            comma =",";
+        }
+
+        stream << "]" << std::endl;
+
+        stream << "});" << std::endl;
+        stream << "});" << std::endl;
+
+        stream << "</script>" << std::endl;
+
+        ++id;
+    }
+    
+    for(auto& section : doc["sections"]){
+        stream << "<h2 style=\"clear:both\">" << section["name"].GetString() << "</h2>" << std::endl;
+
+        //1. Generate the last run graph
+
+        stream << "<div id=\"chart_" << id << "\" style=\"float:left; width:600px; height:400px; margin: 5 auto; padding-right: 10px; \"></div>" << std::endl;
+
+        stream << "<script>" << std::endl;
+
+        stream << "$(function () {" << std::endl;
+        stream << "$('#chart_" << id << "').highcharts({" << std::endl;
+        stream << "title: { text: 'Last run:" << section["name"].GetString() << "', x: -20 }," << std::endl;
 
         stream << "xAxis: { categories: [" << std::endl;
 
@@ -188,6 +294,66 @@ int main(){
             for(auto& rr : r["results"]){
                 stream << comma_inner << rr["duration"].GetInt();
                 comma_inner = ",";
+            }
+
+            stream << "]" << std::endl;
+            stream << "}" << std::endl;
+            comma = ",";
+        }
+
+        stream << "]" << std::endl;
+
+        stream << "});" << std::endl;
+        stream << "});" << std::endl;
+
+        stream << "</script>" << std::endl;
+
+        ++id;
+
+        //2. Generate the time graph
+
+        stream << "<div id=\"chart_" << id << "\" style=\"float:left; width:600px; height:400px; margin: 5 auto; padding-right: 10px; \"></div>" << std::endl;
+
+        stream << "<script>" << std::endl;
+
+        stream << "$(function () {" << std::endl;
+        stream << "$('#chart_" << id << "').highcharts({" << std::endl;
+        stream << "title: { text: 'Time:" << section["name"].GetString() << "', x: -20 }," << std::endl;
+
+        stream << "xAxis: { type: 'datetime', title: { text: 'Date' } }," << std::endl;
+
+        stream << "yAxis: {" << std::endl;
+        stream << "title: { text: 'Time [us]' }," << std::endl;
+        stream << "plotLines: [{ value: 0, width: 1, color: '#808080'}]" << std::endl;
+        stream << "}," << std::endl;
+
+        stream << "tooltip: { valueSuffix: 'us' }," << std::endl;
+        stream << "legend: { align: 'left', verticalAlign: 'top', floating: false, borderWidth: 0, y: 20 }," << std::endl;
+
+        stream << "series: [" << std::endl;
+
+        comma = "";
+        for(auto& r : section["results"]){
+            stream << comma << "{" << std::endl;
+
+            stream << "name: '" << r["name"].GetString() << "'," << std::endl;
+            stream << "data: [";
+
+            std::string comma_inner = "";
+
+            for(auto& r_doc : documents){
+                for(auto& r_section : r_doc["sections"]){
+                    if(std::string(r_section["name"].GetString()) == std::string(section["name"].GetString())){
+                        for(auto& r_r : r_section["results"]){
+                            if(std::string(r_r["name"].GetString()) == std::string(r["name"].GetString())){
+                                stream << comma_inner << "[" << r_doc["timestamp"].GetInt() * 1000 << ",";
+                                auto& r_r_results = r_r["results"];
+                                stream << r_r_results[r_r_results.Size() - 1]["duration"].GetInt() << "]";
+                                comma_inner = ",";
+                            }
+                        }
+                    }
+                }
             }
 
             stream << "]" << std::endl;
