@@ -282,7 +282,7 @@ public:
         end(auto_save);
     }
 
-    void end(bool save = true){
+    void end(bool save_file = true){
         if(standard_report){
             std::cout << std::endl;
             std::cout << "End of CPM benchmarks" << std::endl;
@@ -292,7 +292,7 @@ public:
             std::cout << std::endl;
         }
 
-        if(save){
+        if(save_file){
             save();
         }
     }
