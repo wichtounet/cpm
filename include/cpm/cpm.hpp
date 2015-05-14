@@ -13,6 +13,8 @@
 #include <utility>
 #include <functional>
 
+#include <sys/utsname.h>
+
 #include "compiler.hpp"
 #include "duration.hpp"
 #include "random.hpp"
@@ -212,6 +214,8 @@ private:
     std::string final_file;
     bool folder_ok = false;
 
+    std::string operating_system;
+
     std::vector<measure_data> results;
     std::vector<section_data> section_results;
 
@@ -262,6 +266,19 @@ public:
         }
 
         final_file = folder + tag + ".cpm";
+
+        //Detect the operating system
+        struct utsname buffer;
+        if (uname(&buffer) == 0) {
+            operating_system += buffer.sysname;
+            operating_system += " ";
+            operating_system += buffer.machine;
+            operating_system += " ";
+            operating_system += buffer.release;
+        } else {
+            std::cout << "Warning: Failed to detect operating system" << std::endl; 
+            operating_system = "unknown";
+        }
     }
 
     void begin(){
@@ -277,6 +294,7 @@ public:
             std::cout << "   Each test is warmed-up " << warmup << " times" << std::endl;
             std::cout << "   Each test is repeated " << repeat << " times" << std::endl;
             std::cout << "   Compiler " << COMPILER_FULL << std::endl;
+            std::cout << "   Operating System " << operating_system << std::endl;
             std::cout << std::endl;
         }
     }
@@ -386,7 +404,7 @@ private:
         write_value(stream, indent, "name", name);
         write_value(stream, indent, "tag", tag);
         write_value(stream, indent, "compiler", COMPILER_FULL);
-        write_value(stream, indent, "os", "TODO");
+        write_value(stream, indent, "os", operating_system);
         write_value(stream, indent, "time", "TODO");
 
         start_array(stream, indent, "results");
