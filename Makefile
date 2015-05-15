@@ -15,13 +15,18 @@ ifneq (,$(findstring clang,$(CXX)))
 CXX_FLAGS += -stdlib=libc++
 endif
 
+# Generate the default executable
 $(eval $(call auto_folder_compile,src))
-$(eval $(call add_src_executable,cpm,cpm.cpp))
-$(eval $(call add_src_executable,sample,sample.cpp))
+$(eval $(call auto_add_executable,cpm))
 
-release: release/bin/cpm release/bin/sample
-release_debug: release_debug/bin/cpm release_debug/bin/sample
-debug: debug/bin/cpm debug/bin/sample
+$(eval $(call folder_compile,examples))
+$(eval $(call add_executable,simple,examples/simple.cpp))
+
+release: release/bin/cpm
+release_debug: release_debug/bin/cpm
+debug: debug/bin/cpm
+
+examples: debug/bin/simple
 
 all: release release_debug debug
 
