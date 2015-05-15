@@ -19,43 +19,43 @@ constexpr std::chrono::nanoseconds operator ""_ns(unsigned long long us){
 struct test { std::size_t d; };
 void randomize(test&){}
 
-BENCH() {
-    SIMPLE("simple_a", [](std::size_t d){ std::this_thread::sleep_for((factor * d) * 1_ns ); });
-    SIMPLE("simple_b", [](std::size_t d){ std::this_thread::sleep_for((factor * d) * 2_ns ); });
+CPM_BENCH() {
+    CPM_SIMPLE("simple_a", [](std::size_t d){ std::this_thread::sleep_for((factor * d) * 1_ns ); });
+    CPM_SIMPLE("simple_b", [](std::size_t d){ std::this_thread::sleep_for((factor * d) * 2_ns ); });
 }
 
-BENCH() {
+CPM_BENCH() {
     test a{3};
     test b{5};
-    GLOBAL("global_a", [&a](std::size_t d){ std::this_thread::sleep_for((factor * d * a.d) * 1_ns ); }, a);
-    GLOBAL("global_b", [&b](std::size_t d){ std::this_thread::sleep_for((factor * d * b.d) * 1_ns ); }, b);
+    CPM_GLOBAL("global_a", [&a](std::size_t d){ std::this_thread::sleep_for((factor * d * a.d) * 1_ns ); }, a);
+    CPM_GLOBAL("global_b", [&b](std::size_t d){ std::this_thread::sleep_for((factor * d * b.d) * 1_ns ); }, b);
 }
 
-BENCH() {
-    TWO_PASS("2p_a",
+CPM_BENCH() {
+    CPM_TWO_PASS("2p_a",
         [](std::size_t d){ return std::make_tuple(test{d}); },
         [](std::size_t d, test& d2){ std::this_thread::sleep_for((factor * (d + d2.d)) * 1_ns ); }
         );
 
-    TWO_PASS("2p_b",
+    CPM_TWO_PASS("2p_b",
         [](std::size_t d){ return std::make_tuple(test{d}); },
         [](std::size_t d, test& d2){ std::this_thread::sleep_for((factor * 2 * (d + d2.d)) * 1_ns ); }
         );
 }
 
 CPM_SECTION("mmul")
-    SIMPLE("std", [](std::size_t d){ std::this_thread::sleep_for((factor * d) * 9_ns ); });
-    SIMPLE("fast", [](std::size_t d){ std::this_thread::sleep_for((factor * (d / 3)) * 1_ns ); });
-    SIMPLE("common", [](std::size_t d){ std::this_thread::sleep_for((factor * (d / 2)) * 3_ns ); });
+    CPM_SIMPLE("std", [](std::size_t d){ std::this_thread::sleep_for((factor * d) * 9_ns ); });
+    CPM_SIMPLE("fast", [](std::size_t d){ std::this_thread::sleep_for((factor * (d / 3)) * 1_ns ); });
+    CPM_SIMPLE("common", [](std::size_t d){ std::this_thread::sleep_for((factor * (d / 2)) * 3_ns ); });
 }
 
 CPM_SECTION("conv")
-    TWO_PASS("std",
+    CPM_TWO_PASS("std",
         [](std::size_t d){ return std::make_tuple(test{d}); },
         [](std::size_t d, test& d2){ std::this_thread::sleep_for((factor * 5 * (d + d2.d)) * 1_ns ); }
         );
 
-    TWO_PASS("fast",
+    CPM_TWO_PASS("fast",
         [](std::size_t d){ return std::make_tuple(test{d}); },
         [](std::size_t d, test& d2){ std::this_thread::sleep_for((factor * 3 * (d + d2.d)) * 1_ns ); }
         );
@@ -64,6 +64,6 @@ CPM_SECTION("conv")
 CPM_SECTION("fft")
     test a{3};
     test b{5};
-    GLOBAL("std", [&a](std::size_t d){ std::this_thread::sleep_for((factor * d * (d % a.d)) * 1_ns ); }, a);
-    GLOBAL("mkl", [&b](std::size_t d){ std::this_thread::sleep_for((factor * d * (d % b.d)) * 1_ns ); }, b);
+    CPM_GLOBAL("std", [&a](std::size_t d){ std::this_thread::sleep_for((factor * d * (d % a.d)) * 1_ns ); }, a);
+    CPM_GLOBAL("mkl", [&b](std::size_t d){ std::this_thread::sleep_for((factor * d * (d % b.d)) * 1_ns ); }, b);
 }

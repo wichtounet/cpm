@@ -18,24 +18,24 @@ struct cpm_registry {
     static std::vector<void(*)(cpm::benchmark<>&)> benchs;
 };
 
-#define UNIQUE_DETAIL(x, y) x##y
-#define UNIQUE(x, y) UNIQUE_DETAIL(x, y)
-#define UNIQUE_NAME(x) UNIQUE(x, __LINE__)
+#define CPM_UNIQUE_DETAIL(x, y) x##y
+#define CPM_UNIQUE(x, y) CPM_UNIQUE_DETAIL(x, y)
+#define CPM_UNIQUE_NAME(x) CPM_UNIQUE(x, __LINE__)
 
-#define BENCH()  \
-    void UNIQUE_NAME(bench_) (cpm::benchmark<>& bench); \
-    namespace { cpm_registry UNIQUE_NAME(register_) (& UNIQUE_NAME(bench_)); }              \
-    void UNIQUE_NAME(bench_) (cpm::benchmark<>& bench)
+#define CPM_BENCH()  \
+    void CPM_UNIQUE_NAME(bench_) (cpm::benchmark<>& bench); \
+    namespace { cpm_registry CPM_UNIQUE_NAME(register_) (& CPM_UNIQUE_NAME(bench_)); }              \
+    void CPM_UNIQUE_NAME(bench_) (cpm::benchmark<>& bench)
 
 #define CPM_SECTION(name)                                       \
-    void UNIQUE_NAME(section_) (cpm::benchmark<>& master);      \
-    namespace { cpm_registry UNIQUE_NAME(register_) (& UNIQUE_NAME(section_)); }        \
-    void UNIQUE_NAME(section_) (cpm::benchmark<>& master) {     \
+    void CPM_UNIQUE_NAME(section_) (cpm::benchmark<>& master);      \
+    namespace { cpm_registry CPM_UNIQUE_NAME(register_) (& CPM_UNIQUE_NAME(section_)); }        \
+    void CPM_UNIQUE_NAME(section_) (cpm::benchmark<>& master) {     \
     auto bench = master.multi(name);
 
-#define SIMPLE(...) bench.measure_simple(__VA_ARGS__);
-#define GLOBAL(...) bench.measure_global(__VA_ARGS__);
-#define TWO_PASS(...) bench.measure_two_pass(__VA_ARGS__);
+#define CPM_SIMPLE(...) bench.measure_simple(__VA_ARGS__);
+#define CPM_GLOBAL(...) bench.measure_global(__VA_ARGS__);
+#define CPM_TWO_PASS(...) bench.measure_two_pass(__VA_ARGS__);
 
 int main(int, char*[]){
     //TODO Configure folder from args
