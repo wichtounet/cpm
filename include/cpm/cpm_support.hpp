@@ -10,6 +10,8 @@
 
 #ifdef CPM_BENCHMARK
 
+#include "../../lib/cxxopts/src/cxxopts.hpp"
+
 struct cpm_registry {
     cpm_registry(void (*function)(cpm::benchmark<>&)){
         benchs.emplace_back(function);
@@ -37,9 +39,48 @@ struct cpm_registry {
 #define CPM_GLOBAL(...) bench.measure_global(__VA_ARGS__);
 #define CPM_TWO_PASS(...) bench.measure_two_pass(__VA_ARGS__);
 
-int main(int, char*[]){
-    //TODO Configure folder from args
-    cpm::benchmark<> bench(CPM_BENCHMARK, "./results");
+int main(int argc, char* argv[]){
+    cxxopts::Options options(argv[0], "");
+
+    try {
+        options.add_options()
+            ("n,name", "Benchmark name", cxxopts::value<std::string>())
+            ("t,tag", "Tag name", cxxopts::value<std::string>())
+            ("o,output", "Output folder", cxxopts::value<std::string>())
+            ("h,help", "Print help")
+            ;
+
+        options.parse(argc, argv);
+
+        if (options.count("help")){
+            std::cout << options.help({""}) << std::endl;
+            return 0;
+        }
+
+    } catch (const cxxopts::OptionException& e){
+        std::cout << "cpm: error parsing options: " << e.what() << std::endl;
+        return -1;
+    }
+
+    std::string output_folder{"./results"};
+
+    if (options.count("output")){
+        output_folder = options["output"].as<std::string>();
+    }
+
+    std::string benchmark_name{CPM_BENCHMARK};
+
+    if (options.count("name")){
+        benchmark_name = options["name"].as<std::string>();
+    }
+
+    std::string tag{""};
+
+    if (options.count("tag")){
+        tag = options["tag"].as<std::string>();
+    }
+
+    cpm::benchmark<> bench(benchmark_name, output_folder, tag);
 
     bench.begin();
 
