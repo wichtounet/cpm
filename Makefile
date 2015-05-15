@@ -5,7 +5,7 @@ default: release
 include make-utils/flags.mk
 include make-utils/cpp-utils.mk
 
-CXX_FLAGS += -Ilib/rapidjson/include
+CXX_FLAGS += -Ilib/rapidjson/include -Ilib/cxxopts/src/
 
 # Make sure warnings are not ignored
 CXX_FLAGS += -Werror
