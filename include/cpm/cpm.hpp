@@ -615,4 +615,8 @@ private:
 
 } //end of namespace cpm
 
+#ifdef CPM_BENCHMARK
+#include "cpm_support.hpp"
+#endif
+
 #endif //CPM_CPM_HPP

@@ -21,12 +21,13 @@ $(eval $(call auto_add_executable,cpm))
 
 $(eval $(call folder_compile,examples))
 $(eval $(call add_executable,simple,examples/simple.cpp))
+$(eval $(call add_executable,full,examples/full.cpp))
 
 release: release/bin/cpm
 release_debug: release_debug/bin/cpm
 debug: debug/bin/cpm
 
-examples: debug/bin/simple
+examples: debug/bin/simple debug/bin/full
 
 all: release release_debug debug
 
