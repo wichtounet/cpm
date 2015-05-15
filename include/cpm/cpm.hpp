@@ -203,7 +203,7 @@ template<typename DefaultPolicy>
 struct benchmark {
 private:
     template<typename Bench, typename Policy>
-    friend class section;
+    friend struct section;
 
     std::size_t tests = 0;
     std::size_t measures = 0;
@@ -502,7 +502,7 @@ private:
             std::size_t d = Policy::start;
 
             while(d <= Policy::end){
-                auto duration = measure(d);
+                measure(d);
 
                 d = d * Policy::mul + Policy::add;
             }

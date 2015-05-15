@@ -20,7 +20,7 @@ $(eval $(call add_src_executable,cpm,cpm.cpp))
 $(eval $(call add_src_executable,sample,sample.cpp))
 
 release: release/bin/cpm release/bin/sample
-release_debug: release_debug/bin/cmp release_debug/bin/sample
+release_debug: release_debug/bin/cpm release_debug/bin/sample
 debug: debug/bin/cpm debug/bin/sample
 
 all: release release_debug debug
