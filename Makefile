@@ -10,6 +10,7 @@ CXX_FLAGS += -Ilib/rapidjson/include
 # Make sure warnings are not ignored
 CXX_FLAGS += -Werror
 
+# Use the correct stdlib
 ifneq (,$(findstring clang,$(CXX)))
 CXX_FLAGS += -stdlib=libc++
 endif
