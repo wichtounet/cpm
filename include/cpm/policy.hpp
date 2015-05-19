@@ -12,22 +12,30 @@ namespace cpm {
 
 enum class stop_policy {
     TIMEOUT,
-    GLOBAL_TIMEOUT,
     STOP
 };
 
 template<std::size_t S, std::size_t E, std::size_t A, std::size_t M, stop_policy SP>
 struct cpm_policy {
-    static constexpr const std::size_t start = S;
-    static constexpr const std::size_t end = E;
-    static constexpr const std::size_t add = A;
-    static constexpr const std::size_t mul = M;
-    static constexpr const stop_policy stop = SP;
+    static constexpr bool begin(){
+        return S;
+    }
+
+    static constexpr bool has_next(std::size_t d, std::size_t duration){
+        if(SP == stop_policy::STOP){
+            return d != E;
+        } else {
+            return duration < E;
+        }
+    }
+
+    static constexpr std::size_t next(std::size_t d){
+        return d * M + A;
+    }
 };
 
 using std_stop_policy = cpm_policy<10, 1000000, 0, 10, stop_policy::STOP>;
 using std_timeout_policy = cpm_policy<10, 1000, 0, 10, stop_policy::TIMEOUT>;
-using std_global_timeout_policy = cpm_policy<10, 5000, 0, 10, stop_policy::GLOBAL_TIMEOUT>;
 
 } //end of namespace cpm
 

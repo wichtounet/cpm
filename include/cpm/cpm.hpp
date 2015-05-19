@@ -65,9 +65,9 @@ public:
     template<typename Functor>
     void measure_simple(const std::string& title, Functor functor){
         bench.template policy_run<Policy>(
-            [&title, &functor, this](std::size_t d){
-                auto duration = bench.measure_only_simple(functor, d);
-                report(title, d, duration);
+            [&title, &functor, this](auto sizes){
+                auto duration = bench.measure_only_simple(functor, sizes);
+                report(title, sizes, duration);
                 return duration;
             }
         );
@@ -78,9 +78,9 @@ public:
     template<typename Init, typename Functor>
     void measure_two_pass(const std::string& title, Init init, Functor functor){
         bench.template policy_run<Policy>(
-            [&title, &functor, &init, this](std::size_t d){
-                auto duration = bench.measure_only_two_pass(init, functor, d);
-                report(title, d, duration);
+            [&title, &functor, &init, this](auto sizes){
+                auto duration = bench.measure_only_two_pass(init, functor, sizes);
+                report(title, sizes, duration);
                 return duration;
             }
         );
@@ -91,9 +91,9 @@ public:
     template<typename Functor, typename... T>
     void measure_global(const std::string& title, Functor functor, T&... references){
         bench.template policy_run<Policy>(
-            [&title, &functor, &references..., this](std::size_t d){
-                auto duration = bench.measure_only_global(functor, d, references...);
-                report(title, d, duration);
+            [&title, &functor, &references..., this](auto sizes){
+                auto duration = bench.measure_only_global(functor, sizes, references...);
+                report(title, sizes, duration);
                 return duration;
             }
         );
@@ -340,10 +340,10 @@ public:
         data.title = title;
 
         policy_run<Policy>(
-            [&data, &title, &functor, this](std::size_t d){
-                auto duration = measure_only_simple(functor, d);
-                report(title, d, duration);
-                data.results.push_back(std::make_pair(d, duration));
+            [&data, &title, &functor, this](auto sizes){
+                auto duration = measure_only_simple(functor, sizes);
+                report(title, sizes, duration);
+                data.results.push_back(std::make_pair(sizes, duration));
                 return duration;
             }
         );
@@ -359,10 +359,10 @@ public:
         data.title = title;
 
         policy_run<Policy>(
-            [&data, &title, &functor, &init, this](std::size_t d){
-                auto duration = measure_only_two_pass(init, functor, d);
-                report(title, d, duration);
-                data.results.push_back(std::make_pair(d, duration));
+            [&data, &title, &functor, &init, this](auto sizes){
+                auto duration = measure_only_two_pass(init, functor, sizes);
+                report(title, sizes, duration);
+                data.results.push_back(std::make_pair(sizes, duration));
                 return duration;
             }
         );
@@ -378,10 +378,10 @@ public:
         data.title = title;
 
         policy_run<Policy>(
-            [&data, &title, &functor, &references..., this](std::size_t d){
-                auto duration = measure_only_global(functor, d, references...);
-                report(title, d, duration);
-                data.results.push_back(std::make_pair(d, duration));
+            [&data, &title, &functor, &references..., this](auto sizes){
+                auto duration = measure_only_global(functor, sizes, references...);
+                report(title, sizes, duration);
+                data.results.push_back(std::make_pair(sizes, duration));
                 return duration;
             }
         );
@@ -498,31 +498,13 @@ private:
     void policy_run(M measure){
         ++tests;
 
-        if(Policy::stop == stop_policy::STOP){
-            std::size_t d = Policy::start;
+        std::size_t d = Policy::begin();
+        auto duration = measure(d);
 
-            while(d <= Policy::end){
-                measure(d);
+        while(Policy::has_next(d, duration)){
+            d = Policy::next(d);
 
-                d = d * Policy::mul + Policy::add;
-            }
-        } else if(Policy::stop == stop_policy::TIMEOUT || Policy::stop == stop_policy::GLOBAL_TIMEOUT){
-            std::size_t d = Policy::start;
-
-            std::size_t mul = 1;
-            if(Policy::stop == stop_policy::GLOBAL_TIMEOUT){
-                mul = repeat;
-            }
-
-            while(true){
-                auto duration = measure(d);
-
-                if(((duration * repeat) / 1000) > Policy::end){
-                    break;
-                }
-
-                d = d * Policy::mul + Policy::add;
-            }
+            duration = measure(d);
         }
     }
 
