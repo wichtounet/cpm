@@ -38,7 +38,7 @@ struct section_data {
 
     //TODO This datastructure is probably not ideal
     std::vector<std::string> names;
-    std::vector<std::size_t> sizes;
+    std::vector<std::string> sizes;
     std::vector<std::vector<std::size_t>> results;
 
     section_data() = default;
@@ -110,7 +110,7 @@ public:
             for(std::size_t i = 0; i < data.sizes.size(); ++i){
                 auto s = data.sizes[i];
 
-                widths[0] = std::max(widths[0], static_cast<int>(std::to_string(s).size()));
+                widths[0] = std::max(widths[0], static_cast<int>(s.size()));
             }
 
             widths[0] = std::max(widths[0], static_cast<int>(data.name.size()));
@@ -140,7 +140,7 @@ public:
             for(std::size_t i = 0; i < data.sizes.size(); ++i){
                 auto s = data.sizes[i];
 
-                printf(" | %*ld | ", widths[0], s);
+                printf(" | %*s | ", widths[0], s.c_str());
 
                 std::size_t max = 0;
                 std::size_t min = std::numeric_limits<int>::max();
@@ -180,14 +180,15 @@ public:
     }
 
 private:
-    void report(const std::string& title, std::size_t d, std::size_t duration){
+    template<typename Tuple>
+    void report(const std::string& title, Tuple d, std::size_t duration){
         if(data.names.empty() || data.names.back() != title){
             data.names.push_back(title);
             data.results.emplace_back();
         }
 
         if(data.names.size() == 1){
-            data.sizes.push_back(d);
+            data.sizes.push_back(size_to_string(d));
         }
 
         data.results.back().push_back(duration);
@@ -196,7 +197,7 @@ private:
 
 struct measure_data {
     std::string title;
-    std::vector<std::pair<std::size_t, std::size_t>> results;
+    std::vector<std::pair<std::string, std::size_t>> results;
 };
 
 template<typename DefaultPolicy>
@@ -343,7 +344,7 @@ public:
             [&data, &title, &functor, this](auto sizes){
                 auto duration = measure_only_simple(functor, sizes);
                 report(title, sizes, duration);
-                data.results.push_back(std::make_pair(sizes, duration));
+                data.results.push_back(std::make_pair(size_to_string(sizes), duration));
                 return duration;
             }
         );
@@ -362,7 +363,7 @@ public:
             [&data, &title, &functor, &init, this](auto sizes){
                 auto duration = measure_only_two_pass(init, functor, sizes);
                 report(title, sizes, duration);
-                data.results.push_back(std::make_pair(sizes, duration));
+                data.results.push_back(std::make_pair(size_to_string(sizes), duration));
                 return duration;
             }
         );
@@ -381,7 +382,7 @@ public:
             [&data, &title, &functor, &references..., this](auto sizes){
                 auto duration = measure_only_global(functor, sizes, references...);
                 report(title, sizes, duration);
-                data.results.push_back(std::make_pair(sizes, duration));
+                data.results.push_back(std::make_pair(size_to_string(sizes), duration));
                 return duration;
             }
         );
@@ -498,7 +499,7 @@ private:
     void policy_run(M measure){
         ++tests;
 
-        std::size_t d = Policy::begin();
+        auto d = Policy::begin();
         auto duration = measure(d);
 
         while(Policy::has_next(d, duration)){
@@ -561,8 +562,8 @@ private:
         return duration_acc / repeat;
     }
 
-    template<typename Functor, typename... T>
-    std::size_t measure_only_global(Functor& functor, std::size_t d, T&... references){
+    template<typename Functor, typename Tuple, typename... T>
+    std::size_t measure_only_global(Functor& functor, Tuple d, T&... references){
         ++measures;
 
         for(std::size_t i = 0; i < warmup; ++i){
@@ -588,9 +589,10 @@ private:
         return duration_acc / repeat;
     }
 
-    void report(const std::string& title, std::size_t d, std::size_t duration){
+    template<typename Tuple>
+    void report(const std::string& title, Tuple d, std::size_t duration){
         if(standard_report){
-            std::cout << title << "(" << d << ") took " << us_duration_str(duration) << "\n";
+            std::cout << title << "(" << size_to_string(d) << ") took " << us_duration_str(duration) << "\n";
         }
     }
 };

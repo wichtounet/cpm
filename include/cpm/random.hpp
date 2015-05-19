@@ -30,10 +30,10 @@ void randomize(T1& container){
     randomize_double(container);
 }
 
-template<typename T1, typename... TT, typename std::enable_if_t<std::is_convertible<double, typename T1::value_type>::value, int> = 42 >
-void randomize(T1& container, TT&... containers){
-    randomize_double(container);
-    randomize(containers...);
+template<typename T1, typename... TT>
+void randomize(T1& value, TT&... values){
+    randomize(value);
+    randomize(values...);
 }
 
 template<typename Tuple, std::size_t... I>
