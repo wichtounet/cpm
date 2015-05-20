@@ -35,9 +35,29 @@ struct cpm_registry {
     void CPM_UNIQUE_NAME(section_) (cpm::benchmark<>& master) {     \
     auto bench = master.multi(name);
 
+#define CPM_SECTION_P(policy, name)                                       \
+    void CPM_UNIQUE_NAME(section_) (cpm::benchmark<>& master);      \
+    namespace { cpm_registry CPM_UNIQUE_NAME(register_) (& CPM_UNIQUE_NAME(section_)); }        \
+    void CPM_UNIQUE_NAME(section_) (cpm::benchmark<>& master) {     \
+    auto bench = master.multi<policy>(name);
+
+//Normal versions for simple bench
 #define CPM_SIMPLE(...) bench.measure_simple(__VA_ARGS__);
 #define CPM_GLOBAL(...) bench.measure_global(__VA_ARGS__);
 #define CPM_TWO_PASS(...) bench.measure_two_pass(__VA_ARGS__);
+
+//Versions with policies
+#define CPM_SIMPLE_P(policy, ...) bench.measure_simple<policy>(__VA_ARGS__);
+#define CPM_GLOBAL_P(policy, ...) bench.measure_global<policy>(__VA_ARGS__);
+#define CPM_TWO_PASS_P(policy, ...) bench.measure_two_pass<policy>(__VA_ARGS__);
+
+//Helpers to create policy
+#define POLICY(...) __VA_ARGS__
+#define VALUES_POLICY(...) cpm::values_policy<__VA_ARGS__>
+#define NARY_POLICY(...) cpm::simple_nary_policy<__VA_ARGS__>
+#define STD_STOP_POLICY cpm::std_stop_policy
+#define STOP_POLICY(start, stop, add, mul) cpm::increasing_policy<start, stop, add, mul, stop_policy::STOP>
+#define TIMEOUT_POLICY(start, stop, add, mul) cpm::increasing_policy<start, stop, add, mul, stop_policy::TIMEOUT>
 
 int main(int argc, char* argv[]){
     cxxopts::Options options(argv[0], "");
