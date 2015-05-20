@@ -8,7 +8,7 @@ include make-utils/cpp-utils.mk
 CXX_FLAGS += -Ilib/rapidjson/include -Ilib/cxxopts/src/
 
 # Make sure warnings are not ignored
-CXX_FLAGS += -Werror
+CXX_FLAGS += -Werror -pedantic -Wno-documentation
 
 # Use the correct stdlib
 ifneq (,$(findstring clang,$(CXX)))
