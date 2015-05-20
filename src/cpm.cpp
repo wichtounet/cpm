@@ -112,7 +112,8 @@ int main(int argc, char* argv[]){
     try {
         options.add_options()
             ("s,time-sizes", "Display multiple sizes in the time graphs")
-            ("t,theme", "Theme name [std,dark_unica]", cxxopts::value<std::string>()->default_value("dark_unica"), "theme_name")
+            ("t,theme", "Theme name [raw]", cxxopts::value<std::string>()->default_value("raw"))
+            ("c,hctheme", "Highcharts Theme name [std,dark_unica]", cxxopts::value<std::string>()->default_value("dark_unica"), "theme_name")
             ("o,output", "Output folder", cxxopts::value<std::string>()->default_value("reports"), "output_folder")
             ("input", "Input results", cxxopts::value<std::string>())
             ("d,disable-time", "Disable time graphs")
@@ -169,8 +170,8 @@ int main(int argc, char* argv[]){
 
     information(stream, doc);
 
-    //Configure the theme
-    if(options["theme"].as<std::string>() == "dark_unica"){
+    //Configure the highcharts theme
+    if(options["htheme"].as<std::string>() == "dark_unica"){
         stream << "<script>" << std::endl;
         stream << dark_unica_theme << std::endl;
         stream << "</script>" << std::endl;
