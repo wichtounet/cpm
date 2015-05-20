@@ -60,6 +60,14 @@ public:
         data.name = std::move(name);
     }
 
+    //Measure once functor (no policy, no randomization)
+
+    template<typename Functor>
+    void measure_once(const std::string& title, Functor functor){
+        auto duration = bench.measure_only_simple(functor);
+        report(title, std::size_t(1), duration);
+    }
+
     //Measure simple functor (no randomization)
 
     template<typename Functor>
@@ -279,7 +287,7 @@ public:
             operating_system += " ";
             operating_system += buffer.release;
         } else {
-            std::cout << "Warning: Failed to detect operating system" << std::endl; 
+            std::cout << "Warning: Failed to detect operating system" << std::endl;
             operating_system = "unknown";
         }
 
@@ -331,6 +339,20 @@ public:
     template<typename Policy = DefaultPolicy>
     section<benchmark<DefaultPolicy>, Policy> multi(std::string name){
         return {std::move(name), *this};
+    }
+
+    //Measure once functor (no policy, no randomization)
+
+    template<typename Functor>
+    void measure_once(const std::string& title, Functor functor){
+        measure_data data;
+        data.title = title;
+
+        auto duration = measure_only_simple(functor);
+        report(title, std::size_t(1), duration);
+        data.results.push_back(std::make_pair(std::string("1"), duration));
+
+        results.push_back(std::move(data));
     }
 
     //Measure simple functor (no randomization)
@@ -393,7 +415,7 @@ public:
     //Measure and return the duration of a simple functor
 
     template<typename Functor>
-    std::size_t measure_once(Functor functor){
+    static std::size_t measure_only(Functor functor){
         auto start_time = timer_clock::now();
         functor();
         auto end_time = timer_clock::now();

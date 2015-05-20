@@ -23,6 +23,8 @@ int main(){
 
     bench.begin();
 
+    bench.measure_once("once_a", [](){ std::this_thread::sleep_for((factor * 666) * 1_ns ); });
+
     bench.measure_simple("simple_a", [](std::size_t d){ std::this_thread::sleep_for((factor * d) * 1_ns ); });
     bench.measure_simple("simple_b", [](std::size_t d){ std::this_thread::sleep_for((factor * d) * 2_ns ); });
 
@@ -55,6 +57,14 @@ int main(){
         sec.measure_simple("std", [](std::size_t d){ std::this_thread::sleep_for((factor * d) * 9_ns ); });
         sec.measure_simple("fast", [](std::size_t d){ std::this_thread::sleep_for((factor * (d / 3)) * 1_ns ); });
         sec.measure_simple("common", [](std::size_t d){ std::this_thread::sleep_for((factor * (d / 2)) * 3_ns ); });
+    }
+
+    {
+        auto sec = bench.multi("mega");
+
+        sec.measure_once("std", [](){ std::this_thread::sleep_for((factor * 999) * 9_ns ); });
+        sec.measure_once("fast", [](){ std::this_thread::sleep_for((factor * 2222) * 1_ns ); });
+        sec.measure_once("common", [](){ std::this_thread::sleep_for((factor * 4444) * 3_ns ); });
     }
 
     {
