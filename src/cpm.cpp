@@ -194,7 +194,7 @@ int main(int argc, char* argv[]){
 
         std::string comma = "";
         for(auto& r : result["results"]){
-            stream << comma << "'" << r["size"].GetInt() << "'";
+            stream << comma << "'" << r["size"].GetString() << "'";
             comma = ",";
         }
 
@@ -262,7 +262,7 @@ int main(int argc, char* argv[]){
                 for(auto& r : result["results"]){
                     stream << comma << "{" << std::endl;
 
-                    stream << "name: '" << r["size"].GetInt() << "'," << std::endl;
+                    stream << "name: '" << r["size"].GetString() << "'," << std::endl;
                     stream << "data: [";
 
                     std::string inner_comma = "";
@@ -271,7 +271,7 @@ int main(int argc, char* argv[]){
                         for(auto& o_result : document["results"]){
                             if(std::string(o_result["title"].GetString()) == std::string(result["title"].GetString())){
                                 for(auto& o_rr : o_result["results"]){
-                                    if(o_rr["size"].GetInt() == r["size"].GetInt()){
+                                    if(o_rr["size"].GetString() == r["size"].GetString()){
                                         stream << inner_comma << "[" << document["timestamp"].GetInt() * 1000 << ",";
                                         stream << o_rr["duration"].GetInt() << "]";
                                         inner_comma = ",";
@@ -338,7 +338,7 @@ int main(int argc, char* argv[]){
 
         std::string comma = "";
         for(auto& r : section["results"][static_cast<rapidjson::SizeType>(0)]["results"]){
-            stream << comma << "'" << r["size"].GetInt() << "'";
+            stream << comma << "'" << r["size"].GetString() << "'";
             comma = ",";
         }
 
