@@ -36,7 +36,7 @@ inline auto end(rapidjson::Value& value){
 
 namespace {
 
-std::string dark_unica_theme = 
+std::string dark_unica_theme =
 #include "dark_unica.inc"
 ;
 
@@ -98,7 +98,7 @@ std::vector<rapidjson::Document> read(const std::string& source_folder){
         documents.push_back(read_document(source_folder, entry->d_name));
     }
 
-    std::sort(documents.begin(), documents.end(), 
+    std::sort(documents.begin(), documents.end(),
         [](rapidjson::Document& lhs, rapidjson::Document& rhs){ return lhs["timestamp"].GetInt() < rhs["timestamp"].GetInt(); });
 
     return documents;
@@ -159,10 +159,6 @@ int main(int argc, char* argv[]){
     if(documents.empty()){
         std::cout << "Unable to read any files" << std::endl;
         return -1;
-    }
-
-    for(auto& doc : documents){
-        std::cout << doc["timestamp"].GetInt() << std::endl;
     }
 
     auto& doc = documents.front();
@@ -322,7 +318,7 @@ int main(int argc, char* argv[]){
             ++id;
         }
     }
-    
+
     for(auto& section : doc["sections"]){
         stream << "<h2 style=\"clear:both\">" << section["name"].GetString() << "</h2>" << std::endl;
 
