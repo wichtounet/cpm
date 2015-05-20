@@ -35,11 +35,27 @@ struct cpm_registry {
     void CPM_UNIQUE_NAME(section_) (cpm::benchmark<>& master) {     \
     auto bench = master.multi(name);
 
+#define CPM_SECTION_O(name, W, R)                                       \
+    void CPM_UNIQUE_NAME(section_) (cpm::benchmark<>& master);      \
+    namespace { cpm_registry CPM_UNIQUE_NAME(register_) (& CPM_UNIQUE_NAME(section_)); }        \
+    void CPM_UNIQUE_NAME(section_) (cpm::benchmark<>& master) {     \
+    auto bench = master.multi(name);    \
+    bench.warmup = W;                   \
+    bench.repeat = R;
+
 #define CPM_SECTION_P(policy, name)                                       \
     void CPM_UNIQUE_NAME(section_) (cpm::benchmark<>& master);      \
     namespace { cpm_registry CPM_UNIQUE_NAME(register_) (& CPM_UNIQUE_NAME(section_)); }        \
     void CPM_UNIQUE_NAME(section_) (cpm::benchmark<>& master) {     \
     auto bench = master.multi<policy>(name);
+
+#define CPM_SECTION_PO(policy, name, W, R)                                       \
+    void CPM_UNIQUE_NAME(section_) (cpm::benchmark<>& master);      \
+    namespace { cpm_registry CPM_UNIQUE_NAME(register_) (& CPM_UNIQUE_NAME(section_)); }        \
+    void CPM_UNIQUE_NAME(section_) (cpm::benchmark<>& master) {     \
+    auto bench = master.multi<policy>(name);      \
+    bench.warmup = W;                             \
+    bench.repeat = R;
 
 //Normal versions for simple bench
 #define CPM_SIMPLE(...) bench.measure_simple(__VA_ARGS__);
@@ -101,6 +117,14 @@ int main(int argc, char* argv[]){
     }
 
     cpm::benchmark<> bench(benchmark_name, output_folder, tag);
+
+#ifdef CPM_WARMUP
+    bench.warmup = CPM_WARMUP
+#endif
+
+#ifdef CPM_REPEAT
+    bench.warmup = CPM_REPEAT
+#endif
 
     bench.begin();
 

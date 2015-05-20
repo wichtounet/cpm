@@ -19,6 +19,9 @@ constexpr std::chrono::nanoseconds operator ""_ns(unsigned long long us){
 struct test { std::size_t d; };
 void randomize(test&){}
 
+#define CPM_WARMUP 10
+#define CPM_REPEAT 50
+
 CPM_BENCH() {
     CPM_SIMPLE("simple_a", [](std::size_t d){ std::this_thread::sleep_for((factor * d) * 1_ns ); });
     CPM_SIMPLE("simple_b", [](std::size_t d){ std::this_thread::sleep_for((factor * d) * 2_ns ); });
@@ -82,14 +85,14 @@ CPM_SECTION("conv")
         );
 }
 
-CPM_SECTION("fft")
+CPM_SECTION_O("fft",11,51)
     test a{3};
     test b{5};
     CPM_GLOBAL("std", [&a](std::size_t d){ std::this_thread::sleep_for((factor * d * (d % a.d)) * 1_ns ); }, a);
     CPM_GLOBAL("mkl", [&b](std::size_t d){ std::this_thread::sleep_for((factor * d * (d % b.d)) * 1_ns ); }, b);
 }
 
-CPM_SECTION_P(NARY_POLICY(STD_STOP_POLICY), "gevv")
+CPM_SECTION_PO(NARY_POLICY(STD_STOP_POLICY), "gevv", 9, 49)
     test a{3};
     test b{5};
     CPM_GLOBAL("std", [&a](auto dd){ auto d = std::get<0>(dd); std::this_thread::sleep_for((factor * d * (d % a.d)) * 1_ns ); }, a);

@@ -21,6 +21,9 @@ void randomize(test&){}
 int main(){
     cpm::benchmark<> bench("Test benchmark", "./results");
 
+    ++bench.warmup;
+    ++bench.repeat;
+
     bench.begin();
 
     bench.measure_once("once_a", [](){ std::this_thread::sleep_for((factor * 666) * 1_ns ); });
@@ -69,6 +72,9 @@ int main(){
 
     {
         auto sec = bench.multi("conv");
+
+        sec.warmup = 20;
+        sec.repeat = 100;
 
         sec.measure_two_pass("std",
             [](std::size_t d){ return std::make_tuple(test{d}); },

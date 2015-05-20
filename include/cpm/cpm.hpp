@@ -56,7 +56,10 @@ private:
     section_data data;
 
 public:
-    section(std::string name, Bench& bench) : bench(bench) {
+    std::size_t warmup = 10;
+    std::size_t repeat = 50;
+
+    section(std::string name, Bench& bench) : bench(bench), warmup(bench.warmup), repeat(bench.repeat) {
         data.name = std::move(name);
     }
 
@@ -64,7 +67,7 @@ public:
 
     template<typename Functor>
     void measure_once(const std::string& title, Functor functor){
-        auto duration = bench.measure_only_simple(functor);
+        auto duration = bench.measure_only_simple(*this, functor);
         report(title, std::size_t(1), duration);
     }
 
@@ -74,7 +77,7 @@ public:
     void measure_simple(const std::string& title, Functor functor){
         bench.template policy_run<Policy>(
             [&title, &functor, this](auto sizes){
-                auto duration = bench.measure_only_simple(functor, sizes);
+                auto duration = bench.measure_only_simple(*this, functor, sizes);
                 report(title, sizes, duration);
                 return duration;
             }
@@ -87,7 +90,7 @@ public:
     void measure_two_pass(const std::string& title, Init init, Functor functor){
         bench.template policy_run<Policy>(
             [&title, &functor, &init, this](auto sizes){
-                auto duration = bench.measure_only_two_pass(init, functor, sizes);
+                auto duration = bench.measure_only_two_pass(*this, init, functor, sizes);
                 report(title, sizes, duration);
                 return duration;
             }
@@ -100,7 +103,7 @@ public:
     void measure_global(const std::string& title, Functor functor, T&... references){
         bench.template policy_run<Policy>(
             [&title, &functor, &references..., this](auto sizes){
-                auto duration = bench.measure_only_global(functor, sizes, references...);
+                auto duration = bench.measure_only_global(*this, functor, sizes, references...);
                 report(title, sizes, duration);
                 return duration;
             }
@@ -348,7 +351,7 @@ public:
         measure_data data;
         data.title = title;
 
-        auto duration = measure_only_simple(functor);
+        auto duration = measure_only_simple(*this, functor);
         report(title, std::size_t(1), duration);
         data.results.push_back(std::make_pair(std::string("1"), duration));
 
@@ -364,7 +367,7 @@ public:
 
         policy_run<Policy>(
             [&data, &title, &functor, this](auto sizes){
-                auto duration = measure_only_simple(functor, sizes);
+                auto duration = measure_only_simple(*this, functor, sizes);
                 report(title, sizes, duration);
                 data.results.push_back(std::make_pair(size_to_string(sizes), duration));
                 return duration;
@@ -383,7 +386,7 @@ public:
 
         policy_run<Policy>(
             [&data, &title, &functor, &init, this](auto sizes){
-                auto duration = measure_only_two_pass(init, functor, sizes);
+                auto duration = measure_only_two_pass(*this, init, functor, sizes);
                 report(title, sizes, duration);
                 data.results.push_back(std::make_pair(size_to_string(sizes), duration));
                 return duration;
@@ -402,7 +405,7 @@ public:
 
         policy_run<Policy>(
             [&data, &title, &functor, &references..., this](auto sizes){
-                auto duration = measure_only_global(functor, sizes, references...);
+                auto duration = measure_only_global(*this, functor, sizes, references...);
                 report(title, sizes, duration);
                 data.results.push_back(std::make_pair(size_to_string(sizes), duration));
                 return duration;
@@ -425,7 +428,6 @@ public:
     }
 
 private:
-
     void save(){
         auto time = wall_clock::to_time_t(start_time);
         std::stringstream ss;
@@ -531,17 +533,17 @@ private:
         }
     }
 
-    template<typename Functor, typename... Args>
-    std::size_t measure_only_simple(Functor& functor, Args... args){
+    template<typename Config, typename Functor, typename... Args>
+    std::size_t measure_only_simple(const Config& conf, Functor& functor, Args... args){
         ++measures;
 
-        for(std::size_t i = 0; i < warmup; ++i){
+        for(std::size_t i = 0; i < conf.warmup; ++i){
             functor(args...);
         }
 
         std::size_t duration_acc = 0;
 
-        for(std::size_t i = 0; i < repeat; ++i){
+        for(std::size_t i = 0; i < conf.repeat; ++i){
             auto start_time = timer_clock::now();
             functor(args...);
             auto end_time = timer_clock::now();
@@ -549,13 +551,13 @@ private:
             duration_acc += duration.count();
         }
 
-        runs += warmup + repeat;
+        runs += conf.warmup + conf.repeat;
 
-        return duration_acc / repeat;
+        return duration_acc / conf.repeat;
     }
 
-    template<typename Init, typename Functor, typename... Args>
-    std::size_t measure_only_two_pass(Init& init, Functor& functor, Args... args){
+    template<typename Config, typename Init, typename Functor, typename... Args>
+    std::size_t measure_only_two_pass(const Config& conf, Init& init, Functor& functor, Args... args){
         ++measures;
 
         auto data = init(args...);
@@ -563,14 +565,14 @@ private:
         static constexpr const std::size_t tuple_s = std::tuple_size<decltype(data)>::value;
         std::make_index_sequence<tuple_s> sequence;
 
-        for(std::size_t i = 0; i < warmup; ++i){
+        for(std::size_t i = 0; i < conf.warmup; ++i){
             randomize_each(data, sequence);
             call_with_data(data, functor, sequence, args...);
         }
 
         std::size_t duration_acc = 0;
 
-        for(std::size_t i = 0; i < repeat; ++i){
+        for(std::size_t i = 0; i < conf.repeat; ++i){
             randomize_each(data, sequence);
             auto start_time = timer_clock::now();
             call_with_data(data, functor, sequence, args...);
@@ -579,16 +581,16 @@ private:
             duration_acc += duration.count();
         }
 
-        runs += warmup + repeat;
+        runs += conf.warmup + conf.repeat;
 
-        return duration_acc / repeat;
+        return duration_acc / conf.repeat;
     }
 
-    template<typename Functor, typename Tuple, typename... T>
-    std::size_t measure_only_global(Functor& functor, Tuple d, T&... references){
+    template<typename Config, typename Functor, typename Tuple, typename... T>
+    std::size_t measure_only_global(const Config& conf, Functor& functor, Tuple d, T&... references){
         ++measures;
 
-        for(std::size_t i = 0; i < warmup; ++i){
+        for(std::size_t i = 0; i < conf.warmup; ++i){
             using cpm::randomize;
             randomize(references...);
             functor(d);
@@ -596,7 +598,7 @@ private:
 
         std::size_t duration_acc = 0;
 
-        for(std::size_t i = 0; i < repeat; ++i){
+        for(std::size_t i = 0; i < conf.repeat; ++i){
             using cpm::randomize;
             randomize(references...);
             auto start_time = timer_clock::now();
@@ -606,9 +608,9 @@ private:
             duration_acc += duration.count();
         }
 
-        runs += warmup + repeat;
+        runs += conf.warmup + conf.repeat;
 
-        return duration_acc / repeat;
+        return duration_acc / conf.repeat;
     }
 
     template<typename Tuple>
