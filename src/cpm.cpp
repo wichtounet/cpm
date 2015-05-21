@@ -99,7 +99,7 @@ void header(std::ostream& stream, cxxopts::Options& options){
     stream << "<body>\n";
 
     if(options["theme"].as<std::string>() == "bootstrap"){
-        auto header = R"=====(
+        stream << R"=====(
             <nav id="myNavbar" class="navbar navbar-default navbar-inverse navbar-fixed-top" role="navigation">
             <div class="container-fluid">
             <div class="navbar-header">
@@ -120,14 +120,12 @@ void header(std::ostream& stream, cxxopts::Options& options){
             </div>
             </nav>
         )=====";
-
-        stream << header;
     }
 }
 
 void footer(std::ostream& stream, cxxopts::Options& options){
     if(options["theme"].as<std::string>() == "bootstrap"){
-        auto foot = R"=====(
+        stream << R"=====(
             <hr>
             <div class="row">
             <div class="col-xs-12">
@@ -138,8 +136,6 @@ void footer(std::ostream& stream, cxxopts::Options& options){
             </div>
             </div>
         )=====";
-
-        stream << foot;
     }
 
     stream << "</body>\n";
