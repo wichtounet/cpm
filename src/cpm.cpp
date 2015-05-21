@@ -116,6 +116,22 @@ void start_graph(std::ostream& stream, cxxopts::Options& /*options*/, std::size_
     ++id;
 }
 
+void end_graph(std::ostream& stream){
+    stream << "});\n";
+    stream << "});\n";
+
+    stream << "</script>\n";
+}
+
+void y_axis_configuration(std::ostream& stream){
+    stream << "yAxis: {\n";
+    stream << "title: { text: 'Time [us]' },\n";
+    stream << "plotLines: [{ value: 0, width: 1, color: '#808080'}]\n";
+    stream << "},\n";
+
+    stream << "tooltip: { valueSuffix: 'us' },\n";
+}
+
 void generate_run_graph(std::ostream& stream, cxxopts::Options& options, std::size_t& id, rapidjson::Value& result){
     start_graph(stream, options, id, std::string("Last run:") + result["title"].GetString());
 
@@ -129,12 +145,8 @@ void generate_run_graph(std::ostream& stream, cxxopts::Options& options, std::si
 
     stream << "]},\n";
 
-    stream << "yAxis: {\n";
-    stream << "title: { text: 'Time [us]' },\n";
-    stream << "plotLines: [{ value: 0, width: 1, color: '#808080'}]\n";
-    stream << "},\n";
+    y_axis_configuration(stream);
 
-    stream << "tooltip: { valueSuffix: 'us' },\n";
     stream << "legend: { enabled: false },\n";
 
     stream << "series: [\n";
@@ -153,10 +165,7 @@ void generate_run_graph(std::ostream& stream, cxxopts::Options& options, std::si
     stream << "}\n";
     stream << "]\n";
 
-    stream << "});\n";
-    stream << "});\n";
-
-    stream << "</script>\n";
+    end_graph(stream);
 }
 
 void generate_time_graph(std::ostream& stream, cxxopts::Options& options, std::size_t& id, rapidjson::Value& result, std::vector<rapidjson::Document>& documents){
@@ -164,12 +173,7 @@ void generate_time_graph(std::ostream& stream, cxxopts::Options& options, std::s
 
     stream << "xAxis: { type: 'datetime', title: { text: 'Date' } },\n";
 
-    stream << "yAxis: {\n";
-    stream << "title: { text: 'Time [us]' },\n";
-    stream << "plotLines: [{ value: 0, width: 1, color: '#808080'}]\n";
-    stream << "},\n";
-
-    stream << "tooltip: { valueSuffix: 'us' },\n";
+    y_axis_configuration(stream);
 
     if(!options.count("time-sizes")){
         stream << "legend: { enabled: false },\n";
@@ -230,10 +234,7 @@ void generate_time_graph(std::ostream& stream, cxxopts::Options& options, std::s
 
     stream << "]\n";
 
-    stream << "});\n";
-    stream << "});\n";
-
-    stream << "</script>\n";
+    end_graph(stream);
 }
 
 void generate_section_run_graph(std::ostream& stream, cxxopts::Options& options, std::size_t& id, rapidjson::Value& section){
@@ -251,12 +252,8 @@ void generate_section_run_graph(std::ostream& stream, cxxopts::Options& options,
 
     stream << "]},\n";
 
-    stream << "yAxis: {\n";
-    stream << "title: { text: 'Time [us]' },\n";
-    stream << "plotLines: [{ value: 0, width: 1, color: '#808080'}]\n";
-    stream << "},\n";
+    y_axis_configuration(stream);
 
-    stream << "tooltip: { valueSuffix: 'us' },\n";
     stream << "legend: { align: 'left', verticalAlign: 'top', floating: false, borderWidth: 0, y: 20 },\n";
 
     stream << "series: [\n";
@@ -281,22 +278,15 @@ void generate_section_run_graph(std::ostream& stream, cxxopts::Options& options,
 
     stream << "]\n";
 
-    stream << "});\n";
-    stream << "});\n";
-
-    stream << "</script>\n";
+    end_graph(stream);
 }
 void generate_section_time_graph(std::ostream& stream, cxxopts::Options& options, std::size_t& id, rapidjson::Value& section, std::vector<rapidjson::Document>& documents){
     start_graph(stream, options, id, std::string("Time:") + section["name"].GetString());
 
     stream << "xAxis: { type: 'datetime', title: { text: 'Date' } },\n";
 
-    stream << "yAxis: {\n";
-    stream << "title: { text: 'Time [us]' },\n";
-    stream << "plotLines: [{ value: 0, width: 1, color: '#808080'}]\n";
-    stream << "},\n";
+    y_axis_configuration(stream);
 
-    stream << "tooltip: { valueSuffix: 'us' },\n";
     stream << "legend: { align: 'left', verticalAlign: 'top', floating: false, borderWidth: 0, y: 20 },\n";
 
     stream << "series: [\n";
@@ -332,10 +322,7 @@ void generate_section_time_graph(std::ostream& stream, cxxopts::Options& options
 
     stream << "]\n";
 
-    stream << "});\n";
-    stream << "});\n";
-
-    stream << "</script>\n";
+    end_graph(stream);
 }
 
 } //end of anonymous namespace
