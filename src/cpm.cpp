@@ -52,32 +52,32 @@ rapidjson::Document read_document(const std::string& folder, const std::string& 
 }
 
 void header(std::ostream& stream){
-    stream << "<html>" << std::endl;
-    stream << "<head>" << std::endl;
+    stream << "<html>\n";
+    stream << "<head>\n";
 
-    stream << "<script src=\"http://code.jquery.com/jquery-1.11.3.min.js\"></script>" << std::endl;
-    stream << "<script src=\"http://code.jquery.com/jquery-migrate-1.2.1.min.js\"></script>" << std::endl;
-    stream << "<script src=\"http://code.highcharts.com/highcharts.js\"></script>" << std::endl;
-    stream << "<script src=\"http://code.highcharts.com/modules/exporting.js\"></script>" << std::endl;
+    stream << "<script src=\"http://code.jquery.com/jquery-1.11.3.min.js\"></script>\n";
+    stream << "<script src=\"http://code.jquery.com/jquery-migrate-1.2.1.min.js\"></script>\n";
+    stream << "<script src=\"http://code.highcharts.com/highcharts.js\"></script>\n";
+    stream << "<script src=\"http://code.highcharts.com/modules/exporting.js\"></script>\n";
 
-    stream << "</head>" << std::endl;
+    stream << "</head>\n";
 
-    stream << "<body>" << std::endl;
+    stream << "<body>\n";
 }
 
 void footer(std::ostream& stream){
-    stream << "</body>" << std::endl;
-    stream << "</html>" << std::endl;
+    stream << "</body>\n";
+    stream << "</html>\n";
 }
 
 void information(std::ostream& stream, rapidjson::Document& doc){
-    stream << "<h1>" << doc["name"].GetString() << "</h1>" << std::endl;
+    stream << "<h1>" << doc["name"].GetString() << "</h1>\n";
 
-    stream << "<ul>" << std::endl;
-    stream << "<li>Compiler: " << doc["compiler"].GetString() << "</li>" << std::endl;
-    stream << "<li>Operating System: " << doc["os"].GetString() << "</li>" << std::endl;
-    stream << "<li>Time: " << doc["time"].GetString() << "</li>" << std::endl;
-    stream << "</ul>" << std::endl;
+    stream << "<ul>\n";
+    stream << "<li>Compiler: " << doc["compiler"].GetString() << "</li>\n";
+    stream << "<li>Operating System: " << doc["os"].GetString() << "</li>\n";
+    stream << "<li>Time: " << doc["time"].GetString() << "</li>\n";
+    stream << "</ul>\n";
 }
 
 std::vector<rapidjson::Document> read(const std::string& source_folder){
@@ -105,15 +105,15 @@ std::vector<rapidjson::Document> read(const std::string& source_folder){
 }
 
 void generate_run_graph(std::ostream& stream, cxxopts::Options& /*options*/, std::size_t& id, rapidjson::Value& result){
-    stream << "<div id=\"chart_" << id << "\" style=\"float:left; width:600px; height: 400px; margin: 5 auto; padding-right: 10px; \"></div>" << std::endl;
+    stream << "<div id=\"chart_" << id << "\" style=\"float:left; width:600px; height: 400px; margin: 5 auto; padding-right: 10px; \"></div>\n";
 
-    stream << "<script>" << std::endl;
+    stream << "<script>\n";
 
-    stream << "$(function () {" << std::endl;
-    stream << "$('#chart_" << id << "').highcharts({" << std::endl;
-    stream << "title: { text: 'Last run: " << result["title"].GetString() << "', x: -20 }," << std::endl;
+    stream << "$(function () {\n";
+    stream << "$('#chart_" << id << "').highcharts({\n";
+    stream << "title: { text: 'Last run: " << result["title"].GetString() << "', x: -20 },\n";
 
-    stream << "xAxis: { categories: [" << std::endl;
+    stream << "xAxis: { categories: [\n";
 
     std::string comma = "";
     for(auto& r : result["results"]){
@@ -121,20 +121,20 @@ void generate_run_graph(std::ostream& stream, cxxopts::Options& /*options*/, std
         comma = ",";
     }
 
-    stream << "]}," << std::endl;
+    stream << "]},\n";
 
-    stream << "yAxis: {" << std::endl;
-    stream << "title: { text: 'Time [us]' }," << std::endl;
-    stream << "plotLines: [{ value: 0, width: 1, color: '#808080'}]" << std::endl;
-    stream << "}," << std::endl;
+    stream << "yAxis: {\n";
+    stream << "title: { text: 'Time [us]' },\n";
+    stream << "plotLines: [{ value: 0, width: 1, color: '#808080'}]\n";
+    stream << "},\n";
 
-    stream << "tooltip: { valueSuffix: 'us' }," << std::endl;
-    stream << "legend: { enabled: false }," << std::endl;
+    stream << "tooltip: { valueSuffix: 'us' },\n";
+    stream << "legend: { enabled: false },\n";
 
-    stream << "series: [" << std::endl;
-    stream << "{" << std::endl;
+    stream << "series: [\n";
+    stream << "{\n";
 
-    stream << "name: ''," << std::endl;
+    stream << "name: '',\n";
     stream << "data: [";
 
     comma = "";
@@ -143,48 +143,48 @@ void generate_run_graph(std::ostream& stream, cxxopts::Options& /*options*/, std
         comma = ",";
     }
 
-    stream << "]" << std::endl;
-    stream << "}" << std::endl;
-    stream << "]" << std::endl;
+    stream << "]\n";
+    stream << "}\n";
+    stream << "]\n";
 
-    stream << "});" << std::endl;
-    stream << "});" << std::endl;
+    stream << "});\n";
+    stream << "});\n";
 
-    stream << "</script>" << std::endl;
+    stream << "</script>\n";
 
     ++id;
 }
 
 void generate_time_graph(std::ostream& stream, cxxopts::Options& options, std::size_t& id, rapidjson::Value& result, std::vector<rapidjson::Document>& documents){
-    stream << "<div id=\"chart_" << id << "\" style=\"float:left; width:600px; height: 400px; margin: 5 auto\"></div>" << std::endl;
+    stream << "<div id=\"chart_" << id << "\" style=\"float:left; width:600px; height: 400px; margin: 5 auto\"></div>\n";
 
-    stream << "<script>" << std::endl;
+    stream << "<script>\n";
 
-    stream << "$(function () {" << std::endl;
-    stream << "$('#chart_" << id << "').highcharts({" << std::endl;
-    stream << "title: { text: 'Time: " << result["title"].GetString() << "', x: -20 }," << std::endl;
+    stream << "$(function () {\n";
+    stream << "$('#chart_" << id << "').highcharts({\n";
+    stream << "title: { text: 'Time: " << result["title"].GetString() << "', x: -20 },\n";
 
-    stream << "xAxis: { type: 'datetime', title: { text: 'Date' } }," << std::endl;
+    stream << "xAxis: { type: 'datetime', title: { text: 'Date' } },\n";
 
-    stream << "yAxis: {" << std::endl;
-    stream << "title: { text: 'Time [us]' }," << std::endl;
-    stream << "plotLines: [{ value: 0, width: 1, color: '#808080'}]" << std::endl;
-    stream << "}," << std::endl;
+    stream << "yAxis: {\n";
+    stream << "title: { text: 'Time [us]' },\n";
+    stream << "plotLines: [{ value: 0, width: 1, color: '#808080'}]\n";
+    stream << "},\n";
 
-    stream << "tooltip: { valueSuffix: 'us' }," << std::endl;
+    stream << "tooltip: { valueSuffix: 'us' },\n";
 
     if(!options.count("time-sizes")){
-        stream << "legend: { enabled: false }," << std::endl;
+        stream << "legend: { enabled: false },\n";
     }
 
-    stream << "series: [" << std::endl;
+    stream << "series: [\n";
 
     if(options.count("time-sizes")){
         std::string comma = "";
         for(auto& r : result["results"]){
-            stream << comma << "{" << std::endl;
+            stream << comma << "{\n";
 
-            stream << "name: '" << r["size"].GetString() << "'," << std::endl;
+            stream << "name: '" << r["size"].GetString() << "',\n";
             stream << "data: [";
 
             std::string inner_comma = "";
@@ -203,14 +203,14 @@ void generate_time_graph(std::ostream& stream, cxxopts::Options& options, std::s
                 }
             }
 
-            stream << "]" << std::endl;
-            stream << "}" << std::endl;
+            stream << "]\n";
+            stream << "}\n";
             comma =",";
         }
     } else {
-        stream << "{" << std::endl;
+        stream << "{\n";
 
-        stream << "name: ''," << std::endl;
+        stream << "name: '',\n";
         stream << "data: [";
 
         std::string comma = "";
@@ -226,30 +226,30 @@ void generate_time_graph(std::ostream& stream, cxxopts::Options& options, std::s
             }
         }
 
-        stream << "]" << std::endl;
-        stream << "}" << std::endl;
+        stream << "]\n";
+        stream << "}\n";
     }
 
-    stream << "]" << std::endl;
+    stream << "]\n";
 
-    stream << "});" << std::endl;
-    stream << "});" << std::endl;
+    stream << "});\n";
+    stream << "});\n";
 
-    stream << "</script>" << std::endl;
+    stream << "</script>\n";
 
     ++id;
 }
 
 void generate_section_run_graph(std::ostream& stream, cxxopts::Options& /*options*/, std::size_t& id, rapidjson::Value& section){
-    stream << "<div id=\"chart_" << id << "\" style=\"float:left; width:600px; height:400px; margin: 5 auto; padding-right: 10px; \"></div>" << std::endl;
+    stream << "<div id=\"chart_" << id << "\" style=\"float:left; width:600px; height:400px; margin: 5 auto; padding-right: 10px; \"></div>\n";
 
-    stream << "<script>" << std::endl;
+    stream << "<script>\n";
 
-    stream << "$(function () {" << std::endl;
-    stream << "$('#chart_" << id << "').highcharts({" << std::endl;
-    stream << "title: { text: 'Last run:" << section["name"].GetString() << "', x: -20 }," << std::endl;
+    stream << "$(function () {\n";
+    stream << "$('#chart_" << id << "').highcharts({\n";
+    stream << "title: { text: 'Last run:" << section["name"].GetString() << "', x: -20 },\n";
 
-    stream << "xAxis: { categories: [" << std::endl;
+    stream << "xAxis: { categories: [\n";
 
     //TODO Use all the sizes
 
@@ -259,23 +259,23 @@ void generate_section_run_graph(std::ostream& stream, cxxopts::Options& /*option
         comma = ",";
     }
 
-    stream << "]}," << std::endl;
+    stream << "]},\n";
 
-    stream << "yAxis: {" << std::endl;
-    stream << "title: { text: 'Time [us]' }," << std::endl;
-    stream << "plotLines: [{ value: 0, width: 1, color: '#808080'}]" << std::endl;
-    stream << "}," << std::endl;
+    stream << "yAxis: {\n";
+    stream << "title: { text: 'Time [us]' },\n";
+    stream << "plotLines: [{ value: 0, width: 1, color: '#808080'}]\n";
+    stream << "},\n";
 
-    stream << "tooltip: { valueSuffix: 'us' }," << std::endl;
-    stream << "legend: { align: 'left', verticalAlign: 'top', floating: false, borderWidth: 0, y: 20 }," << std::endl;
+    stream << "tooltip: { valueSuffix: 'us' },\n";
+    stream << "legend: { align: 'left', verticalAlign: 'top', floating: false, borderWidth: 0, y: 20 },\n";
 
-    stream << "series: [" << std::endl;
+    stream << "series: [\n";
 
     comma = "";
     for(auto& r : section["results"]){
-        stream << comma << "{" << std::endl;
+        stream << comma << "{\n";
 
-        stream << "name: '" << r["name"].GetString() << "'," << std::endl;
+        stream << "name: '" << r["name"].GetString() << "',\n";
         stream << "data: [";
 
         std::string comma_inner = "";
@@ -284,46 +284,46 @@ void generate_section_run_graph(std::ostream& stream, cxxopts::Options& /*option
             comma_inner = ",";
         }
 
-        stream << "]" << std::endl;
-        stream << "}" << std::endl;
+        stream << "]\n";
+        stream << "}\n";
         comma = ",";
     }
 
-    stream << "]" << std::endl;
+    stream << "]\n";
 
-    stream << "});" << std::endl;
-    stream << "});" << std::endl;
+    stream << "});\n";
+    stream << "});\n";
 
-    stream << "</script>" << std::endl;
+    stream << "</script>\n";
 
     ++id;
 }
 void generate_section_time_graph(std::ostream& stream, cxxopts::Options& /*options*/, std::size_t& id, rapidjson::Value& section, std::vector<rapidjson::Document>& documents){
-    stream << "<div id=\"chart_" << id << "\" style=\"float:left; width:600px; height:400px; margin: 5 auto; padding-right: 10px; \"></div>" << std::endl;
+    stream << "<div id=\"chart_" << id << "\" style=\"float:left; width:600px; height:400px; margin: 5 auto; padding-right: 10px; \"></div>\n";
 
-    stream << "<script>" << std::endl;
+    stream << "<script>\n";
 
-    stream << "$(function () {" << std::endl;
-    stream << "$('#chart_" << id << "').highcharts({" << std::endl;
-    stream << "title: { text: 'Time:" << section["name"].GetString() << "', x: -20 }," << std::endl;
+    stream << "$(function () {\n";
+    stream << "$('#chart_" << id << "').highcharts({\n";
+    stream << "title: { text: 'Time:" << section["name"].GetString() << "', x: -20 },\n";
 
-    stream << "xAxis: { type: 'datetime', title: { text: 'Date' } }," << std::endl;
+    stream << "xAxis: { type: 'datetime', title: { text: 'Date' } },\n";
 
-    stream << "yAxis: {" << std::endl;
-    stream << "title: { text: 'Time [us]' }," << std::endl;
-    stream << "plotLines: [{ value: 0, width: 1, color: '#808080'}]" << std::endl;
-    stream << "}," << std::endl;
+    stream << "yAxis: {\n";
+    stream << "title: { text: 'Time [us]' },\n";
+    stream << "plotLines: [{ value: 0, width: 1, color: '#808080'}]\n";
+    stream << "},\n";
 
-    stream << "tooltip: { valueSuffix: 'us' }," << std::endl;
-    stream << "legend: { align: 'left', verticalAlign: 'top', floating: false, borderWidth: 0, y: 20 }," << std::endl;
+    stream << "tooltip: { valueSuffix: 'us' },\n";
+    stream << "legend: { align: 'left', verticalAlign: 'top', floating: false, borderWidth: 0, y: 20 },\n";
 
-    stream << "series: [" << std::endl;
+    stream << "series: [\n";
 
     std::string comma = "";
     for(auto& r : section["results"]){
-        stream << comma << "{" << std::endl;
+        stream << comma << "{\n";
 
-        stream << "name: '" << r["name"].GetString() << "'," << std::endl;
+        stream << "name: '" << r["name"].GetString() << "',\n";
         stream << "data: [";
 
         std::string comma_inner = "";
@@ -343,17 +343,17 @@ void generate_section_time_graph(std::ostream& stream, cxxopts::Options& /*optio
             }
         }
 
-        stream << "]" << std::endl;
-        stream << "}" << std::endl;
+        stream << "]\n";
+        stream << "}\n";
         comma = ",";
     }
 
-    stream << "]" << std::endl;
+    stream << "]\n";
 
-    stream << "});" << std::endl;
-    stream << "});" << std::endl;
+    stream << "});\n";
+    stream << "});\n";
 
-    stream << "</script>" << std::endl;
+    stream << "</script>\n";
 
     ++id;
 }
@@ -426,14 +426,14 @@ int main(int argc, char* argv[]){
 
     //Configure the highcharts theme
     if(options["hctheme"].as<std::string>() == "dark_unica"){
-        stream << "<script>" << std::endl;
-        stream << dark_unica_theme << std::endl;
-        stream << "</script>" << std::endl;
+        stream << "<script>\n" << "\n";
+        stream << dark_unica_theme << "\n";
+        stream << "</script>\n";
     }
 
     std::size_t id = 1;
     for(auto& result : doc["results"]){
-        stream << "<h2 style=\"clear:both\">" << result["title"].GetString() << "</h2>" << std::endl;
+        stream << "<h2 style=\"clear:both\">" << result["title"].GetString() << "</h2>\n";
 
         generate_run_graph(stream, options, id, result);
 
@@ -443,7 +443,7 @@ int main(int argc, char* argv[]){
     }
 
     for(auto& section : doc["sections"]){
-        stream << "<h2 style=\"clear:both\">" << section["name"].GetString() << "</h2>" << std::endl;
+        stream << "<h2 style=\"clear:both\">" << section["name"].GetString() << "</h2>\n";
 
         generate_section_run_graph(stream, options, id, section);
 
