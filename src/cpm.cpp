@@ -104,14 +104,20 @@ std::vector<rapidjson::Document> read(const std::string& source_folder){
     return documents;
 }
 
-void generate_run_graph(std::ostream& stream, cxxopts::Options& /*options*/, std::size_t& id, rapidjson::Value& result){
+void start_graph(std::ostream& stream, cxxopts::Options& /*options*/, std::size_t& id, const std::string& title){
     stream << "<div id=\"chart_" << id << "\" style=\"float:left; width:600px; height: 400px; margin: 5 auto; padding-right: 10px; \"></div>\n";
 
     stream << "<script>\n";
 
     stream << "$(function () {\n";
     stream << "$('#chart_" << id << "').highcharts({\n";
-    stream << "title: { text: 'Last run: " << result["title"].GetString() << "', x: -20 },\n";
+    stream << "title: { text: '" << title << "', x: -20 },\n";
+
+    ++id;
+}
+
+void generate_run_graph(std::ostream& stream, cxxopts::Options& options, std::size_t& id, rapidjson::Value& result){
+    start_graph(stream, options, id, std::string("Last run:") + result["title"].GetString());
 
     stream << "xAxis: { categories: [\n";
 
@@ -151,18 +157,10 @@ void generate_run_graph(std::ostream& stream, cxxopts::Options& /*options*/, std
     stream << "});\n";
 
     stream << "</script>\n";
-
-    ++id;
 }
 
 void generate_time_graph(std::ostream& stream, cxxopts::Options& options, std::size_t& id, rapidjson::Value& result, std::vector<rapidjson::Document>& documents){
-    stream << "<div id=\"chart_" << id << "\" style=\"float:left; width:600px; height: 400px; margin: 5 auto\"></div>\n";
-
-    stream << "<script>\n";
-
-    stream << "$(function () {\n";
-    stream << "$('#chart_" << id << "').highcharts({\n";
-    stream << "title: { text: 'Time: " << result["title"].GetString() << "', x: -20 },\n";
+    start_graph(stream, options, id, std::string("Time:") + result["title"].GetString());
 
     stream << "xAxis: { type: 'datetime', title: { text: 'Date' } },\n";
 
@@ -236,18 +234,10 @@ void generate_time_graph(std::ostream& stream, cxxopts::Options& options, std::s
     stream << "});\n";
 
     stream << "</script>\n";
-
-    ++id;
 }
 
-void generate_section_run_graph(std::ostream& stream, cxxopts::Options& /*options*/, std::size_t& id, rapidjson::Value& section){
-    stream << "<div id=\"chart_" << id << "\" style=\"float:left; width:600px; height:400px; margin: 5 auto; padding-right: 10px; \"></div>\n";
-
-    stream << "<script>\n";
-
-    stream << "$(function () {\n";
-    stream << "$('#chart_" << id << "').highcharts({\n";
-    stream << "title: { text: 'Last run:" << section["name"].GetString() << "', x: -20 },\n";
+void generate_section_run_graph(std::ostream& stream, cxxopts::Options& options, std::size_t& id, rapidjson::Value& section){
+    start_graph(stream, options, id, std::string("Last run:") + section["name"].GetString());
 
     stream << "xAxis: { categories: [\n";
 
@@ -295,17 +285,9 @@ void generate_section_run_graph(std::ostream& stream, cxxopts::Options& /*option
     stream << "});\n";
 
     stream << "</script>\n";
-
-    ++id;
 }
-void generate_section_time_graph(std::ostream& stream, cxxopts::Options& /*options*/, std::size_t& id, rapidjson::Value& section, std::vector<rapidjson::Document>& documents){
-    stream << "<div id=\"chart_" << id << "\" style=\"float:left; width:600px; height:400px; margin: 5 auto; padding-right: 10px; \"></div>\n";
-
-    stream << "<script>\n";
-
-    stream << "$(function () {\n";
-    stream << "$('#chart_" << id << "').highcharts({\n";
-    stream << "title: { text: 'Time:" << section["name"].GetString() << "', x: -20 },\n";
+void generate_section_time_graph(std::ostream& stream, cxxopts::Options& options, std::size_t& id, rapidjson::Value& section, std::vector<rapidjson::Document>& documents){
+    start_graph(stream, options, id, std::string("Time:") + section["name"].GetString());
 
     stream << "xAxis: { type: 'datetime', title: { text: 'Date' } },\n";
 
@@ -354,8 +336,6 @@ void generate_section_time_graph(std::ostream& stream, cxxopts::Options& /*optio
     stream << "});\n";
 
     stream << "</script>\n";
-
-    ++id;
 }
 
 } //end of anonymous namespace
