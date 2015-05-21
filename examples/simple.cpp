@@ -115,7 +115,7 @@ int main(){
     }
 
     {
-        auto sec = bench.multi<cpm::simple_nary_policy<cpm::std_stop_policy, cpm::values_policy<1,2,3,4,5,6>, cpm::values_policy<2,4,8,16,32,64>>>("mmul");
+        auto sec = bench.multi<cpm::simple_nary_policy<cpm::std_stop_policy, cpm::values_policy<1,2,3,4,5,6>, cpm::values_policy<2,4,8,16,32,64>>>("mamul");
 
         test a{3};
         test b{5};
