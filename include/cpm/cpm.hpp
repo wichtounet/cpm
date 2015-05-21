@@ -341,6 +341,30 @@ public:
 
     template<typename Policy = DefaultPolicy>
     section<benchmark<DefaultPolicy>, Policy> multi(std::string name){
+        bool rename = false;
+        bool found = false;
+        std::size_t id = 0;
+        while(true){
+            for(auto& section : section_results){
+                if(section.name == name){
+                    name += "_" + std::to_string(id++);
+                    rename = true;
+                    found = true;
+                    break;
+                }
+            }
+
+            if(found){
+                found = false;
+            } else {
+                break;
+            }
+        }
+
+        if(rename){
+            std::cout << "Warning: Section already exists. Renamed in \"" << name << "\"\n";
+        }
+
         return {std::move(name), *this};
     }
 
