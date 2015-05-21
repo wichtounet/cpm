@@ -51,35 +51,6 @@ rapidjson::Document read_document(const std::string& folder, const std::string& 
     return doc;
 }
 
-void header(std::ostream& stream){
-    stream << "<html>\n";
-    stream << "<head>\n";
-
-    stream << "<script src=\"http://code.jquery.com/jquery-1.11.3.min.js\"></script>\n";
-    stream << "<script src=\"http://code.jquery.com/jquery-migrate-1.2.1.min.js\"></script>\n";
-    stream << "<script src=\"http://code.highcharts.com/highcharts.js\"></script>\n";
-    stream << "<script src=\"http://code.highcharts.com/modules/exporting.js\"></script>\n";
-
-    stream << "</head>\n";
-
-    stream << "<body>\n";
-}
-
-void footer(std::ostream& stream){
-    stream << "</body>\n";
-    stream << "</html>\n";
-}
-
-void information(std::ostream& stream, rapidjson::Document& doc){
-    stream << "<h1>" << doc["name"].GetString() << "</h1>\n";
-
-    stream << "<ul>\n";
-    stream << "<li>Compiler: " << doc["compiler"].GetString() << "</li>\n";
-    stream << "<li>Operating System: " << doc["os"].GetString() << "</li>\n";
-    stream << "<li>Time: " << doc["time"].GetString() << "</li>\n";
-    stream << "</ul>\n";
-}
-
 std::vector<rapidjson::Document> read(const std::string& source_folder){
     std::vector<rapidjson::Document> documents;
 
@@ -104,8 +75,105 @@ std::vector<rapidjson::Document> read(const std::string& source_folder){
     return documents;
 }
 
-void start_graph(std::ostream& stream, cxxopts::Options& /*options*/, std::size_t& id, const std::string& title){
-    stream << "<div id=\"chart_" << id << "\" style=\"float:left; width:600px; height: 400px; margin: 5 auto; padding-right: 10px; \"></div>\n";
+void header(std::ostream& stream, cxxopts::Options& options){
+    stream << "<!DOCTYPE html>\n";
+    stream << "<html lang=\"en\">\n";
+    stream << "<head>\n";
+
+    //We need JQuery
+    stream << "<script src=\"http://code.jquery.com/jquery-1.11.3.min.js\"></script>\n";
+    stream << "<script src=\"http://code.jquery.com/jquery-migrate-1.2.1.min.js\"></script>\n";
+
+    //We need Highcharts
+    stream << "<script src=\"http://code.highcharts.com/highcharts.js\"></script>\n";
+    stream << "<script src=\"http://code.highcharts.com/modules/exporting.js\"></script>\n";
+
+    if(options["theme"].as<std::string>() == "bootstrap"){
+        stream << "<script src=\"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js\"></script>\n";
+        stream << "<link href=\"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css\" rel=\"stylesheet\">\n";
+        stream << "<link href=\"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap-theme.min.css\" rel=\"stylesheet\">\n";
+    }
+
+    stream << "</head>\n";
+
+    stream << "<body>\n";
+
+    if(options["theme"].as<std::string>() == "bootstrap"){
+        auto header = R"=====(
+            <nav id="myNavbar" class="navbar navbar-default navbar-inverse navbar-fixed-top" role="navigation">
+            <div class="container-fluid">
+            <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbarCollapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="#">Results</a>
+            </div>
+            <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="nav navbar-nav">
+            <li class="active"><a target="_blank">Home</a></li>
+            <li><a href="http://github.com/wichtounet/cpm">Generated with CPM</a></li>
+            </ul>
+            </div>
+            </div>
+            </nav>
+        )=====";
+
+        stream << header;
+    }
+}
+
+void footer(std::ostream& stream, cxxopts::Options& options){
+    if(options["theme"].as<std::string>() == "bootstrap"){
+        auto foot = R"=====(
+            <hr>
+            <div class="row">
+            <div class="col-xs-12">
+            <footer>
+            <p>Generated with <a href="https://github.com/wichtounet/cpm">CPM</a></p>
+            </footer>
+            </div>
+            </div>
+            </div>
+        )=====";
+
+        stream << foot;
+    }
+
+    stream << "</body>\n";
+    stream << "</html>\n";
+}
+
+void information(std::ostream& stream, rapidjson::Document& doc, cxxopts::Options& options){
+    if(options["theme"].as<std::string>() == "bootstrap"){
+        stream << "<div class=\"jumbotron\">\n";
+        stream << "<div class=\"container-fluid\">\n";
+    }
+
+    stream << "<h1>" << doc["name"].GetString() << "</h1>\n";
+
+    stream << "<ul>\n";
+    stream << "<li>Compiler: " << doc["compiler"].GetString() << "</li>\n";
+    stream << "<li>Operating System: " << doc["os"].GetString() << "</li>\n";
+    stream << "<li>Time: " << doc["time"].GetString() << "</li>\n";
+    stream << "</ul>\n";
+
+    if(options["theme"].as<std::string>() == "bootstrap"){
+        stream << "</div>\n";
+        stream << "</div>\n";
+        stream << "<div class=\"container-fluid\">\n";
+    }
+}
+
+void start_graph(std::ostream& stream, cxxopts::Options& options, std::size_t& id, const std::string& title){
+    if(options["theme"].as<std::string>() == "bootstrap"){
+        stream << "<div class=\"col-xs-6\">\n";
+        stream << "<div id=\"chart_" << id << "\" style=\"min-width:400px; height: 400px;\"></div>\n";
+    } else {
+        stream << "<div id=\"chart_" << id << "\" style=\"float:left; width:600px; height: 400px; margin: 5 auto; padding-right: 10px; \"></div>\n";
+    }
 
     stream << "<script>\n";
 
@@ -116,11 +184,15 @@ void start_graph(std::ostream& stream, cxxopts::Options& /*options*/, std::size_
     ++id;
 }
 
-void end_graph(std::ostream& stream){
+void end_graph(std::ostream& stream, cxxopts::Options& options){
     stream << "});\n";
     stream << "});\n";
 
     stream << "</script>\n";
+
+    if(options["theme"].as<std::string>() == "bootstrap"){
+        stream << "</div>\n";
+    }
 }
 
 void y_axis_configuration(std::ostream& stream){
@@ -165,7 +237,7 @@ void generate_run_graph(std::ostream& stream, cxxopts::Options& options, std::si
     stream << "}\n";
     stream << "]\n";
 
-    end_graph(stream);
+    end_graph(stream, options);
 }
 
 void generate_time_graph(std::ostream& stream, cxxopts::Options& options, std::size_t& id, rapidjson::Value& result, std::vector<rapidjson::Document>& documents){
@@ -234,7 +306,7 @@ void generate_time_graph(std::ostream& stream, cxxopts::Options& options, std::s
 
     stream << "]\n";
 
-    end_graph(stream);
+    end_graph(stream, options);
 }
 
 void generate_section_run_graph(std::ostream& stream, cxxopts::Options& options, std::size_t& id, rapidjson::Value& section){
@@ -278,7 +350,7 @@ void generate_section_run_graph(std::ostream& stream, cxxopts::Options& options,
 
     stream << "]\n";
 
-    end_graph(stream);
+    end_graph(stream, options);
 }
 void generate_section_time_graph(std::ostream& stream, cxxopts::Options& options, std::size_t& id, rapidjson::Value& section, std::vector<rapidjson::Document>& documents){
     start_graph(stream, options, id, std::string("Time:") + section["name"].GetString());
@@ -322,7 +394,7 @@ void generate_section_time_graph(std::ostream& stream, cxxopts::Options& options
 
     stream << "]\n";
 
-    end_graph(stream);
+    end_graph(stream, options);
 }
 
 } //end of anonymous namespace
@@ -333,7 +405,7 @@ int main(int argc, char* argv[]){
     try {
         options.add_options()
             ("s,time-sizes", "Display multiple sizes in the time graphs")
-            ("t,theme", "Theme name [raw]", cxxopts::value<std::string>()->default_value("raw"))
+            ("t,theme", "Theme name [raw,bootstrap]", cxxopts::value<std::string>()->default_value("raw"))
             ("c,hctheme", "Highcharts Theme name [std,dark_unica]", cxxopts::value<std::string>()->default_value("dark_unica"), "theme_name")
             ("o,output", "Output folder", cxxopts::value<std::string>()->default_value("reports"), "output_folder")
             ("input", "Input results", cxxopts::value<std::string>())
@@ -387,9 +459,9 @@ int main(int argc, char* argv[]){
 
     std::ofstream stream(target_file);
 
-    header(stream);
+    header(stream, options);
 
-    information(stream, doc);
+    information(stream, doc, options);
 
     //Configure the highcharts theme
     if(options["hctheme"].as<std::string>() == "dark_unica"){
@@ -400,26 +472,48 @@ int main(int argc, char* argv[]){
 
     std::size_t id = 1;
     for(auto& result : doc["results"]){
-        stream << "<h2 style=\"clear:both\">" << result["title"].GetString() << "</h2>\n";
+        if(options["theme"].as<std::string>() == "bootstrap"){
+            stream << "<div class=\"page-header\">\n";
+            stream << "<h2>" << result["title"].GetString() << "</h2>\n";
+            stream << "</div>\n";
+            stream << "<div class=\"row\">\n";
+        } else {
+            stream << "<h2 style=\"clear:both\">" << result["title"].GetString() << "</h2>\n";
+        }
 
         generate_run_graph(stream, options, id, result);
 
         if(time_graphs){
             generate_time_graph(stream, options, id, result, documents);
         }
+
+        if(options["theme"].as<std::string>() == "bootstrap"){
+            stream << "</div>\n";
+        }
     }
 
     for(auto& section : doc["sections"]){
-        stream << "<h2 style=\"clear:both\">" << section["name"].GetString() << "</h2>\n";
+        if(options["theme"].as<std::string>() == "bootstrap"){
+            stream << "<div class=\"page-header\">\n";
+            stream << "<h2>" << section["name"].GetString() << "</h2>\n";
+            stream << "</div>\n";
+            stream << "<div class=\"row\">\n";
+        } else {
+            stream << "<h2 style=\"clear:both\">" << section["name"].GetString() << "</h2>\n";
+        }
 
         generate_section_run_graph(stream, options, id, section);
 
         if(time_graphs){
             generate_section_time_graph(stream, options, id, section, documents);
         }
+
+        if(options["theme"].as<std::string>() == "bootstrap"){
+            stream << "</div>\n";
+        }
     }
 
-    footer(stream);
+    footer(stream, options);
 
     return 0;
 }
