@@ -25,9 +25,14 @@
 
 namespace cpm {
 
-template<typename Tuple, typename Functor, std::size_t... I, typename... Args>
+template<bool Sizes, typename Tuple, typename Functor, std::size_t... I, typename... Args, std::enable_if_t<Sizes, int> = 42>
 inline void call_with_data(Tuple& data, Functor functor, std::index_sequence<I...> /*indices*/, Args... args){
     functor(args..., std::get<I>(data)...);
+}
+
+template<bool Sizes, typename Tuple, typename Functor, std::size_t... I, typename... Args, std::enable_if_t<!Sizes, int> = 42>
+inline void call_with_data(Tuple& data, Functor functor, std::index_sequence<I...> /*indices*/, Args... /*args*/){
+    functor(std::get<I>(data)...);
 }
 
 template<typename DefaultPolicy = std_stop_policy>
@@ -86,11 +91,11 @@ public:
 
     //Measure with two-pass functors (init and functor)
 
-    template<typename Init, typename Functor>
+    template<bool Sizes = true, typename Init, typename Functor>
     void measure_two_pass(const std::string& title, Init init, Functor functor){
         bench.template policy_run<Policy>(
             [&title, &functor, &init, this](auto sizes){
-                auto duration = bench.measure_only_two_pass(*this, init, functor, sizes);
+                auto duration = bench.template measure_only_two_pass<Sizes>(*this, init, functor, sizes);
                 report(title, sizes, duration);
                 return duration;
             }
@@ -403,14 +408,14 @@ public:
 
     //Measure with two-pass functors (init and functor)
 
-    template<typename Policy = DefaultPolicy, typename Init, typename Functor>
+    template<typename Policy= DefaultPolicy, bool Sizes = true, typename Init, typename Functor>
     void measure_two_pass(const std::string& title, Init init, Functor functor){
         measure_data data;
         data.title = title;
 
         policy_run<Policy>(
             [&data, &title, &functor, &init, this](auto sizes){
-                auto duration = measure_only_two_pass(*this, init, functor, sizes);
+                auto duration = measure_only_two_pass<Sizes>(*this, init, functor, sizes);
                 report(title, sizes, duration);
                 data.results.push_back(std::make_pair(size_to_string(sizes), duration));
                 return duration;
@@ -580,7 +585,7 @@ private:
         return duration_acc / conf.repeat;
     }
 
-    template<typename Config, typename Init, typename Functor, typename... Args>
+    template<bool Sizes, typename Config, typename Init, typename Functor, typename... Args>
     std::size_t measure_only_two_pass(const Config& conf, Init& init, Functor& functor, Args... args){
         ++measures;
 
@@ -591,7 +596,7 @@ private:
 
         for(std::size_t i = 0; i < conf.warmup; ++i){
             randomize_each(data, sequence);
-            call_with_data(data, functor, sequence, args...);
+            call_with_data<Sizes>(data, functor, sequence, args...);
         }
 
         std::size_t duration_acc = 0;
@@ -599,7 +604,7 @@ private:
         for(std::size_t i = 0; i < conf.repeat; ++i){
             randomize_each(data, sequence);
             auto start_time = timer_clock::now();
-            call_with_data(data, functor, sequence, args...);
+            call_with_data<Sizes>(data, functor, sequence, args...);
             auto end_time = timer_clock::now();
             auto duration = std::chrono::duration_cast<microseconds>(end_time - start_time);
             duration_acc += duration.count();
