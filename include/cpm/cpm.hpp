@@ -136,6 +136,10 @@ public:
 
     section(std::string name, Bench& bench) : bench(bench), warmup(bench.warmup), repeat(bench.repeat) {
         data.name = std::move(name);
+
+        if(bench.standard_report){
+            std::cout << std::endl;
+        }
     }
 
     //Measure once functor (no policy, no randomization)
@@ -459,6 +463,10 @@ public:
 
     template<typename Policy = DefaultPolicy, typename Functor>
     void measure_simple(const std::string& title, Functor functor){
+        if(standard_report){
+            std::cout << std::endl;
+        }
+
         measure_data data;
         data.title = title;
 
@@ -478,6 +486,10 @@ public:
 
     template<bool Sizes = true, typename Policy= DefaultPolicy, typename Init, typename Functor>
     void measure_two_pass(const std::string& title, Init init, Functor functor){
+        if(standard_report){
+            std::cout << std::endl;
+        }
+
         measure_data data;
         data.title = title;
 
@@ -497,6 +509,10 @@ public:
 
     template<typename Policy = DefaultPolicy, typename Functor, typename... T>
     void measure_global(const std::string& title, Functor functor, T&... references){
+        if(standard_report){
+            std::cout << std::endl;
+        }
+
         measure_data data;
         data.title = title;
 
