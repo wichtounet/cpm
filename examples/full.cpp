@@ -5,6 +5,7 @@
 //  http://opensource.org/licenses/MIT)
 //=======================================================================
 
+#define CPM_PROPAGATE_TUPLE
 #define CPM_BENCHMARK "Tests Benchmarks"
 #include "cpm/cpm.hpp"
 

@@ -562,19 +562,46 @@ private:
         }
     }
 
+    template<typename Functor>
+    void call_functor(Functor& functor){
+        functor();
+    }
+
+    template<typename Functor>
+    void call_functor(Functor& functor, std::size_t d){
+        functor(d);
+    }
+
+#ifndef CPM_PROPAGATE_TUPLE
+    template<typename Functor, typename... TT, std::size_t... I>
+    void propagate_call_functor(Functor& functor, std::tuple<TT...> d, std::index_sequence<I...> /*s*/){
+        functor(std::get<I>(d)...);
+    }
+
+    template<typename Functor, typename... TT>
+    void call_functor(Functor& functor, std::tuple<TT...> d){
+        propagate_call_functor(functor, d, std::make_index_sequence<sizeof...(TT)>());
+    }
+#else
+    template<typename Functor, typename... TT>
+    void call_functor(Functor& functor, std::tuple<TT...> d){
+        functor(d);
+    }
+#endif
+
     template<typename Config, typename Functor, typename... Args>
     std::size_t measure_only_simple(const Config& conf, Functor& functor, Args... args){
         ++measures;
 
         for(std::size_t i = 0; i < conf.warmup; ++i){
-            functor(args...);
+            call_functor(functor, args...);
         }
 
         std::size_t duration_acc = 0;
 
         for(std::size_t i = 0; i < conf.repeat; ++i){
             auto start_time = timer_clock::now();
-            functor(args...);
+            call_functor(functor, args...);
             auto end_time = timer_clock::now();
             auto duration = std::chrono::duration_cast<microseconds>(end_time - start_time);
             duration_acc += duration.count();

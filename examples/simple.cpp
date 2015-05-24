@@ -5,6 +5,7 @@
 //  http://opensource.org/licenses/MIT)
 //=======================================================================
 
+#define CPM_PROPAGATE_TUPLE
 #include "cpm/cpm.hpp"
 
 #include <thread>
