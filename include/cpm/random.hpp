@@ -12,6 +12,8 @@
 
 namespace cpm {
 
+#ifndef CPM_FAST_RANDOMIZE
+
 template<typename T>
 void randomize_double(T& container){
     static std::random_device rd;
@@ -23,6 +25,29 @@ void randomize_double(T& container){
         v = generator();
     }
 }
+
+#else
+
+template<typename T>
+void randomize_double(T& container){
+    static std::random_device rd;
+    static std::mt19937_64 rand_engine(rd());
+    static std::uniform_real_distribution<double> real_distribution(-10000.0, 10000.0);
+    static auto generator = std::bind(real_distribution, rand_engine);
+
+    auto a = generator();
+    auto b = generator();
+    auto c = generator();
+
+    std::size_t i = 0;
+    for(auto& v : container){
+        v = a + (i * b) + (-i * c);
+        ++i;
+    }
+}
+
+#endif
+
 
 inline void randomize(){}
 
