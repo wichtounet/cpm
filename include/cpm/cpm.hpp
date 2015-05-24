@@ -347,8 +347,6 @@ public:
             folder += "/";
         }
 
-        std::cout << folder << std::endl;
-
         //If no tag is provided, select one that does not yet exists
         if(folder_ok && tag.empty()){
             tag = get_free_file(folder);
