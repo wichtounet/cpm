@@ -83,6 +83,28 @@ void call_functor(Functor& functor, std::tuple<TT...> d){
 }
 #endif
 
+template<typename Functor>
+auto call_init_functor(Functor& functor, std::size_t d){
+    return functor(d);
+}
+
+#ifndef CPM_PROPAGATE_TUPLE
+template<typename Functor, typename... TT, std::size_t... I>
+auto propagate_call_init_functor(Functor& functor, std::tuple<TT...> d, std::index_sequence<I...> /*s*/){
+    return functor(std::get<I>(d)...);
+}
+
+template<typename Functor, typename... TT>
+auto call_init_functor(Functor& functor, std::tuple<TT...> d){
+    return propagate_call_init_functor(functor, d, std::make_index_sequence<sizeof...(TT)>());
+}
+#else
+template<typename Functor, typename... TT>
+auto call_init_functor(Functor& functor, std::tuple<TT...> d){
+    return functor(d);
+}
+#endif
+
 template<typename DefaultPolicy = std_stop_policy>
 struct benchmark;
 
@@ -637,7 +659,7 @@ private:
     std::size_t measure_only_two_pass(const Config& conf, Init& init, Functor& functor, Args... args){
         ++measures;
 
-        auto data = init(args...);
+        auto data = call_init_functor(init, args...);
 
         static constexpr const std::size_t tuple_s = std::tuple_size<decltype(data)>::value;
         std::make_index_sequence<tuple_s> sequence;
