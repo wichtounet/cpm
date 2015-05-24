@@ -49,7 +49,7 @@ int main(){
         [](std::size_t d, test& d2){ std::this_thread::sleep_for((factor * 2 * (d + d2.d)) * 1_ns ); }
         );
 
-    bench.measure_two_pass<cpm::simple_nary_policy<cpm::std_stop_policy, cpm::std_stop_policy>>("2p_b_n",
+    bench.measure_two_pass<true, cpm::simple_nary_policy<cpm::std_stop_policy, cpm::std_stop_policy>>("2p_b_n",
         [](auto dd){ return std::make_tuple(test{std::get<0>(dd)}); },
         [](auto dd, test& d2){ std::this_thread::sleep_for((factor * 2 * (std::get<0>(dd) + std::get<1>(dd) + d2.d)) * 1_ns ); }
         );

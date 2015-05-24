@@ -66,8 +66,8 @@ struct cpm_registry {
 //Versions with policies
 #define CPM_SIMPLE_P(policy, ...) bench.measure_simple<policy>(__VA_ARGS__);
 #define CPM_GLOBAL_P(policy, ...) bench.measure_global<policy>(__VA_ARGS__);
-#define CPM_TWO_PASS_P(policy, ...) bench.measure_two_pass<policy>(__VA_ARGS__);
-#define CPM_TWO_PASS_NS_P(policy, ...) bench.measure_two_pass<policy, false>(__VA_ARGS__);
+#define CPM_TWO_PASS_P(policy, ...) bench.measure_two_pass<true, policy>(__VA_ARGS__);
+#define CPM_TWO_PASS_NS_P(policy, ...) bench.measure_two_pass<false, policy>(__VA_ARGS__);
 
 //Helpers to create policy
 #define POLICY(...) __VA_ARGS__

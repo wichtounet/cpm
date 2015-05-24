@@ -408,7 +408,7 @@ public:
 
     //Measure with two-pass functors (init and functor)
 
-    template<typename Policy= DefaultPolicy, bool Sizes = true, typename Init, typename Functor>
+    template<bool Sizes = true, typename Policy= DefaultPolicy, typename Init, typename Functor>
     void measure_two_pass(const std::string& title, Init init, Functor functor){
         measure_data data;
         data.title = title;
