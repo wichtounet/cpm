@@ -41,7 +41,7 @@ inline void call_with_data(Tuple& data, Functor& functor, std::index_sequence<I.
 }
 
 #ifndef CPM_PROPAGATE_TUPLE
-template<bool Sizes, typename Tuple, typename Functor, typename... TT, std::size_t... Ii, std::size_t... I2>
+template<bool Sizes, typename Tuple, typename Functor, typename... TT, std::size_t... I, std::size_t... I2>
 inline void propagate_call_with_data_final(Tuple& data, Functor& functor, std::index_sequence<I...> indices, std::index_sequence<I2...> /*i2*/, std::tuple<TT...> arg){
     call_with_data_final<Sizes>(data, functor, indices, std::get<I2>(arg)....);
 }
