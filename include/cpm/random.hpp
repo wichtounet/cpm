@@ -14,8 +14,9 @@ namespace cpm {
 
 template<typename T>
 void randomize_double(T& container){
-    static std::default_random_engine rand_engine(std::time(nullptr));
-    static std::uniform_real_distribution<double> real_distribution(-1000.0, 1000.0);
+    static std::random_device rd;
+    static std::mt19937_64 rand_engine(rd());
+    static std::uniform_real_distribution<double> real_distribution(-10000.0, 10000.0);
     static auto generator = std::bind(real_distribution, rand_engine);
 
     for(auto& v : container){
