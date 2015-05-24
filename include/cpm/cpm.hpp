@@ -26,14 +26,62 @@
 namespace cpm {
 
 template<bool Sizes, typename Tuple, typename Functor, std::size_t... I, typename... Args, std::enable_if_t<Sizes, int> = 42>
-inline void call_with_data(Tuple& data, Functor functor, std::index_sequence<I...> /*indices*/, Args... args){
+inline void call_with_data_final(Tuple& data, Functor& functor, std::index_sequence<I...> /*indices*/, Args... args){
     functor(args..., std::get<I>(data)...);
 }
 
 template<bool Sizes, typename Tuple, typename Functor, std::size_t... I, typename... Args, std::enable_if_t<!Sizes, int> = 42>
-inline void call_with_data(Tuple& data, Functor functor, std::index_sequence<I...> /*indices*/, Args... /*args*/){
+inline void call_with_data_final(Tuple& data, Functor& functor, std::index_sequence<I...> /*indices*/, Args... /*args*/){
     functor(std::get<I>(data)...);
 }
+
+template<bool Sizes, typename Tuple, typename Functor, std::size_t... I>
+inline void call_with_data(Tuple& data, Functor& functor, std::index_sequence<I...> indices, std::size_t arg){
+    call_with_data_final<Sizes>(data, functor, indices, arg);
+}
+
+#ifndef CPM_PROPAGATE_TUPLE
+template<bool Sizes, typename Tuple, typename Functor, typename... TT, std::size_t... Ii, std::size_t... I2>
+inline void propagate_call_with_data_final(Tuple& data, Functor& functor, std::index_sequence<I...> indices, std::index_sequence<I2...> /*i2*/, std::tuple<TT...> arg){
+    call_with_data_final<Sizes>(data, functor, indices, std::get<I2>(arg)....);
+}
+template<bool Sizes, typename Tuple, typename Functor, typename... TT, std::size_t... I>
+inline void call_with_data(Tuple& data, Functor& functor, std::index_sequence<I...> indices, std::tuple<TT...> arg){
+    propagate_call_with_data<Sizes>(data, functor, indices, std::make_index_sequence<sizeof...(TT)>(), arg);
+}
+#else
+template<bool Sizes, typename Tuple, typename Functor, typename... TT, std::size_t... I>
+inline void call_with_data(Tuple& data, Functor& functor, std::index_sequence<I...> indices, std::tuple<TT...> arg){
+    call_with_data_final<Sizes>(data, functor, indices, arg);
+}
+#endif
+
+template<typename Functor>
+void call_functor(Functor& functor){
+    functor();
+}
+
+template<typename Functor>
+void call_functor(Functor& functor, std::size_t d){
+    functor(d);
+}
+
+#ifndef CPM_PROPAGATE_TUPLE
+template<typename Functor, typename... TT, std::size_t... I>
+void propagate_call_functor(Functor& functor, std::tuple<TT...> d, std::index_sequence<I...> /*s*/){
+    functor(std::get<I>(d)...);
+}
+
+template<typename Functor, typename... TT>
+void call_functor(Functor& functor, std::tuple<TT...> d){
+    propagate_call_functor(functor, d, std::make_index_sequence<sizeof...(TT)>());
+}
+#else
+template<typename Functor, typename... TT>
+void call_functor(Functor& functor, std::tuple<TT...> d){
+    functor(d);
+}
+#endif
 
 template<typename DefaultPolicy = std_stop_policy>
 struct benchmark;
@@ -561,33 +609,6 @@ private:
             duration = measure(d);
         }
     }
-
-    template<typename Functor>
-    void call_functor(Functor& functor){
-        functor();
-    }
-
-    template<typename Functor>
-    void call_functor(Functor& functor, std::size_t d){
-        functor(d);
-    }
-
-#ifndef CPM_PROPAGATE_TUPLE
-    template<typename Functor, typename... TT, std::size_t... I>
-    void propagate_call_functor(Functor& functor, std::tuple<TT...> d, std::index_sequence<I...> /*s*/){
-        functor(std::get<I>(d)...);
-    }
-
-    template<typename Functor, typename... TT>
-    void call_functor(Functor& functor, std::tuple<TT...> d){
-        propagate_call_functor(functor, d, std::make_index_sequence<sizeof...(TT)>());
-    }
-#else
-    template<typename Functor, typename... TT>
-    void call_functor(Functor& functor, std::tuple<TT...> d){
-        functor(d);
-    }
-#endif
 
     template<typename Config, typename Functor, typename... Args>
     std::size_t measure_only_simple(const Config& conf, Functor& functor, Args... args){
