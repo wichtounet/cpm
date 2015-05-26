@@ -12,6 +12,8 @@
 
 #include "../../lib/cxxopts/src/cxxopts.hpp"
 
+namespace cpm {
+
 struct cpm_registry {
     cpm_registry(void (*function)(cpm::benchmark<>&)){
         benchs.emplace_back(function);
@@ -20,24 +22,35 @@ struct cpm_registry {
     static std::vector<void(*)(cpm::benchmark<>&)> benchs;
 };
 
+template<template<typename...> class TT, typename T>
+struct is_specialization_of : std::false_type {};
+
+template<template<typename...> class TT, typename... Args>
+struct is_specialization_of<TT, TT<Args...>> : std::true_type {};
+
+template<typename T>
+struct is_section : is_specialization_of<cpm::section, std::decay_t<T>> {};
+
+} //end of namespace cpm
+
 #define CPM_UNIQUE_DETAIL(x, y) x##y
 #define CPM_UNIQUE(x, y) CPM_UNIQUE_DETAIL(x, y)
 #define CPM_UNIQUE_NAME(x) CPM_UNIQUE(x, __LINE__)
 
 #define CPM_BENCH()  \
     void CPM_UNIQUE_NAME(bench_) (cpm::benchmark<>& bench); \
-    namespace { cpm_registry CPM_UNIQUE_NAME(register_) (& CPM_UNIQUE_NAME(bench_)); }              \
+    namespace { cpm::cpm_registry CPM_UNIQUE_NAME(register_) (& CPM_UNIQUE_NAME(bench_)); }              \
     void CPM_UNIQUE_NAME(bench_) (cpm::benchmark<>& bench)
 
 #define CPM_SECTION(name)                                       \
     void CPM_UNIQUE_NAME(section_) (cpm::benchmark<>& master);      \
-    namespace { cpm_registry CPM_UNIQUE_NAME(register_) (& CPM_UNIQUE_NAME(section_)); }        \
+    namespace { cpm::cpm_registry CPM_UNIQUE_NAME(register_) (& CPM_UNIQUE_NAME(section_)); }        \
     void CPM_UNIQUE_NAME(section_) (cpm::benchmark<>& master) {     \
     auto bench = master.multi(name);
 
 #define CPM_SECTION_O(name, W, R)                                       \
     void CPM_UNIQUE_NAME(section_) (cpm::benchmark<>& master);      \
-    namespace { cpm_registry CPM_UNIQUE_NAME(register_) (& CPM_UNIQUE_NAME(section_)); }        \
+    namespace { cpm::cpm_registry CPM_UNIQUE_NAME(register_) (& CPM_UNIQUE_NAME(section_)); }        \
     void CPM_UNIQUE_NAME(section_) (cpm::benchmark<>& master) {     \
     auto bench = master.multi(name);    \
     bench.warmup = W;                   \
@@ -45,13 +58,13 @@ struct cpm_registry {
 
 #define CPM_SECTION_P(policy, name)                                       \
     void CPM_UNIQUE_NAME(section_) (cpm::benchmark<>& master);      \
-    namespace { cpm_registry CPM_UNIQUE_NAME(register_) (& CPM_UNIQUE_NAME(section_)); }        \
+    namespace { cpm::cpm_registry CPM_UNIQUE_NAME(register_) (& CPM_UNIQUE_NAME(section_)); }        \
     void CPM_UNIQUE_NAME(section_) (cpm::benchmark<>& master) {     \
     auto bench = master.multi<policy>(name);
 
 #define CPM_SECTION_PO(policy, name, W, R)                                       \
     void CPM_UNIQUE_NAME(section_) (cpm::benchmark<>& master);      \
-    namespace { cpm_registry CPM_UNIQUE_NAME(register_) (& CPM_UNIQUE_NAME(section_)); }        \
+    namespace { cpm::cpm_registry CPM_UNIQUE_NAME(register_) (& CPM_UNIQUE_NAME(section_)); }        \
     void CPM_UNIQUE_NAME(section_) (cpm::benchmark<>& master) {     \
     auto bench = master.multi<policy>(name);      \
     bench.warmup = W;                             \
@@ -64,10 +77,22 @@ struct cpm_registry {
 #define CPM_TWO_PASS_NS(...) bench.measure_two_pass<false>(__VA_ARGS__);
 
 //Versions with policies
-#define CPM_SIMPLE_P(policy, ...) bench.measure_simple<policy>(__VA_ARGS__);
-#define CPM_GLOBAL_P(policy, ...) bench.measure_global<policy>(__VA_ARGS__);
-#define CPM_TWO_PASS_P(policy, ...) bench.measure_two_pass<true, policy>(__VA_ARGS__);
-#define CPM_TWO_PASS_NS_P(policy, ...) bench.measure_two_pass<false, policy>(__VA_ARGS__);
+
+#define CPM_SIMPLE_P(policy, ...)  \
+    static_assert(!cpm::is_section<decltype(bench)>::value, "CPM_SIMPLE_P cannot be used inside CPM_SECTION");  \
+    bench.measure_simple<policy>(__VA_ARGS__);
+
+#define CPM_GLOBAL_P(policy, ...) \
+    static_assert(!cpm::is_section<decltype(bench)>::value, "CPM_GLOBAL_P cannot be used inside CPM_SECTION");  \
+    bench.measure_global<policy>(__VA_ARGS__);
+
+#define CPM_TWO_PASS_P(policy, ...) \
+    static_assert(!cpm::is_section<decltype(bench)>::value, "CPM_TWO_PASS_P cannot be used inside CPM_SECTION");  \
+    bench.measure_two_pass<true, policy>(__VA_ARGS__);
+
+#define CPM_TWO_PASS_NS_P(policy, ...)  \
+    static_assert(!cpm::is_section<decltype(bench)>::value, "CPM_TWO_PASS_NS_P cannot be used inside CPM_SECTION");  \
+    bench.measure_two_pass<false, policy>(__VA_ARGS__);
 
 //Helpers to create policy
 #define POLICY(...) __VA_ARGS__
@@ -130,14 +155,14 @@ int main(int argc, char* argv[]){
 
     bench.begin();
 
-    for(auto f : cpm_registry::benchs){
+    for(auto f : cpm::cpm_registry::benchs){
         f(bench);
     }
 
     return 0;
 }
 
-std::vector<void(*)(cpm::benchmark<>&)> cpm_registry::benchs;
+std::vector<void(*)(cpm::benchmark<>&)> cpm::cpm_registry::benchs;
 
 #endif
 
