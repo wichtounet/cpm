@@ -100,6 +100,19 @@ CPM_SECTION("conv")
         );
 }
 
+CPM_DIRECT_SECTION_TWO_PASS("conv2",
+    CPM_SECTION_INIT([](std::size_t d){ return std::make_tuple(test{d}); }),
+    CPM_SECTION_FUNCTOR("std", [](std::size_t d, test& d2){ std::this_thread::sleep_for((factor * 5 * (d + d2.d)) * 1_ns ); }),
+    CPM_SECTION_FUNCTOR("fast", [](std::size_t d, test& d2){ std::this_thread::sleep_for((factor * 3 * (d + d2.d)) * 1_ns ); })
+    )
+
+CPM_DIRECT_SECTION_TWO_PASS_P("conv3",
+    VALUES_POLICY(1,2,3,4,5,6,7,8,9,10),
+    CPM_SECTION_INIT([](std::size_t d){ return std::make_tuple(test{d}); }),
+    CPM_SECTION_FUNCTOR("std", [](std::size_t d, test& d2){ std::this_thread::sleep_for((factor * 5 * (d + d2.d)) * 1_ns ); }),
+    CPM_SECTION_FUNCTOR("fast", [](std::size_t d, test& d2){ std::this_thread::sleep_for((factor * 3 * (d + d2.d)) * 1_ns ); })
+    )
+
 CPM_SECTION_O("fft",11,51)
     test a{3};
     test b{5};

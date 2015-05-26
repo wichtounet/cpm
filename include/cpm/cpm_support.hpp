@@ -112,6 +112,62 @@ struct is_section : is_specialization_of<cpm::section, std::decay_t<T>> {};
 #define CPM_DIRECT_BENCH_TWO_PASS_P(policy,...) CPM_BENCH() { CPM_TWO_PASS_P(POLICY(policy),__VA_ARGS__); }
 #define CPM_DIRECT_BENCH_TWO_PASS_NS_P(policy,...) CPM_BENCH() { CPM_TWO_PASS_NS_P(POLICY(policy),__VA_ARGS__); }
 
+//Direct section functions
+
+#define FE_1(WHAT, X) WHAT(X) 
+#define FE_2(WHAT, X, ...) WHAT(X)FE_1(WHAT, __VA_ARGS__)
+#define FE_3(WHAT, X, ...) WHAT(X)FE_2(WHAT, __VA_ARGS__)
+#define FE_4(WHAT, X, ...) WHAT(X)FE_3(WHAT, __VA_ARGS__)
+#define FE_5(WHAT, X, ...) WHAT(X)FE_4(WHAT, __VA_ARGS__)
+#define FE_6(WHAT, X, ...) WHAT(X)FE_5(WHAT, __VA_ARGS__)
+#define FE_7(WHAT, X, ...) WHAT(X)FE_6(WHAT, __VA_ARGS__)
+#define FE_8(WHAT, X, ...) WHAT(X)FE_7(WHAT, __VA_ARGS__)
+
+#define GET_MACRO(_1,_2,_3,_4,_5,_6,_7,_8,NAME,...) NAME 
+
+#define FOR_EACH(action,...) \
+  GET_MACRO(__VA_ARGS__,FE_8,FE_7,FE_6,FE_5,FE_4,FE_3,FE_2,FE_1)(action,__VA_ARGS__)
+
+#define FFE_1(WHAT, I, X) WHAT(I,X) 
+#define FFE_2(WHAT, I, X, ...) WHAT(I,X)FFE_1(WHAT, I, __VA_ARGS__)
+#define FFE_3(WHAT, I, X, ...) WHAT(I,X)FFE_2(WHAT, I, __VA_ARGS__)
+#define FFE_4(WHAT, I, X, ...) WHAT(I,X)FFE_3(WHAT, I, __VA_ARGS__)
+#define FFE_5(WHAT, I, X, ...) WHAT(I,X)FFE_4(WHAT, I, __VA_ARGS__)
+#define FFE_6(WHAT, I, X, ...) WHAT(I,X)FFE_5(WHAT, I, __VA_ARGS__)
+#define FFE_7(WHAT, I, X, ...) WHAT(I,X)FFE_6(WHAT, I, __VA_ARGS__)
+#define FFE_8(WHAT, I, X, ...) WHAT(I,X)FFE_7(WHAT, I, __VA_ARGS__)
+
+#define F_FOR_EACH(action,I,...) \
+  GET_MACRO(__VA_ARGS__,FFE_8,FFE_7,FFE_6,FFE_5,FFE_4,FFE_3,FFE_2,FFE_1)(action,I,__VA_ARGS__)
+
+#define EMIT_TWO_PASS(init, X) CPM_TWO_PASS((X).first, init, (X).second);
+#define EMIT_TWO_PASS_NS(init, X) CPM_TWO_PASS_NS((X).first, init, (X).second);
+
+#define CPM_SECTION_FUNCTOR(name, ...) \
+    (std::make_pair(name, (__VA_ARGS__)))
+
+#define CPM_DIRECT_SECTION_TWO_PASS(name, init, ...) \
+    CPM_SECTION(name) \
+    F_FOR_EACH(EMIT_TWO_PASS, init, __VA_ARGS__) \
+    }
+
+#define CPM_DIRECT_SECTION_TWO_PASS_P(name, policy, init, ...) \
+    CPM_SECTION_P(name, POLICY(policy)) \
+    F_FOR_EACH(EMIT_TWO_PASS, init, __VA_ARGS__) \
+    }
+
+#define CPM_DIRECT_SECTION_TWO_PASS_NS(name, init, ...) \
+    CPM_SECTION(name) \
+    F_FOR_EACH(EMIT_TWO_PASS_NS, init, __VA_ARGS__) \
+    }
+
+#define CPM_DIRECT_SECTION_TWO_PASS_NS_P(name, policy, init, ...) \
+    CPM_SECTION_P(name, POLICY(policy)) \
+    F_FOR_EACH(EMIT_TWO_PASS_NS, init, __VA_ARGS__) \
+    }
+
+#define CPM_SECTION_INIT(...) (__VA_ARGS__)
+
 //Helpers to create policy
 #define POLICY(...) __VA_ARGS__
 #define VALUES_POLICY(...) cpm::values_policy<__VA_ARGS__>
