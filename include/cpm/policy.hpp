@@ -83,11 +83,7 @@ struct increasing_policy {
     }
 
     static constexpr bool has_next(std::size_t /*i*/, std::size_t d, std::size_t duration){
-        if(SP == stop_policy::STOP){
-            return d != E;
-        } else {
-            return duration < E;
-        }
+        return SP == stop_policy::STOP ? d != E : duration < E;
     }
 
     static constexpr std::size_t next(std::size_t /*i*/, std::size_t d){
