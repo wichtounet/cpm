@@ -636,13 +636,16 @@ private:
     void policy_run(M measure){
         ++tests;
 
+        std::size_t i = 0;
         auto d = Policy::begin();
         auto duration = measure(d);
 
-        while(Policy::has_next(d, duration)){
-            d = Policy::next(d);
+        while(Policy::has_next(i, d, duration)){
+            d = Policy::next(i, d);
 
             duration = measure(d);
+
+            ++i;
         }
     }
 

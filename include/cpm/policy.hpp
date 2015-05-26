@@ -34,8 +34,8 @@ struct has_next;
 
 template<typename Tuple, std::size_t... I, typename... Policy>
 struct has_next<Tuple, std::index_sequence<I...>, Policy...> {
-    static constexpr bool value(Tuple d, std::size_t duration){
-        return all_and((nth_type<I, Policy...>::type::has_next(std::get<I>(d), duration))...);
+    static constexpr bool value(std::size_t i,Tuple d, std::size_t duration){
+        return all_and((nth_type<I, Policy...>::type::has_next(i, std::get<I>(d), duration))...);
     }
 };
 
@@ -45,8 +45,8 @@ struct next;
 template<typename Tuple, std::size_t... I, typename... Policy>
 struct next <Tuple, std::index_sequence<I...>, Policy...> {
     template<typename T = int> //Simply to fake debug symbols for auto
-    static constexpr auto value(Tuple d){
-        return std::make_tuple((nth_type<I, Policy...>::type::next(std::get<I>(d)))...);
+    static constexpr auto value(std::size_t i, Tuple d){
+        return std::make_tuple((nth_type<I, Policy...>::type::next(i, std::get<I>(d)))...);
     }
 };
 
@@ -82,7 +82,7 @@ struct increasing_policy {
         return S;
     }
 
-    static constexpr bool has_next(std::size_t d, std::size_t duration){
+    static constexpr bool has_next(std::size_t /*i*/, std::size_t d, std::size_t duration){
         if(SP == stop_policy::STOP){
             return d != E;
         } else {
@@ -90,7 +90,7 @@ struct increasing_policy {
         }
     }
 
-    static constexpr std::size_t next(std::size_t d){
+    static constexpr std::size_t next(std::size_t /*i*/, std::size_t d){
         return d * M + A;
     }
 };
@@ -102,14 +102,13 @@ struct values_policy {
         return values[0];
     }
 
-    static bool has_next(std::size_t d, std::size_t /*duration*/){
-        std::array<std::size_t, sizeof...(SS)> values{{SS...}};
-        return std::find(values.begin(), values.end(), d) != (values.begin() + sizeof...(SS) - 1);
+    static bool has_next(std::size_t i, std::size_t /*d*/, std::size_t /*duration*/){
+        return (i + 1) < sizeof...(SS);
     }
 
-    static std::size_t next(std::size_t d){
+    static std::size_t next(std::size_t i, std::size_t /*d*/){
         std::array<std::size_t, sizeof...(SS)> values{{SS...}};
-        return *std::next(std::find(values.begin(), values.end(), d));
+        return values[i+1];
     }
 };
 
@@ -121,13 +120,13 @@ struct nary_policy {
     }
 
     template<typename Tuple>
-    static constexpr bool has_next(Tuple d, std::size_t duration){
-        return detail::has_next<Tuple, std::make_index_sequence<std::tuple_size<Tuple>::value>, Policy...>::value(d, duration);
+    static constexpr bool has_next(std::size_t i, Tuple d, std::size_t duration){
+        return detail::has_next<Tuple, std::make_index_sequence<std::tuple_size<Tuple>::value>, Policy...>::value(i, d, duration);
     }
 
     template<typename Tuple>
-    static constexpr auto next(Tuple d){
-        return detail::next<Tuple, std::make_index_sequence<std::tuple_size<Tuple>::value>, Policy...>::value(d);
+    static constexpr auto next(std::size_t i, Tuple d){
+        return detail::next<Tuple, std::make_index_sequence<std::tuple_size<Tuple>::value>, Policy...>::value(i, d);
     }
 };
 
