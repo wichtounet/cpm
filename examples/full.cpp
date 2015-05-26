@@ -93,21 +93,21 @@ CPM_SECTION_O("fft",11,51)
     CPM_GLOBAL("mkl", [&b](std::size_t d){ std::this_thread::sleep_for((factor * d * (d % b.d)) * 1_ns ); }, b);
 }
 
-CPM_SECTION_PO(NARY_POLICY(STD_STOP_POLICY), "gevv", 9, 49)
+CPM_SECTION_PO("gevv", NARY_POLICY(STD_STOP_POLICY), 9, 49)
     test a{3};
     test b{5};
     CPM_GLOBAL("std", [&a](auto dd){ auto d = std::get<0>(dd); std::this_thread::sleep_for((factor * d * (d % a.d)) * 1_ns ); }, a);
     CPM_GLOBAL("mkl", [&b](auto dd){ auto d = std::get<0>(dd); std::this_thread::sleep_for((factor * d * (d % b.d)) * 1_ns ); }, b);
 }
 
-CPM_SECTION_P(NARY_POLICY(STD_STOP_POLICY, STD_STOP_POLICY), "gemm")
+CPM_SECTION_P("gemm", NARY_POLICY(STD_STOP_POLICY, STD_STOP_POLICY))
     test a{3};
     test b{5};
     CPM_GLOBAL("std", [&a](auto dd){ auto d = std::get<0>(dd) + std::get<1>(dd); std::this_thread::sleep_for((factor * d * (d % a.d)) * 1_ns ); }, a);
     CPM_GLOBAL("mkl", [&b](auto dd){ auto d = std::get<0>(dd) + 2 * std::get<1>(dd); std::this_thread::sleep_for((factor * d * (d % b.d)) * 1_ns ); }, b);
 }
 
-CPM_SECTION_P(NARY_POLICY(STD_STOP_POLICY, VALUES_POLICY(1,2,3,4,5,6), VALUES_POLICY(2,4,8,16,32,64)), "mmul")
+CPM_SECTION_P("mmul", NARY_POLICY(STD_STOP_POLICY, VALUES_POLICY(1,2,3,4,5,6), VALUES_POLICY(2,4,8,16,32,64)))
     test a{3};
     test b{5};
     CPM_GLOBAL("std", [&a](auto dd){ auto d = std::get<0>(dd) + 2 * std::get<1>(dd) + 4 * std::get<2>(dd); std::this_thread::sleep_for(factor * d * 1_ns ); }, a);

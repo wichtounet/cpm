@@ -56,13 +56,13 @@ struct is_section : is_specialization_of<cpm::section, std::decay_t<T>> {};
     bench.warmup = W;                   \
     bench.repeat = R;
 
-#define CPM_SECTION_P(policy, name)                                       \
+#define CPM_SECTION_P(name, policy)                                       \
     void CPM_UNIQUE_NAME(section_) (cpm::benchmark<>& master);      \
     namespace { cpm::cpm_registry CPM_UNIQUE_NAME(register_) (& CPM_UNIQUE_NAME(section_)); }        \
     void CPM_UNIQUE_NAME(section_) (cpm::benchmark<>& master) {     \
     auto bench = master.multi<policy>(name);
 
-#define CPM_SECTION_PO(policy, name, W, R)                                       \
+#define CPM_SECTION_PO(name, policy, W, R)                                       \
     void CPM_UNIQUE_NAME(section_) (cpm::benchmark<>& master);      \
     namespace { cpm::cpm_registry CPM_UNIQUE_NAME(register_) (& CPM_UNIQUE_NAME(section_)); }        \
     void CPM_UNIQUE_NAME(section_) (cpm::benchmark<>& master) {     \
