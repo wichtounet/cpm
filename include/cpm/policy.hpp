@@ -108,20 +108,26 @@ struct values_policy {
     }
 };
 
+#ifdef __clang__
+#define cpp14_constexpr constexpr
+#else
+#define cpp14_constexpr
+#endif
+
 template<nary_combination_policy NCB, typename... Policy>
 struct nary_policy {
     template<typename T = int> //Simply to fake debug symbols for auto
-    static constexpr auto begin(){
+    static cpp14_constexpr auto begin(){
         return std::make_tuple(Policy::begin()...);
     }
 
     template<typename Tuple>
-    static constexpr bool has_next(std::size_t i, Tuple d, std::size_t duration){
+    static cpp14_constexpr bool has_next(std::size_t i, Tuple d, std::size_t duration){
         return detail::has_next<Tuple, std::make_index_sequence<std::tuple_size<Tuple>::value>, Policy...>::value(i, d, duration);
     }
 
     template<typename Tuple>
-    static constexpr auto next(std::size_t i, Tuple d){
+    static cpp14_constexpr auto next(std::size_t i, Tuple d){
         return detail::next<Tuple, std::make_index_sequence<std::tuple_size<Tuple>::value>, Policy...>::value(i, d);
     }
 };
