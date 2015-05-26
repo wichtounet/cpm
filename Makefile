@@ -8,7 +8,12 @@ include make-utils/cpp-utils.mk
 CXX_FLAGS += -Ilib/rapidjson/include -Ilib/cxxopts/src/
 
 # Make sure warnings are not ignored
-CXX_FLAGS += -Werror -pedantic -Wno-documentation
+CXX_FLAGS += -Werror -pedantic
+
+# Disable documentation warnings for dependencies
+ifneq (,$(findstring clang,$(CXX)))
+CXX_FLAGS += -Wno-documentation
+endif
 
 # Use the correct stdlib
 ifneq (,$(findstring clang,$(CXX)))
