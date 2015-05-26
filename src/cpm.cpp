@@ -151,6 +151,7 @@ void information(std::ostream& stream, rapidjson::Document& doc, cxxopts::Option
     stream << "<h1>" << doc["name"].GetString() << "</h1>\n";
 
     stream << "<ul>\n";
+    stream << "<li>Tag: " << doc["tag"].GetString() << "</li>\n";
     stream << "<li>Compiler: " << doc["compiler"].GetString() << "</li>\n";
     stream << "<li>Operating System: " << doc["os"].GetString() << "</li>\n";
     stream << "<li>Time: " << doc["time"].GetString() << "</li>\n";
