@@ -9,6 +9,7 @@
 #include <fstream>
 #include <vector>
 #include <algorithm>
+#include <set>
 
 #include <stdio.h>
 #include <dirent.h>
@@ -179,6 +180,41 @@ void information(std::ostream& stream, document_t& doc, cxxopts::Options& option
         stream << "</div>\n";
         stream << "</div>\n";
         stream << "<div class=\"container-fluid\">\n";
+    }
+}
+
+void compiler_buttons(std::ostream& stream, std::vector<document_t>& documents, document_t& /*base*/, cxxopts::Options& options){
+    std::set<std::string> compilers;
+
+    for(auto& doc : documents){
+        compilers.insert(doc["compiler"].GetString());
+    }
+
+    //TODO Change the color of the current compiler
+
+    if(compilers.size() > 1){
+        if(options["theme"].as<std::string>() == "bootstrap"){
+            stream << R"=====(<div class="row">)=====";
+            stream << R"=====(<div class="col-xs-12">)=====";
+
+            stream << R"=====(<span>Select compiler: </span>)=====";
+
+            stream << R"=====(<div class="btn-group">)=====";
+            for(auto& compiler : compilers){
+                stream << "<button class=\"btn\">" << compiler << "</button>\n";
+            }
+            stream << "</div>\n";
+
+            stream << "</div>\n";
+            stream << "</div>\n";
+        } else {
+            stream << "<div>\n";
+            stream << R"=====(<span>Select compiler: </span>)=====";
+            for(auto& compiler : compilers){
+                stream << "<button>" << compiler << "</button>\n";
+            }
+            stream << "</div>\n";
+        }
     }
 }
 
@@ -488,6 +524,8 @@ int main(int argc, char* argv[]){
     header(stream, options);
 
     information(stream, doc, options);
+
+    compiler_buttons(stream, all_documents, doc, options);
 
     //Configure the highcharts theme
     if(options["hctheme"].as<std::string>() == "dark_unica"){
