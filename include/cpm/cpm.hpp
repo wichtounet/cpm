@@ -244,9 +244,9 @@ public:
 
                 for(std::size_t r = 0; r < data.results.size(); ++r){
                     if(i < data.results[r].size()){
-                        if(data.results[r][i] == min){
+                        if(data.results[r][i] >= 0.99 * static_cast<double>(min) && data.results[r][i] <= 1.01 * static_cast<double>(min)){
                             std::cout << "\033[0;32m";
-                        } else if(data.results[r][i] == max){
+                        } else if(data.results[r][i] >= 0.99 * static_cast<double>(max) && data.results[r][i] <= 1.01 * static_cast<double>(max)){
                             std::cout << "\033[0;31m";
                         }
 
