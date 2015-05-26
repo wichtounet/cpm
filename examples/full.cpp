@@ -28,6 +28,8 @@ CPM_BENCH() {
     CPM_SIMPLE("simple_b", [](std::size_t d){ std::this_thread::sleep_for((factor * d) * 2_ns ); });
 }
 
+CPM_DIRECT_BENCH_SIMPLE("simple_c", [](std::size_t d){ std::this_thread::sleep_for((factor * d) * 2_ns ); });
+
 CPM_BENCH() {
     CPM_SIMPLE_P(
         NARY_POLICY(VALUES_POLICY(1,2,3,4,5,6), VALUES_POLICY(2,4,8,16,32,64)),
@@ -67,6 +69,18 @@ CPM_BENCH() {
         [](test& d2){ std::this_thread::sleep_for((factor * 2 * (d2.d + d2.d + d2.d)) * 1_ns ); }
         );
 }
+
+CPM_DIRECT_BENCH_TWO_PASS("2p_c",
+    [](std::size_t d){ return std::make_tuple(test{d}); },
+    [](std::size_t d, test& d2){ std::this_thread::sleep_for((factor * 3 * (d + d2.d)) * 1_ns ); }
+    );
+
+CPM_DIRECT_BENCH_TWO_PASS_NS_P(
+    NARY_POLICY(VALUES_POLICY(1,2), VALUES_POLICY(3,4)),
+    "2p_c_n",
+    [](auto dd){ return std::make_tuple(test{std::get<0>(dd)}); },
+    [](test& d2){ std::this_thread::sleep_for((factor * 2 * (d2.d + d2.d + d2.d)) * 1_ns ); }
+    );
 
 CPM_SECTION("mmul")
     CPM_SIMPLE("std", [](std::size_t d){ std::this_thread::sleep_for((factor * d) * 9_ns ); });

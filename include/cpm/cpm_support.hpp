@@ -33,14 +33,20 @@ struct is_section : is_specialization_of<cpm::section, std::decay_t<T>> {};
 
 } //end of namespace cpm
 
+//Internal helpers
+
 #define CPM_UNIQUE_DETAIL(x, y) x##y
 #define CPM_UNIQUE(x, y) CPM_UNIQUE_DETAIL(x, y)
 #define CPM_UNIQUE_NAME(x) CPM_UNIQUE(x, __LINE__)
+
+//Declarations of benchs functions
 
 #define CPM_BENCH()  \
     void CPM_UNIQUE_NAME(bench_) (cpm::benchmark<>& bench); \
     namespace { cpm::cpm_registry CPM_UNIQUE_NAME(register_) (& CPM_UNIQUE_NAME(bench_)); }              \
     void CPM_UNIQUE_NAME(bench_) (cpm::benchmark<>& bench)
+
+//Declaration of section functions
 
 #define CPM_SECTION(name)                                       \
     void CPM_UNIQUE_NAME(section_) (cpm::benchmark<>& master);      \
@@ -92,7 +98,19 @@ struct is_section : is_specialization_of<cpm::section, std::decay_t<T>> {};
 
 #define CPM_TWO_PASS_NS_P(policy, ...)  \
     static_assert(!cpm::is_section<decltype(bench)>::value, "CPM_TWO_PASS_NS_P cannot be used inside CPM_SECTION");  \
-    bench.measure_two_pass<false, policy>(__VA_ARGS__);
+    bench.template measure_two_pass<false, policy>(__VA_ARGS__);
+
+//Direct bench functions
+
+#define CPM_DIRECT_BENCH_SIMPLE(...) CPM_BENCH() { CPM_SIMPLE(__VA_ARGS__); }
+#define CPM_DIRECT_BENCH_TWO_PASS(...) CPM_BENCH() { CPM_TWO_PASS(__VA_ARGS__); }
+#define CPM_DIRECT_BENCH_TWO_PASS_NS(...) CPM_BENCH() { CPM_TWO_PASS_NS(__VA_ARGS__); }
+
+//Direct bench functions with policies
+
+#define CPM_DIRECT_BENCH_SIMPLE_P(policy,...) CPM_BENCH() { CPM_SIMPLE_P(POLICY(policy),__VA_ARGS__); }
+#define CPM_DIRECT_BENCH_TWO_PASS_P(policy,...) CPM_BENCH() { CPM_TWO_PASS_P(POLICY(policy),__VA_ARGS__); }
+#define CPM_DIRECT_BENCH_TWO_PASS_NS_P(policy,...) CPM_BENCH() { CPM_TWO_PASS_NS_P(POLICY(policy),__VA_ARGS__); }
 
 //Helpers to create policy
 #define POLICY(...) __VA_ARGS__
