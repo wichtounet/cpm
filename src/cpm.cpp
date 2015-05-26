@@ -36,23 +36,26 @@ inline auto end(rapidjson::Value& value){
 
 namespace {
 
+using document_t = rapidjson::Document;
+using document_ref = std::reference_wrapper<document_t>;
+
 std::string dark_unica_theme =
 #include "dark_unica.inc"
 ;
 
-rapidjson::Document read_document(const std::string& folder, const std::string& file){
+document_t read_document(const std::string& folder, const std::string& file){
     FILE* pFile = fopen((folder + "/" + file).c_str(), "rb");
     char buffer[65536];
 
     rapidjson::FileReadStream is(pFile, buffer, sizeof(buffer));
-    rapidjson::Document doc;
+    document_t doc;
     doc.ParseStream<0>(is);
 
     return doc;
 }
 
-std::vector<rapidjson::Document> read(const std::string& source_folder){
-    std::vector<rapidjson::Document> documents;
+std::vector<document_t> read(const std::string& source_folder){
+    std::vector<document_t> documents;
 
     struct dirent* entry;
     DIR* dp = opendir(source_folder.c_str());
@@ -70,9 +73,24 @@ std::vector<rapidjson::Document> read(const std::string& source_folder){
     }
 
     std::sort(documents.begin(), documents.end(),
-        [](rapidjson::Document& lhs, rapidjson::Document& rhs){ return lhs["timestamp"].GetInt() < rhs["timestamp"].GetInt(); });
+        [](document_t& lhs, document_t& rhs){ return lhs["timestamp"].GetInt() < rhs["timestamp"].GetInt(); });
 
     return documents;
+}
+
+//Select relevant documents
+std::vector<document_ref> select_documents(std::vector<document_t>& documents, document_t& base){
+    std::vector<document_ref> relevant;
+
+    for(auto& doc : documents){
+        //Two documents are relevant if the configuration 
+        //is the same
+        if(std::string(doc["compiler"].GetString()) == std::string(base["compiler"].GetString())){
+            relevant.push_back(std::ref(doc));
+        }
+    }
+
+    return relevant;
 }
 
 void header(std::ostream& stream, cxxopts::Options& options){
@@ -142,7 +160,7 @@ void footer(std::ostream& stream, cxxopts::Options& options){
     stream << "</html>\n";
 }
 
-void information(std::ostream& stream, rapidjson::Document& doc, cxxopts::Options& options){
+void information(std::ostream& stream, document_t& doc, cxxopts::Options& options){
     if(options["theme"].as<std::string>() == "bootstrap"){
         stream << "<div class=\"jumbotron\">\n";
         stream << "<div class=\"container-fluid\">\n";
@@ -237,7 +255,7 @@ void generate_run_graph(std::ostream& stream, cxxopts::Options& options, std::si
     end_graph(stream, options);
 }
 
-void generate_time_graph(std::ostream& stream, cxxopts::Options& options, std::size_t& id, rapidjson::Value& result, std::vector<rapidjson::Document>& documents){
+void generate_time_graph(std::ostream& stream, cxxopts::Options& options, std::size_t& id, rapidjson::Value& result, std::vector<document_ref>& documents){
     start_graph(stream, options, id, std::string("Time:") + result["title"].GetString());
 
     stream << "xAxis: { type: 'datetime', title: { text: 'Date' } },\n";
@@ -260,7 +278,9 @@ void generate_time_graph(std::ostream& stream, cxxopts::Options& options, std::s
 
             std::string inner_comma = "";
 
-            for(auto& document : documents){
+            for(auto& document_r : documents){
+                auto& document = static_cast<document_t&>(document_r);
+
                 for(auto& o_result : document["results"]){
                     if(std::string(o_result["title"].GetString()) == std::string(result["title"].GetString())){
                         for(auto& o_rr : o_result["results"]){
@@ -286,7 +306,9 @@ void generate_time_graph(std::ostream& stream, cxxopts::Options& options, std::s
 
         std::string comma = "";
 
-        for(auto& document : documents){
+        for(auto& document_r : documents){
+            auto& document = static_cast<document_t&>(document_r);
+
             for(auto& o_result : document["results"]){
                 if(std::string(o_result["title"].GetString()) == std::string(result["title"].GetString())){
                     stream << comma << "[" << document["timestamp"].GetInt() * 1000 << ",";
@@ -349,7 +371,7 @@ void generate_section_run_graph(std::ostream& stream, cxxopts::Options& options,
 
     end_graph(stream, options);
 }
-void generate_section_time_graph(std::ostream& stream, cxxopts::Options& options, std::size_t& id, rapidjson::Value& section, std::vector<rapidjson::Document>& documents){
+void generate_section_time_graph(std::ostream& stream, cxxopts::Options& options, std::size_t& id, rapidjson::Value& section, std::vector<document_ref>& documents){
     start_graph(stream, options, id, std::string("Time:") + section["name"].GetString());
 
     stream << "xAxis: { type: 'datetime', title: { text: 'Date' } },\n";
@@ -369,7 +391,9 @@ void generate_section_time_graph(std::ostream& stream, cxxopts::Options& options
 
         std::string comma_inner = "";
 
-        for(auto& r_doc : documents){
+        for(auto& r_doc_r : documents){
+            auto& r_doc = static_cast<document_t&>(r_doc_r);
+
             for(auto& r_section : r_doc["sections"]){
                 if(std::string(r_section["name"].GetString()) == std::string(section["name"].GetString())){
                     for(auto& r_r : r_section["results"]){
@@ -445,14 +469,19 @@ int main(int argc, char* argv[]){
 
     std::string target_file = target_folder + "/index.html";
 
-    auto documents = read(source_folder);
+    //Get all the documents
+    auto all_documents = read(source_folder);
 
-    if(documents.empty()){
+    if(all_documents.empty()){
         std::cout << "Unable to read any files" << std::endl;
         return -1;
     }
 
-    auto& doc = documents.front();
+    //Get the most recent document as base
+    auto& doc = all_documents.back();
+
+    //Select the document for time graphs
+    auto documents = select_documents(all_documents, doc);
 
     std::ofstream stream(target_file);
 
