@@ -351,12 +351,14 @@ public:
             folder += "/";
         }
 
-        //If no tag is provided, select one that does not yet exists
-        if(folder_ok && tag.empty()){
-            tag = get_free_file(folder);
+        //Select a free file
+        if(folder_ok){
+            auto f = get_free_file(folder);
+            if(tag.empty()){
+                tag = f;
+            }
+            final_file = folder + f + ".cpm";
         }
-
-        final_file = folder + tag + ".cpm";
 
         //Detect the operating system
         struct utsname buffer;
@@ -391,8 +393,9 @@ public:
             auto time = wall_clock::to_time_t(start_time);
             std::cout << "   Time " << std::ctime(&time) << std::endl;
 
-            std::cout << "   Compiler " << COMPILER_FULL << std::endl;
-            std::cout << "   Operating System " << operating_system << std::endl;
+            std::cout << "   Tag: " << tag << std::endl;
+            std::cout << "   Compiler: " << COMPILER_FULL << std::endl;
+            std::cout << "   Operating System: " << operating_system << std::endl;
             std::cout << std::endl;
         }
     }
@@ -542,6 +545,12 @@ public:
 
 private:
     void save(){
+        if(!folder_ok){
+            std::cout << "Impossible save, the folder was not correct" << std::endl;
+
+            return;
+        }
+
         auto time = wall_clock::to_time_t(start_time);
         std::stringstream ss;
         ss << std::ctime(&time);
