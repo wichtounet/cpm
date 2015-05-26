@@ -17,7 +17,7 @@ namespace detail {
 template<typename H>
 bool all_and(H h) {
     return h;
-};
+}
 
 template<typename H, typename... HT>
 bool all_and(H h, HT... hs){
