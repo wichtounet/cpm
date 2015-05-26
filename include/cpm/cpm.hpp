@@ -157,7 +157,7 @@ public:
         bench.template policy_run<Policy>(
             [&title, &functor, this](auto sizes){
                 auto duration = bench.measure_only_simple(*this, functor, sizes);
-                report(title, sizes, duration);
+                this->report(title, sizes, duration);
                 return duration;
             }
         );
@@ -170,7 +170,7 @@ public:
         bench.template policy_run<Policy>(
             [&title, &functor, &init, this](auto sizes){
                 auto duration = bench.template measure_only_two_pass<Sizes>(*this, init, functor, sizes);
-                report(title, sizes, duration);
+                this->report(title, sizes, duration);
                 return duration;
             }
         );
@@ -183,7 +183,7 @@ public:
         bench.template policy_run<Policy>(
             [&title, &functor, &references..., this](auto sizes){
                 auto duration = bench.measure_only_global(*this, functor, sizes, references...);
-                report(title, sizes, duration);
+                this->report(title, sizes, duration);
                 return duration;
             }
         );
