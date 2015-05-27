@@ -86,6 +86,18 @@ bool folder_exists(const std::string& folder){
     }
 }
 
+std::string filify(std::string name){
+    std::string n{std::move(name)};
+
+    //Replace all spaces
+    std::replace(n.begin(), n.end(), ' ', '_');
+
+    //Append extension
+    n += ".html";
+
+    return n;
+}
+
 } //end of namespace cpm
 
 #endif //CPM_IO_HPP

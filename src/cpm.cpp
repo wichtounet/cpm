@@ -18,47 +18,29 @@
 
 #include "cpm/io.hpp"
 #include "cpm/rapidjson.hpp"
+#include "cpm/data.hpp"
+#include "cpm/raw_theme.hpp"
+#include "cpm/bootstrap_theme.hpp"
 
 namespace {
-
-using document_t = rapidjson::Document;
-using document_ref = std::reference_wrapper<document_t>;
-using document_cref = std::reference_wrapper<const document_t>;
-
-struct reports_data {
-    std::set<std::string> compilers;
-    std::vector<document_t> documents;
-};
 
 std::string dark_unica_theme =
 #include "dark_unica.inc"
 ;
 
-std::string filify(std::string name){
-    std::string n{std::move(name)};
-
-    //Replace all spaces
-    std::replace(n.begin(), n.end(), ' ', '_');
-
-    //Append extension
-    n += ".html";
-
-    return n;
-}
-
-document_t read_document(const std::string& folder, const std::string& file){
+cpm::document_t read_document(const std::string& folder, const std::string& file){
     FILE* pFile = fopen((folder + "/" + file).c_str(), "rb");
     char buffer[65536];
 
     rapidjson::FileReadStream is(pFile, buffer, sizeof(buffer));
-    document_t doc;
+    cpm::document_t doc;
     doc.ParseStream<0>(is);
 
     return doc;
 }
 
-std::vector<document_t> read(const std::string& source_folder){
-    std::vector<document_t> documents;
+std::vector<cpm::document_t> read(const std::string& source_folder){
+    std::vector<cpm::document_t> documents;
 
     struct dirent* entry;
     DIR* dp = opendir(source_folder.c_str());
@@ -76,14 +58,14 @@ std::vector<document_t> read(const std::string& source_folder){
     }
 
     std::sort(documents.begin(), documents.end(),
-        [](document_t& lhs, document_t& rhs){ return lhs["timestamp"].GetInt() < rhs["timestamp"].GetInt(); });
+        [](cpm::document_t& lhs, cpm::document_t& rhs){ return lhs["timestamp"].GetInt() < rhs["timestamp"].GetInt(); });
 
     return documents;
 }
 
 //Select relevant documents
-std::vector<document_cref> select_documents(std::vector<document_t>& documents, document_t& base){
-    std::vector<document_cref> relevant;
+std::vector<cpm::document_cref> select_documents(std::vector<cpm::document_t>& documents, cpm::document_t& base){
+    std::vector<cpm::document_cref> relevant;
 
     for(auto& doc : documents){
         //Two documents are relevant if the configuration
@@ -96,7 +78,8 @@ std::vector<document_cref> select_documents(std::vector<document_t>& documents, 
     return relevant;
 }
 
-void header(std::ostream& stream, cxxopts::Options& options){
+template<typename Theme>
+void header(Theme& theme, std::ostream& stream){
     stream << "<!DOCTYPE html>\n";
     stream << "<html lang=\"en\">\n";
     stream << "<head>\n";
@@ -109,65 +92,26 @@ void header(std::ostream& stream, cxxopts::Options& options){
     stream << "<script src=\"http://code.highcharts.com/highcharts.js\"></script>\n";
     stream << "<script src=\"http://code.highcharts.com/modules/exporting.js\"></script>\n";
 
-    if(options["theme"].as<std::string>() == "bootstrap"){
-        stream << "<script src=\"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js\"></script>\n";
-        stream << "<link href=\"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css\" rel=\"stylesheet\">\n";
-        stream << "<link href=\"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap-theme.min.css\" rel=\"stylesheet\">\n";
-    }
+    theme.include(stream);
 
     stream << "</head>\n";
 
     stream << "<body>\n";
 
-    if(options["theme"].as<std::string>() == "bootstrap"){
-        stream << R"=====(
-            <nav id="myNavbar" class="navbar navbar-default navbar-inverse navbar-fixed-top" role="navigation">
-            <div class="container-fluid">
-            <div class="navbar-header">
-            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbarCollapse">
-            <span class="sr-only">Toggle navigation</span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            </button>
-            <a class="navbar-brand" href="#">Results</a>
-            </div>
-            <div class="collapse navbar-collapse" id="navbarCollapse">
-            <ul class="nav navbar-nav">
-            <li class="active"><a href="index.html">Home</a></li>
-            <li><a href="http://github.com/wichtounet/cpm">Generated with CPM</a></li>
-            </ul>
-            </div>
-            </div>
-            </nav>
-        )=====";
-    }
+    theme.header(stream);
 }
 
-void footer(std::ostream& stream, cxxopts::Options& options){
-    if(options["theme"].as<std::string>() == "bootstrap"){
-        stream << R"=====(
-            <hr>
-            <div class="row">
-            <div class="col-xs-12">
-            <footer>
-            <p>Generated with <a href="https://github.com/wichtounet/cpm">CPM</a></p>
-            </footer>
-            </div>
-            </div>
-            </div>
-        )=====";
-    }
+template<typename Theme>
+void footer(Theme& theme, std::ostream& stream){
+    theme.footer(stream);
 
     stream << "</body>\n";
     stream << "</html>\n";
 }
 
-void information(std::ostream& stream, const document_t& doc, cxxopts::Options& options){
-    if(options["theme"].as<std::string>() == "bootstrap"){
-        stream << "<div class=\"jumbotron\">\n";
-        stream << "<div class=\"container-fluid\">\n";
-    }
+template<typename Theme>
+void information(Theme& theme, std::ostream& stream, const cpm::document_t& doc){
+    theme.before_information(stream);
 
     stream << "<h1>" << doc["name"].GetString() << "</h1>\n";
 
@@ -178,56 +122,21 @@ void information(std::ostream& stream, const document_t& doc, cxxopts::Options& 
     stream << "<li>Time: " << doc["time"].GetString() << "</li>\n";
     stream << "</ul>\n";
 
-    if(options["theme"].as<std::string>() == "bootstrap"){
-        stream << "</div>\n";
-        stream << "</div>\n";
-        stream << "<div class=\"container-fluid\">\n";
-    }
+    theme.after_information(stream);
 }
 
-void compiler_buttons(std::ostream& stream, const reports_data& data, const document_t& base, cxxopts::Options& options){
+template<typename Theme>
+void compiler_buttons(Theme& theme, std::ostream& stream, const cpm::reports_data& data, const cpm::document_t& base){
     if(data.compilers.size() > 1){
         std::string current_compiler{base["compiler"].GetString()};
 
-        if(options["theme"].as<std::string>() == "bootstrap"){
-            stream << R"=====(<div class="row">)=====";
-            stream << R"=====(<div class="col-xs-12">)=====";
-
-            stream << R"=====(<span>Select compiler: </span>)=====";
-
-            stream << R"=====(<div class="btn-group" role="group">)=====";
-            for(auto& compiler : data.compilers){
-                if(compiler == current_compiler){
-                    stream << "<a class=\"btn btn-primary\" href=\"" << filify(compiler)  << "\">" << compiler << "</a>\n";
-                } else {
-                    stream << "<a class=\"btn btn-default\" href=\"" << filify(compiler)  << "\">" << compiler << "</a>\n";
-                }
-            }
-            stream << "</div>\n";
-
-            stream << "</div>\n"; stream << "</div>\n"; } else {
-            stream << "<div>\n";
-            stream << R"=====(<span>Select compiler: </span>)=====";
-            for(auto& compiler : data.compilers){
-                stream << "<a href=\"" << filify(compiler)  << "\">" << compiler << "</a>\n";
-            }
-            stream << "</div>\n";
-        }
+        theme.compiler_buttons(stream, current_compiler);
     }
 }
 
-void start_graph(std::ostream& stream, cxxopts::Options& options, const reports_data& data, std::size_t& id, const std::string& title){
-    if(options["theme"].as<std::string>() == "bootstrap"){
-        //TODO Improve this to select correctly the width
-        if(data.compilers.size() > 1 && !options.count("disable-compiler")){
-            stream << "<div class=\"col-xs-4\">\n";
-        } else {
-            stream << "<div class=\"col-xs-6\">\n";
-        }
-        stream << "<div id=\"chart_" << id << "\" style=\"min-width:400px; height: 400px;\"></div>\n";
-    } else {
-        stream << "<div id=\"chart_" << id << "\" style=\"float:left; width:600px; height: 400px; margin: 5 auto; padding-right: 10px; \"></div>\n";
-    }
+template<typename Theme>
+void start_graph(Theme& theme, std::ostream& stream, std::size_t& id, const std::string& title){
+    theme.before_graph(stream, id);
 
     stream << "<script>\n";
 
@@ -238,14 +147,14 @@ void start_graph(std::ostream& stream, cxxopts::Options& options, const reports_
     ++id;
 }
 
-void end_graph(std::ostream& stream, cxxopts::Options& options){ stream << "});\n";
+template<typename Theme>
+void end_graph(Theme& theme, std::ostream& stream){
+    stream << "});\n";
     stream << "});\n";
 
     stream << "</script>\n";
 
-    if(options["theme"].as<std::string>() == "bootstrap"){
-        stream << "</div>\n";
-    }
+    theme.after_graph(stream);
 }
 
 void y_axis_configuration(std::ostream& stream){
@@ -257,8 +166,9 @@ void y_axis_configuration(std::ostream& stream){
     stream << "tooltip: { valueSuffix: 'us' },\n";
 }
 
-void generate_run_graph(std::ostream& stream, cxxopts::Options& options, const reports_data& data, std::size_t& id, const rapidjson::Value& result){
-    start_graph(stream, options, data, id, std::string("Last run:") + result["title"].GetString());
+template<typename Theme>
+void generate_run_graph(Theme& theme, std::ostream& stream, std::size_t& id, const rapidjson::Value& result){
+    start_graph(theme, stream, id, std::string("Last run:") + result["title"].GetString());
 
     stream << "xAxis: { categories: [\n";
 
@@ -290,11 +200,12 @@ void generate_run_graph(std::ostream& stream, cxxopts::Options& options, const r
     stream << "}\n";
     stream << "]\n";
 
-    end_graph(stream, options);
+    end_graph(theme, stream);
 }
 
-void generate_compiler_graph(std::ostream& stream, cxxopts::Options& options, const reports_data& data, std::size_t& id, const rapidjson::Value& base_result, const document_t& base){
-    start_graph(stream, options, data, id, std::string("Compiler:") + base_result["title"].GetString());
+template<typename Theme>
+void generate_compiler_graph(Theme& theme, std::ostream& stream, std::size_t& id, const rapidjson::Value& base_result, const cpm::document_t& base){
+    start_graph(theme, stream, id, std::string("Compiler:") + base_result["title"].GetString());
 
     stream << "xAxis: { categories: [\n";
 
@@ -313,7 +224,7 @@ void generate_compiler_graph(std::ostream& stream, cxxopts::Options& options, co
     stream << "series: [\n";
 
     comma = "";
-    for(auto& document : data.documents){
+    for(auto& document : theme.data.documents){
         //Filter different tag
         if(std::string(document["tag"].GetString()) != std::string(base["tag"].GetString())){
             continue;
@@ -341,23 +252,24 @@ void generate_compiler_graph(std::ostream& stream, cxxopts::Options& options, co
 
     stream << "]\n";
 
-    end_graph(stream, options);
+    end_graph(theme, stream);
 }
 
-void generate_time_graph(std::ostream& stream, cxxopts::Options& options, const reports_data& data, std::size_t& id, const rapidjson::Value& result, const std::vector<document_cref>& documents){
-    start_graph(stream, options, data, id, std::string("Time:") + result["title"].GetString());
+template<typename Theme>
+void generate_time_graph(Theme& theme, std::ostream& stream, std::size_t& id, const rapidjson::Value& result, const std::vector<cpm::document_cref>& documents){
+    start_graph(theme, stream, id, std::string("Time:") + result["title"].GetString());
 
     stream << "xAxis: { type: 'datetime', title: { text: 'Date' } },\n";
 
     y_axis_configuration(stream);
 
-    if(!options.count("time-sizes")){
+    if(!theme.options.count("time-sizes")){
         stream << "legend: { enabled: false },\n";
     }
 
     stream << "series: [\n";
 
-    if(options.count("time-sizes")){
+    if(theme.options.count("time-sizes")){
         std::string comma = "";
         for(auto& r : result["results"]){
             stream << comma << "{\n";
@@ -368,7 +280,7 @@ void generate_time_graph(std::ostream& stream, cxxopts::Options& options, const 
             std::string inner_comma = "";
 
             for(auto& document_r : documents){
-                auto& document = static_cast<const document_t&>(document_r);
+                auto& document = static_cast<const cpm::document_t&>(document_r);
 
                 for(auto& o_result : document["results"]){
                     if(std::string(o_result["title"].GetString()) == std::string(result["title"].GetString())){
@@ -396,7 +308,7 @@ void generate_time_graph(std::ostream& stream, cxxopts::Options& options, const 
         std::string comma = "";
 
         for(auto& document_r : documents){
-            auto& document = static_cast<const document_t&>(document_r);
+            auto& document = static_cast<const cpm::document_t&>(document_r);
 
             for(auto& o_result : document["results"]){
                 if(std::string(o_result["title"].GetString()) == std::string(result["title"].GetString())){
@@ -414,11 +326,12 @@ void generate_time_graph(std::ostream& stream, cxxopts::Options& options, const 
 
     stream << "]\n";
 
-    end_graph(stream, options);
+    end_graph(theme, stream);
 }
 
-void generate_section_run_graph(std::ostream& stream, cxxopts::Options& options, const reports_data& data, std::size_t& id, const rapidjson::Value& section){
-    start_graph(stream, options, data, id, std::string("Last run:") + section["name"].GetString());
+template<typename Theme>
+void generate_section_run_graph(Theme& theme, std::ostream& stream, std::size_t& id, const rapidjson::Value& section){
+    start_graph(theme, stream, id, std::string("Last run:") + section["name"].GetString());
 
     stream << "xAxis: { categories: [\n";
 
@@ -458,10 +371,12 @@ void generate_section_run_graph(std::ostream& stream, cxxopts::Options& options,
 
     stream << "]\n";
 
-    end_graph(stream, options);
+    end_graph(theme, stream);
 }
-void generate_section_time_graph(std::ostream& stream, cxxopts::Options& options, const reports_data& data, std::size_t& id, const rapidjson::Value& section, const std::vector<document_cref>& documents){
-    start_graph(stream, options, data, id, std::string("Time:") + section["name"].GetString());
+
+template<typename Theme>
+void generate_section_time_graph(Theme& theme, std::ostream& stream, std::size_t& id, const rapidjson::Value& section, const std::vector<cpm::document_cref>& documents){
+    start_graph(theme, stream, id, std::string("Time:") + section["name"].GetString());
 
     stream << "xAxis: { type: 'datetime', title: { text: 'Date' } },\n";
 
@@ -481,7 +396,7 @@ void generate_section_time_graph(std::ostream& stream, cxxopts::Options& options
         std::string comma_inner = "";
 
         for(auto& r_doc_r : documents){
-            auto& r_doc = static_cast<const document_t&>(r_doc_r);
+            auto& r_doc = static_cast<const cpm::document_t&>(r_doc_r);
 
             for(auto& r_section : r_doc["sections"]){
                 if(std::string(r_section["name"].GetString()) == std::string(section["name"].GetString())){
@@ -504,10 +419,11 @@ void generate_section_time_graph(std::ostream& stream, cxxopts::Options& options
 
     stream << "]\n";
 
-    end_graph(stream, options);
+    end_graph(theme, stream);
 }
 
-void generate_standard_page(const std::string& target_folder, const std::string& file, const reports_data& data, const document_t& doc, const std::vector<document_cref>& documents, cxxopts::Options& options){
+template<typename Theme>
+void generate_standard_page(Theme& theme, const std::string& target_folder, const std::string& file, const cpm::reports_data& data, const cpm::document_t& doc, const std::vector<cpm::document_cref>& documents, cxxopts::Options& options){
     bool time_graphs = !options.count("disable-time") && documents.size() > 1;
     bool compiler_graphs = !options.count("disable-compiler") && data.compilers.size() > 1;
 
@@ -515,11 +431,8 @@ void generate_standard_page(const std::string& target_folder, const std::string&
 
     std::ofstream stream(target_file);
 
-    header(stream, options);
-
-    information(stream, doc, options);
-
-    compiler_buttons(stream, data, doc, options);
+    //Header of the page
+    header(theme, stream);
 
     //Configure the highcharts theme
     if(options["hctheme"].as<std::string>() == "dark_unica"){
@@ -528,54 +441,62 @@ void generate_standard_page(const std::string& target_folder, const std::string&
         stream << "</script>\n";
     }
 
+    //Information block about the last run
+    information(theme, stream, doc);
+
+    //Compiler selection
+    compiler_buttons(theme, stream, data, doc);
+
     std::size_t id = 1;
     for(const auto& result : doc["results"]){
-        if(options["theme"].as<std::string>() == "bootstrap"){
-            stream << "<div class=\"page-header\">\n";
-            stream << "<h2>" << result["title"].GetString() << "</h2>\n";
-            stream << "</div>\n";
-            stream << "<div class=\"row\">\n";
-        } else {
-            stream << "<h2 style=\"clear:both\">" << result["title"].GetString() << "</h2>\n";
-        }
+        theme.before_result(stream, result["title"].GetString());
 
-        generate_run_graph(stream, options, data, id, result);
+        generate_run_graph(theme, stream, id, result);
 
         if(time_graphs){
-            generate_time_graph(stream, options, data, id, result, documents);
+            generate_time_graph(theme, stream, id, result, documents);
         }
 
         if(compiler_graphs){
-            generate_compiler_graph(stream, options, data, id, result, doc);
+            generate_compiler_graph(theme, stream, id, result, doc);
         }
 
-        if(options["theme"].as<std::string>() == "bootstrap"){
-            stream << "</div>\n";
-        }
+        theme.after_result(stream);
     }
 
     for(auto& section : doc["sections"]){
-        if(options["theme"].as<std::string>() == "bootstrap"){
-            stream << "<div class=\"page-header\">\n";
-            stream << "<h2>" << section["name"].GetString() << "</h2>\n";
-            stream << "</div>\n";
-            stream << "<div class=\"row\">\n";
-        } else {
-            stream << "<h2 style=\"clear:both\">" << section["name"].GetString() << "</h2>\n";
-        }
+        theme.before_result(stream, section["name"].GetString());
 
-        generate_section_run_graph(stream, options, data, id, section);
+        generate_section_run_graph(theme, stream, id, section);
 
         if(time_graphs){
-            generate_section_time_graph(stream, options, data, id, section, documents);
+            generate_section_time_graph(theme, stream, id, section, documents);
         }
 
-        if(options["theme"].as<std::string>() == "bootstrap"){
-            stream << "</div>\n";
-        }
+        theme.after_result(stream);
     }
 
-    footer(stream, options);
+    footer(theme, stream);
+}
+
+template<typename Theme>
+void generate_pages(const std::string& target_folder, cpm::reports_data& data, cxxopts::Options& options){
+    Theme theme(data, options);
+
+    //Generate the index
+    auto& base = data.documents.back();
+    generate_standard_page(theme, target_folder, "index.html", data, base, select_documents(data.documents, base), options);
+
+    std::set<std::string> compilers(data.compilers);
+
+    //Generate the compiler pages
+    std::for_each(data.documents.rbegin(), data.documents.rend(), [&](cpm::document_t& d){
+        std::string compiler{d["compiler"].GetString()};
+        if(compilers.count(compiler)){
+            generate_standard_page(theme, target_folder, cpm::filify(compiler), data, d, select_documents(data.documents, d), options);
+            compilers.erase(compiler);
+        }
+    });
 }
 
 } //end of anonymous namespace
@@ -626,7 +547,7 @@ int main(int argc, char* argv[]){
         return -1;
     }
 
-    reports_data data;
+    cpm::reports_data data;
 
     //Get all the documents
     data.documents = read(source_folder);
@@ -641,20 +562,11 @@ int main(int argc, char* argv[]){
         data.compilers.insert(doc["compiler"].GetString());
     }
 
-    //Generate the index
-    auto& base = data.documents.back();
-    generate_standard_page(target_folder, "index.html", data, base, select_documents(data.documents, base), options);
-
-    std::set<std::string> compilers(data.compilers);
-
-    //Generate the compiler pages
-    std::for_each(data.documents.rbegin(), data.documents.rend(), [&](document_t& d){
-        std::string compiler{d["compiler"].GetString()};
-        if(compilers.count(compiler)){
-            generate_standard_page(target_folder, filify(compiler), data, d, select_documents(data.documents, d), options);
-            compilers.erase(compiler);
-        }
-    });
+    if(options["theme"].as<std::string>() == "raw"){
+        generate_pages<cpm::raw_theme>(target_folder, data, options);
+    } else {
+        generate_pages<cpm::bootstrap_theme>(target_folder, data, options);
+    }
 
     return 0;
 }
