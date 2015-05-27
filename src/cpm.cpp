@@ -230,9 +230,7 @@ void compiler_buttons(std::ostream& stream, const std::vector<document_t>& docum
             }
             stream << "</div>\n";
 
-            stream << "</div>\n";
-            stream << "</div>\n";
-        } else {
+            stream << "</div>\n"; stream << "</div>\n"; } else {
             stream << "<div>\n";
             stream << R"=====(<span>Select compiler: </span>)=====";
             for(auto& compiler : compilers){
@@ -557,6 +555,7 @@ int main(int argc, char* argv[]){
             ("o,output", "Output folder", cxxopts::value<std::string>()->default_value("reports"), "output_folder")
             ("input", "Input results", cxxopts::value<std::string>())
             ("d,disable-time", "Disable time graphs")
+            ("disable-compiler", "Disable compiler graphs")
             ("h,help", "Print help")
             ;
 
