@@ -33,16 +33,37 @@ inline auto end(rapidjson::Value& value){
     return value.End();
 }
 
+inline auto begin(const rapidjson::Value& value){
+    return value.Begin();
+}
+
+inline auto end(const rapidjson::Value& value){
+    return value.End();
+}
+
 } //end of namespace rapidjson
 
 namespace {
 
 using document_t = rapidjson::Document;
 using document_ref = std::reference_wrapper<document_t>;
+using document_cref = std::reference_wrapper<const document_t>;
 
 std::string dark_unica_theme =
 #include "dark_unica.inc"
 ;
+
+std::string filify(std::string name){
+    std::string n{std::move(name)};
+
+    //Replace all spaces
+    std::replace(n.begin(), n.end(), ' ', '_');
+
+    //Append extension
+    n += ".html";
+
+    return n;
+}
 
 document_t read_document(const std::string& folder, const std::string& file){
     FILE* pFile = fopen((folder + "/" + file).c_str(), "rb");
@@ -80,14 +101,14 @@ std::vector<document_t> read(const std::string& source_folder){
 }
 
 //Select relevant documents
-std::vector<document_ref> select_documents(std::vector<document_t>& documents, document_t& base){
-    std::vector<document_ref> relevant;
+std::vector<document_cref> select_documents(std::vector<document_t>& documents, document_t& base){
+    std::vector<document_cref> relevant;
 
     for(auto& doc : documents){
         //Two documents are relevant if the configuration
         //is the same
         if(std::string(doc["compiler"].GetString()) == std::string(base["compiler"].GetString())){
-            relevant.push_back(std::ref(doc));
+            relevant.push_back(std::cref(doc));
         }
     }
 
@@ -161,7 +182,7 @@ void footer(std::ostream& stream, cxxopts::Options& options){
     stream << "</html>\n";
 }
 
-void information(std::ostream& stream, document_t& doc, cxxopts::Options& options){
+void information(std::ostream& stream, const document_t& doc, cxxopts::Options& options){
     if(options["theme"].as<std::string>() == "bootstrap"){
         stream << "<div class=\"jumbotron\">\n";
         stream << "<div class=\"container-fluid\">\n";
@@ -183,7 +204,7 @@ void information(std::ostream& stream, document_t& doc, cxxopts::Options& option
     }
 }
 
-void compiler_buttons(std::ostream& stream, std::vector<document_t>& documents, document_t& base, cxxopts::Options& options){
+void compiler_buttons(std::ostream& stream, const std::vector<document_t>& documents, const document_t& base, cxxopts::Options& options){
     std::set<std::string> compilers;
 
     for(auto& doc : documents){
@@ -199,12 +220,12 @@ void compiler_buttons(std::ostream& stream, std::vector<document_t>& documents, 
 
             stream << R"=====(<span>Select compiler: </span>)=====";
 
-            stream << R"=====(<div class="btn-group">)=====";
+            stream << R"=====(<div class="btn-group" role="group">)=====";
             for(auto& compiler : compilers){
                 if(compiler == current_compiler){
-                    stream << "<button class=\"btn btn-primary\">" << compiler << "</button>\n";
+                    stream << "<a class=\"btn btn-primary\" href=\"" << filify(compiler)  << "\">" << compiler << "</a>\n";
                 } else {
-                    stream << "<button class=\"btn\">" << compiler << "</button>\n";
+                    stream << "<a class=\"btn btn-default\" href=\"" << filify(compiler)  << "\">" << compiler << "</a>\n";
                 }
             }
             stream << "</div>\n";
@@ -215,7 +236,7 @@ void compiler_buttons(std::ostream& stream, std::vector<document_t>& documents, 
             stream << "<div>\n";
             stream << R"=====(<span>Select compiler: </span>)=====";
             for(auto& compiler : compilers){
-                stream << "<button>" << compiler << "</button>\n";
+                stream << "<a href=\"" << filify(compiler)  << "\">" << compiler << "</a>\n";
             }
             stream << "</div>\n";
         }
@@ -239,8 +260,7 @@ void start_graph(std::ostream& stream, cxxopts::Options& options, std::size_t& i
     ++id;
 }
 
-void end_graph(std::ostream& stream, cxxopts::Options& options){
-    stream << "});\n";
+void end_graph(std::ostream& stream, cxxopts::Options& options){ stream << "});\n";
     stream << "});\n";
 
     stream << "</script>\n";
@@ -259,7 +279,7 @@ void y_axis_configuration(std::ostream& stream){
     stream << "tooltip: { valueSuffix: 'us' },\n";
 }
 
-void generate_run_graph(std::ostream& stream, cxxopts::Options& options, std::size_t& id, rapidjson::Value& result){
+void generate_run_graph(std::ostream& stream, cxxopts::Options& options, std::size_t& id, const rapidjson::Value& result){
     start_graph(stream, options, id, std::string("Last run:") + result["title"].GetString());
 
     stream << "xAxis: { categories: [\n";
@@ -295,7 +315,7 @@ void generate_run_graph(std::ostream& stream, cxxopts::Options& options, std::si
     end_graph(stream, options);
 }
 
-void generate_time_graph(std::ostream& stream, cxxopts::Options& options, std::size_t& id, rapidjson::Value& result, std::vector<document_ref>& documents){
+void generate_time_graph(std::ostream& stream, cxxopts::Options& options, std::size_t& id, const rapidjson::Value& result, const std::vector<document_cref>& documents){
     start_graph(stream, options, id, std::string("Time:") + result["title"].GetString());
 
     stream << "xAxis: { type: 'datetime', title: { text: 'Date' } },\n";
@@ -319,7 +339,7 @@ void generate_time_graph(std::ostream& stream, cxxopts::Options& options, std::s
             std::string inner_comma = "";
 
             for(auto& document_r : documents){
-                auto& document = static_cast<document_t&>(document_r);
+                auto& document = static_cast<const document_t&>(document_r);
 
                 for(auto& o_result : document["results"]){
                     if(std::string(o_result["title"].GetString()) == std::string(result["title"].GetString())){
@@ -347,7 +367,7 @@ void generate_time_graph(std::ostream& stream, cxxopts::Options& options, std::s
         std::string comma = "";
 
         for(auto& document_r : documents){
-            auto& document = static_cast<document_t&>(document_r);
+            auto& document = static_cast<const document_t&>(document_r);
 
             for(auto& o_result : document["results"]){
                 if(std::string(o_result["title"].GetString()) == std::string(result["title"].GetString())){
@@ -368,7 +388,7 @@ void generate_time_graph(std::ostream& stream, cxxopts::Options& options, std::s
     end_graph(stream, options);
 }
 
-void generate_section_run_graph(std::ostream& stream, cxxopts::Options& options, std::size_t& id, rapidjson::Value& section){
+void generate_section_run_graph(std::ostream& stream, cxxopts::Options& options, std::size_t& id, const rapidjson::Value& section){
     start_graph(stream, options, id, std::string("Last run:") + section["name"].GetString());
 
     stream << "xAxis: { categories: [\n";
@@ -411,7 +431,7 @@ void generate_section_run_graph(std::ostream& stream, cxxopts::Options& options,
 
     end_graph(stream, options);
 }
-void generate_section_time_graph(std::ostream& stream, cxxopts::Options& options, std::size_t& id, rapidjson::Value& section, std::vector<document_ref>& documents){
+void generate_section_time_graph(std::ostream& stream, cxxopts::Options& options, std::size_t& id, const rapidjson::Value& section, const std::vector<document_cref>& documents){
     start_graph(stream, options, id, std::string("Time:") + section["name"].GetString());
 
     stream << "xAxis: { type: 'datetime', title: { text: 'Date' } },\n";
@@ -432,7 +452,7 @@ void generate_section_time_graph(std::ostream& stream, cxxopts::Options& options
         std::string comma_inner = "";
 
         for(auto& r_doc_r : documents){
-            auto& r_doc = static_cast<document_t&>(r_doc_r);
+            auto& r_doc = static_cast<const document_t&>(r_doc_r);
 
             for(auto& r_section : r_doc["sections"]){
                 if(std::string(r_section["name"].GetString()) == std::string(section["name"].GetString())){
@@ -456,6 +476,72 @@ void generate_section_time_graph(std::ostream& stream, cxxopts::Options& options
     stream << "]\n";
 
     end_graph(stream, options);
+}
+
+void generate_standard_page(const std::string& target_folder, const std::string& file, const std::vector<document_t>& all_documents, const document_t& doc, const std::vector<document_cref>& documents, cxxopts::Options& options){
+    bool time_graphs = !options.count("disable-time");
+
+    std::string target_file = target_folder + "/" + file;
+
+    std::ofstream stream(target_file);
+
+    header(stream, options);
+
+    information(stream, doc, options);
+
+    compiler_buttons(stream, all_documents, doc, options);
+
+    //Configure the highcharts theme
+    if(options["hctheme"].as<std::string>() == "dark_unica"){
+        stream << "<script>\n" << "\n";
+        stream << dark_unica_theme << "\n";
+        stream << "</script>\n";
+    }
+
+    std::size_t id = 1;
+    for(const auto& result : doc["results"]){
+        if(options["theme"].as<std::string>() == "bootstrap"){
+            stream << "<div class=\"page-header\">\n";
+            stream << "<h2>" << result["title"].GetString() << "</h2>\n";
+            stream << "</div>\n";
+            stream << "<div class=\"row\">\n";
+        } else {
+            stream << "<h2 style=\"clear:both\">" << result["title"].GetString() << "</h2>\n";
+        }
+
+        generate_run_graph(stream, options, id, result);
+
+        if(time_graphs){
+            generate_time_graph(stream, options, id, result, documents);
+        }
+
+        if(options["theme"].as<std::string>() == "bootstrap"){
+            stream << "</div>\n";
+        }
+    }
+
+    for(auto& section : doc["sections"]){
+        if(options["theme"].as<std::string>() == "bootstrap"){
+            stream << "<div class=\"page-header\">\n";
+            stream << "<h2>" << section["name"].GetString() << "</h2>\n";
+            stream << "</div>\n";
+            stream << "<div class=\"row\">\n";
+        } else {
+            stream << "<h2 style=\"clear:both\">" << section["name"].GetString() << "</h2>\n";
+        }
+
+        generate_section_run_graph(stream, options, id, section);
+
+        if(time_graphs){
+            generate_section_time_graph(stream, options, id, section, documents);
+        }
+
+        if(options["theme"].as<std::string>() == "bootstrap"){
+            stream << "</div>\n";
+        }
+    }
+
+    footer(stream, options);
 }
 
 } //end of anonymous namespace
@@ -505,10 +591,6 @@ int main(int argc, char* argv[]){
         return -1;
     }
 
-    bool time_graphs = !options.count("disable-time");
-
-    std::string target_file = target_folder + "/index.html";
-
     //Get all the documents
     auto all_documents = read(source_folder);
 
@@ -517,71 +599,24 @@ int main(int argc, char* argv[]){
         return -1;
     }
 
-    //Get the most recent document as base
-    auto& doc = all_documents.back();
+    std::set<std::string> compilers;
 
-    //Select the document for time graphs
-    auto documents = select_documents(all_documents, doc);
-
-    std::ofstream stream(target_file);
-
-    header(stream, options);
-
-    information(stream, doc, options);
-
-    compiler_buttons(stream, all_documents, doc, options);
-
-    //Configure the highcharts theme
-    if(options["hctheme"].as<std::string>() == "dark_unica"){
-        stream << "<script>\n" << "\n";
-        stream << dark_unica_theme << "\n";
-        stream << "</script>\n";
+    for(auto& doc : all_documents){
+        compilers.insert(doc["compiler"].GetString());
     }
 
-    std::size_t id = 1;
-    for(auto& result : doc["results"]){
-        if(options["theme"].as<std::string>() == "bootstrap"){
-            stream << "<div class=\"page-header\">\n";
-            stream << "<h2>" << result["title"].GetString() << "</h2>\n";
-            stream << "</div>\n";
-            stream << "<div class=\"row\">\n";
-        } else {
-            stream << "<h2 style=\"clear:both\">" << result["title"].GetString() << "</h2>\n";
+    //Generate the index
+    auto& base = all_documents.back();
+    generate_standard_page(target_folder, "index.html", all_documents, base, select_documents(all_documents, base), options);
+
+    //Generate the compiler pages
+    std::for_each(all_documents.rbegin(), all_documents.rend(), [&](document_t& d){
+        std::string compiler{d["compiler"].GetString()};
+        if(compilers.count(compiler)){
+            generate_standard_page(target_folder, filify(compiler), all_documents, d, select_documents(all_documents, d), options);
+            compilers.erase(compiler);
         }
-
-        generate_run_graph(stream, options, id, result);
-
-        if(time_graphs){
-            generate_time_graph(stream, options, id, result, documents);
-        }
-
-        if(options["theme"].as<std::string>() == "bootstrap"){
-            stream << "</div>\n";
-        }
-    }
-
-    for(auto& section : doc["sections"]){
-        if(options["theme"].as<std::string>() == "bootstrap"){
-            stream << "<div class=\"page-header\">\n";
-            stream << "<h2>" << section["name"].GetString() << "</h2>\n";
-            stream << "</div>\n";
-            stream << "<div class=\"row\">\n";
-        } else {
-            stream << "<h2 style=\"clear:both\">" << section["name"].GetString() << "</h2>\n";
-        }
-
-        generate_section_run_graph(stream, options, id, section);
-
-        if(time_graphs){
-            generate_section_time_graph(stream, options, id, section, documents);
-        }
-
-        if(options["theme"].as<std::string>() == "bootstrap"){
-            stream << "</div>\n";
-        }
-    }
-
-    footer(stream, options);
+    });
 
     return 0;
 }
