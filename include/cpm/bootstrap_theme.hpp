@@ -94,13 +94,23 @@ struct bootstrap_theme {
         stream << "</div>\n";
     }
 
-    void before_graph(std::ostream& stream, std::size_t id){
-        //TODO Improve this to select correctly the width
-        if(data.compilers.size() > 1 && !options.count("disable-compiler")){
-            stream << "<div class=\"col-xs-4\">\n";
-        } else {
-            stream << "<div class=\"col-xs-6\">\n";
+    void start_column(std::ostream& stream){
+        std::size_t columns = 1; //Always the first grapah
+
+        if(data.documents.size() > 1 && !options.count("disable-time")){
+            ++columns;
         }
+
+        if(data.compilers.size() > 1 && !options.count("disable-compiler")){
+            ++columns;
+        } 
+
+        stream << "<div class=\"col-xs-" << 12 / columns << "\">\n";
+    }
+
+    void before_graph(std::ostream& stream, std::size_t id){
+        start_column(stream);
+
         stream << "<div id=\"chart_" << id << "\" style=\"height: 400px;\"></div>\n";
     }
 
@@ -125,12 +135,7 @@ struct bootstrap_theme {
     }
 
     void before_sub_graphs(std::ostream& stream, std::size_t id, std::vector<std::string> graphs){
-        //TODO Improve this to select correctly the width
-        if(data.compilers.size() > 1 && !options.count("disable-compiler")){
-            stream << "<div class=\"col-xs-4\">\n";
-        } else {
-            stream << "<div class=\"col-xs-6\">\n";
-        }
+        start_column(stream);
 
         stream << "<div role=\"tabpanel\">\n";
         stream << "<ul class=\"nav nav-tabs\" role=\"tablist\">\n";
