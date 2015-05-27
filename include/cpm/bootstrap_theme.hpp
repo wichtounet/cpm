@@ -101,7 +101,7 @@ struct bootstrap_theme {
         } else {
             stream << "<div class=\"col-xs-6\">\n";
         }
-        stream << "<div id=\"chart_" << id << "\" style=\"min-width:400px; height: 400px;\"></div>\n";
+        stream << "<div id=\"chart_" << id << "\" style=\"height: 400px;\"></div>\n";
     }
 
     void after_graph(std::ostream& stream){
