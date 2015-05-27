@@ -162,7 +162,7 @@ struct bootstrap_theme {
         }
         stream << "<div role=\"tabpanel\" class=\"tab-pane" << active << "\" id=\"" << sub_id << "\">\n";
 
-        stream << "<div id=\"chart_" << id << "-" << sub << "\" style=\"width:min-width:400px; height: 400px;\"></div>\n";
+        stream << "<div id=\"chart_" << id << "-" << sub << "\" style=\"height: 400px;\"></div>\n";
     }
 
     void after_sub_graph(std::ostream& stream){
