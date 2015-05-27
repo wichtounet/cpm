@@ -54,9 +54,7 @@ struct raw_theme {
         stream << "<div id=\"chart_" << id << "-" << sub << "\" style=\"float:left; width:600px; height: 400px; margin: 5 auto; padding-right: 10px; padding-bottom: 10px; \"></div>\n";
     }
 
-    void after_sub_graph(std::ostream& stream){
-        stream << "</div>\n";
-    }
+    void after_sub_graph(std::ostream& /*stream*/){}
 };
 
 } //end of namespace cpm
