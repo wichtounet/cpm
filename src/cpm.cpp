@@ -16,38 +16,19 @@
 
 #include "cxxopts.hpp"
 
-#include "rapidjson/document.h"
-#include "rapidjson/filereadstream.h"
-
 #include "cpm/io.hpp"
-
-//Allow range-based for loop on rapidjson objects
-
-namespace rapidjson {
-
-inline auto begin(rapidjson::Value& value){
-    return value.Begin();
-}
-
-inline auto end(rapidjson::Value& value){
-    return value.End();
-}
-
-inline auto begin(const rapidjson::Value& value){
-    return value.Begin();
-}
-
-inline auto end(const rapidjson::Value& value){
-    return value.End();
-}
-
-} //end of namespace rapidjson
+#include "cpm/rapidjson.hpp"
 
 namespace {
 
 using document_t = rapidjson::Document;
 using document_ref = std::reference_wrapper<document_t>;
 using document_cref = std::reference_wrapper<const document_t>;
+
+struct reports_data {
+    std::set<std::string> compilers;
+    std::vector<document_t> documents;
+};
 
 std::string dark_unica_theme =
 #include "dark_unica.inc"
@@ -204,14 +185,8 @@ void information(std::ostream& stream, const document_t& doc, cxxopts::Options& 
     }
 }
 
-void compiler_buttons(std::ostream& stream, const std::vector<document_t>& documents, const document_t& base, cxxopts::Options& options){
-    std::set<std::string> compilers;
-
-    for(auto& doc : documents){
-        compilers.insert(doc["compiler"].GetString());
-    }
-
-    if(compilers.size() > 1){
+void compiler_buttons(std::ostream& stream, const reports_data& data, const document_t& base, cxxopts::Options& options){
+    if(data.compilers.size() > 1){
         std::string current_compiler{base["compiler"].GetString()};
 
         if(options["theme"].as<std::string>() == "bootstrap"){
@@ -221,7 +196,7 @@ void compiler_buttons(std::ostream& stream, const std::vector<document_t>& docum
             stream << R"=====(<span>Select compiler: </span>)=====";
 
             stream << R"=====(<div class="btn-group" role="group">)=====";
-            for(auto& compiler : compilers){
+            for(auto& compiler : data.compilers){
                 if(compiler == current_compiler){
                     stream << "<a class=\"btn btn-primary\" href=\"" << filify(compiler)  << "\">" << compiler << "</a>\n";
                 } else {
@@ -233,7 +208,7 @@ void compiler_buttons(std::ostream& stream, const std::vector<document_t>& docum
             stream << "</div>\n"; stream << "</div>\n"; } else {
             stream << "<div>\n";
             stream << R"=====(<span>Select compiler: </span>)=====";
-            for(auto& compiler : compilers){
+            for(auto& compiler : data.compilers){
                 stream << "<a href=\"" << filify(compiler)  << "\">" << compiler << "</a>\n";
             }
             stream << "</div>\n";
@@ -476,7 +451,7 @@ void generate_section_time_graph(std::ostream& stream, cxxopts::Options& options
     end_graph(stream, options);
 }
 
-void generate_standard_page(const std::string& target_folder, const std::string& file, const std::vector<document_t>& all_documents, const document_t& doc, const std::vector<document_cref>& documents, cxxopts::Options& options){
+void generate_standard_page(const std::string& target_folder, const std::string& file, const reports_data& data, const document_t& doc, const std::vector<document_cref>& documents, cxxopts::Options& options){
     bool time_graphs = !options.count("disable-time");
 
     std::string target_file = target_folder + "/" + file;
@@ -487,7 +462,7 @@ void generate_standard_page(const std::string& target_folder, const std::string&
 
     information(stream, doc, options);
 
-    compiler_buttons(stream, all_documents, doc, options);
+    compiler_buttons(stream, data, doc, options);
 
     //Configure the highcharts theme
     if(options["hctheme"].as<std::string>() == "dark_unica"){
@@ -590,29 +565,32 @@ int main(int argc, char* argv[]){
         return -1;
     }
 
-    //Get all the documents
-    auto all_documents = read(source_folder);
+    reports_data data;
 
-    if(all_documents.empty()){
+    //Get all the documents
+    data.documents = read(source_folder);
+
+    if(data.documents.empty()){
         std::cout << "Unable to read any files" << std::endl;
         return -1;
     }
 
-    std::set<std::string> compilers;
-
-    for(auto& doc : all_documents){
-        compilers.insert(doc["compiler"].GetString());
+    //Collect the list of compilers
+    for(auto& doc : data.documents){
+        data.compilers.insert(doc["compiler"].GetString());
     }
 
     //Generate the index
-    auto& base = all_documents.back();
-    generate_standard_page(target_folder, "index.html", all_documents, base, select_documents(all_documents, base), options);
+    auto& base = data.documents.back();
+    generate_standard_page(target_folder, "index.html", data, base, select_documents(data.documents, base), options);
+
+    std::set<std::string> compilers(data.compilers);
 
     //Generate the compiler pages
-    std::for_each(all_documents.rbegin(), all_documents.rend(), [&](document_t& d){
+    std::for_each(data.documents.rbegin(), data.documents.rend(), [&](document_t& d){
         std::string compiler{d["compiler"].GetString()};
         if(compilers.count(compiler)){
-            generate_standard_page(target_folder, filify(compiler), all_documents, d, select_documents(all_documents, d), options);
+            generate_standard_page(target_folder, filify(compiler), data, d, select_documents(data.documents, d), options);
             compilers.erase(compiler);
         }
     });
