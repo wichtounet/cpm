@@ -132,7 +132,7 @@ void header(std::ostream& stream, cxxopts::Options& options){
             </div>
             <div class="collapse navbar-collapse" id="navbarCollapse">
             <ul class="nav navbar-nav">
-            <li class="active"><a target="_blank">Home</a></li>
+            <li class="active"><a href="index.html">Home</a></li>
             <li><a href="http://github.com/wichtounet/cpm">Generated with CPM</a></li>
             </ul>
             </div>
