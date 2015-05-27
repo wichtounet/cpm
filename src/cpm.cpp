@@ -84,7 +84,7 @@ std::vector<document_ref> select_documents(std::vector<document_t>& documents, d
     std::vector<document_ref> relevant;
 
     for(auto& doc : documents){
-        //Two documents are relevant if the configuration 
+        //Two documents are relevant if the configuration
         //is the same
         if(std::string(doc["compiler"].GetString()) == std::string(base["compiler"].GetString())){
             relevant.push_back(std::ref(doc));
@@ -183,16 +183,16 @@ void information(std::ostream& stream, document_t& doc, cxxopts::Options& option
     }
 }
 
-void compiler_buttons(std::ostream& stream, std::vector<document_t>& documents, document_t& /*base*/, cxxopts::Options& options){
+void compiler_buttons(std::ostream& stream, std::vector<document_t>& documents, document_t& base, cxxopts::Options& options){
     std::set<std::string> compilers;
 
     for(auto& doc : documents){
         compilers.insert(doc["compiler"].GetString());
     }
 
-    //TODO Change the color of the current compiler
-
     if(compilers.size() > 1){
+        std::string current_compiler{base["compiler"].GetString()};
+
         if(options["theme"].as<std::string>() == "bootstrap"){
             stream << R"=====(<div class="row">)=====";
             stream << R"=====(<div class="col-xs-12">)=====";
@@ -201,7 +201,11 @@ void compiler_buttons(std::ostream& stream, std::vector<document_t>& documents, 
 
             stream << R"=====(<div class="btn-group">)=====";
             for(auto& compiler : compilers){
-                stream << "<button class=\"btn\">" << compiler << "</button>\n";
+                if(compiler == current_compiler){
+                    stream << "<button class=\"btn btn-primary\">" << compiler << "</button>\n";
+                } else {
+                    stream << "<button class=\"btn\">" << compiler << "</button>\n";
+                }
             }
             stream << "</div>\n";
 
