@@ -86,8 +86,9 @@ void header(Theme& theme, std::ostream& stream){
     stream << "<!DOCTYPE html>\n";
     stream << "<html lang=\"en\">\n";
     stream << "<head>\n";
-    
+
     stream << "<title>" << theme.data.documents.back()["name"].GetString() << "</title>\n";
+    stream << "<meta charset=\"UTF-8\">\n";
 
     //We need JQuery
     stream << "<script src=\"http://code.jquery.com/jquery-1.11.3.min.js\"></script>\n";
