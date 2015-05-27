@@ -25,7 +25,7 @@
 namespace {
 
 std::string dark_unica_theme =
-#include "dark_unica.inc"
+#include "dark_unica.inc.js"
 ;
 
 cpm::document_t read_document(const std::string& folder, const std::string& file){
