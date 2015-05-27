@@ -51,7 +51,7 @@ struct raw_theme {
     void after_sub_graphs(std::ostream& /*stream*/){}
 
     void before_sub_graph(std::ostream& stream, std::size_t id, std::size_t sub){
-        stream << "<div id=\"chart_" << id << "-" << sub << "\" style=\"float:left; width:550px; height: 400px;\"></div>\n";
+        stream << "<div id=\"chart_" << id << "-" << sub << "\" style=\"float:left; width:600px; height: 400px; margin: 5 auto; padding-right: 10px; padding-bottom: 10px; \"></div>\n";
     }
 
     void after_sub_graph(std::ostream& stream){
