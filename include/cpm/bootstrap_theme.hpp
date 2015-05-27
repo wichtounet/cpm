@@ -108,14 +108,64 @@ struct bootstrap_theme {
         stream << "</div>\n";
     }
 
-    void before_result(std::ostream& stream, const std::string& title){
+    void before_result(std::ostream& stream, const std::string& title, bool sub = false){
         stream << "<div class=\"page-header\">\n";
         stream << "<h2>" << title << "</h2>\n";
         stream << "</div>\n";
-        stream << "<div class=\"row\">\n";
+
+        if(sub){
+            stream << "<div class=\"row\" style=\"display:flex; align-items: flex-end\">\n";
+        } else {
+            stream << "<div class=\"row\">\n";
+        }
     }
 
     void after_result(std::ostream& stream){
+        stream << "</div>\n";
+    }
+
+    void before_sub_graphs(std::ostream& stream, std::size_t id, std::vector<std::string> graphs){
+        //TODO Improve this to select correctly the width
+        if(data.compilers.size() > 1 && !options.count("disable-compiler")){
+            stream << "<div class=\"col-xs-4\">\n";
+        } else {
+            stream << "<div class=\"col-xs-6\">\n";
+        }
+
+        stream << "<div role=\"tabpanel\">\n";
+        stream << "<ul class=\"nav nav-tabs\" role=\"tablist\">\n";
+
+        std::string active = "class=\"active\"";
+        std::size_t sub = 0;
+        for(auto& g : graphs){
+            auto sub_id = std::string("sub") + std::to_string(id) + "-" + std::to_string(sub++);
+            stream << "<li " << active << " role=\"presentation\"><a href=\"#" << sub_id << "\" aria-controls=\""
+                << sub_id << "\" role=\"tab\" data-toggle=\"tab\">" << g << "</a></li>\n";
+            active = "";
+        }
+
+        stream << "</ul>\n";
+        stream << "<div class=\"tab-content\">\n";
+    }
+
+    void after_sub_graphs(std::ostream& stream){
+        stream << "</div>\n";
+        stream << "</div>\n";
+        stream << "</div>\n";
+    }
+
+    void before_sub_graph(std::ostream& stream, std::size_t id, std::size_t sub){
+        auto sub_id = std::string("sub") + std::to_string(id) + "-" + std::to_string(sub);
+        std::string active;
+        if(sub == 0){
+            active = " active";
+        }
+        stream << "<div role=\"tabpanel\" class=\"tab-pane" << active << "\" id=\"" << sub_id << "\">\n";
+
+        stream << "<div id=\"chart_" << id << "-" << sub << "\" style=\"width:min-width:400px; height: 400px;\"></div>\n";
+    }
+
+    void after_sub_graph(std::ostream& stream){
         stream << "</div>\n";
     }
 };

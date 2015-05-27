@@ -40,11 +40,23 @@ struct raw_theme {
 
     void after_graph(std::ostream& /*stream*/){}
 
-    void before_result(std::ostream& stream, const std::string& title){
+    void before_result(std::ostream& stream, const std::string& title, bool /*sub */ = false){
         stream << "<h2 style=\"clear:both\">" << title << "</h2>\n";
     }
 
     void after_result(std::ostream& /*stream*/){}
+
+    void before_sub_graphs(std::ostream& /*stream*/, std::size_t /*id*/, std::vector<std::string> /*graphs*/){}
+
+    void after_sub_graphs(std::ostream& /*stream*/){}
+
+    void before_sub_graph(std::ostream& stream, std::size_t id, std::size_t sub){
+        stream << "<div id=\"chart_" << id << "-" << sub << "\" style=\"float:left; width:550px; height: 400px;\"></div>\n";
+    }
+
+    void after_sub_graph(std::ostream& stream){
+        stream << "</div>\n";
+    }
 };
 
 } //end of namespace cpm

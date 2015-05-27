@@ -22,6 +22,9 @@
 #include "cpm/raw_theme.hpp"
 #include "cpm/bootstrap_theme.hpp"
 
+//TODO Use all the sizes for section graphs to handle timeouts in some of the graphs
+//TODO Align correctly sections when compiler graphs are generated
+
 namespace {
 
 std::string dark_unica_theme =
@@ -134,27 +137,19 @@ void compiler_buttons(Theme& theme, std::ostream& stream, const cpm::reports_dat
     }
 }
 
-template<typename Theme>
-void start_graph(Theme& theme, std::ostream& stream, std::size_t& id, const std::string& title){
-    theme.before_graph(stream, id);
-
+void start_graph(std::ostream& stream, const std::string& id, const std::string& title){
     stream << "<script>\n";
 
     stream << "$(function () {\n";
-    stream << "$('#chart_" << id << "').highcharts({\n";
+    stream << "$('#" << id << "').highcharts({\n";
     stream << "title: { text: '" << title << "', x: -20 },\n";
-
-    ++id;
 }
 
-template<typename Theme>
-void end_graph(Theme& theme, std::ostream& stream){
+void end_graph(std::ostream& stream){
     stream << "});\n";
     stream << "});\n";
 
     stream << "</script>\n";
-
-    theme.after_graph(stream);
 }
 
 void y_axis_configuration(std::ostream& stream){
@@ -168,7 +163,8 @@ void y_axis_configuration(std::ostream& stream){
 
 template<typename Theme>
 void generate_run_graph(Theme& theme, std::ostream& stream, std::size_t& id, const rapidjson::Value& result){
-    start_graph(theme, stream, id, std::string("Last run:") + result["title"].GetString());
+    theme.before_graph(stream, id);
+    start_graph(stream, std::string("chart_") + std::to_string(id), std::string("Last run:") + result["title"].GetString());
 
     stream << "xAxis: { categories: [\n";
 
@@ -200,12 +196,15 @@ void generate_run_graph(Theme& theme, std::ostream& stream, std::size_t& id, con
     stream << "}\n";
     stream << "]\n";
 
-    end_graph(theme, stream);
+    end_graph(stream);
+    theme.after_graph(stream);
+    ++id;
 }
 
 template<typename Theme>
 void generate_compiler_graph(Theme& theme, std::ostream& stream, std::size_t& id, const rapidjson::Value& base_result, const cpm::document_t& base){
-    start_graph(theme, stream, id, std::string("Compiler:") + base_result["title"].GetString());
+    theme.before_graph(stream, id);
+    start_graph(stream, std::string("chart_") + std::to_string(id), std::string("Compiler:") + base_result["title"].GetString());
 
     stream << "xAxis: { categories: [\n";
 
@@ -252,12 +251,15 @@ void generate_compiler_graph(Theme& theme, std::ostream& stream, std::size_t& id
 
     stream << "]\n";
 
-    end_graph(theme, stream);
+    end_graph(stream);
+    theme.after_graph(stream);
+    ++id;
 }
 
 template<typename Theme>
 void generate_time_graph(Theme& theme, std::ostream& stream, std::size_t& id, const rapidjson::Value& result, const std::vector<cpm::document_cref>& documents){
-    start_graph(theme, stream, id, std::string("Time:") + result["title"].GetString());
+    theme.before_graph(stream, id);
+    start_graph(stream, std::string("chart_") + std::to_string(id), std::string("Time:") + result["title"].GetString());
 
     stream << "xAxis: { type: 'datetime', title: { text: 'Date' } },\n";
 
@@ -326,16 +328,17 @@ void generate_time_graph(Theme& theme, std::ostream& stream, std::size_t& id, co
 
     stream << "]\n";
 
-    end_graph(theme, stream);
+    end_graph(stream);
+    theme.after_graph(stream);
+    ++id;
 }
 
 template<typename Theme>
 void generate_section_run_graph(Theme& theme, std::ostream& stream, std::size_t& id, const rapidjson::Value& section){
-    start_graph(theme, stream, id, std::string("Last run:") + section["name"].GetString());
+    theme.before_graph(stream, id);
+    start_graph(stream, std::string("chart_") + std::to_string(id), std::string("Last run:") + section["name"].GetString());
 
     stream << "xAxis: { categories: [\n";
-
-    //TODO Use all the sizes
 
     std::string comma = "";
     for(auto& r : section["results"][static_cast<rapidjson::SizeType>(0)]["results"]){
@@ -371,12 +374,15 @@ void generate_section_run_graph(Theme& theme, std::ostream& stream, std::size_t&
 
     stream << "]\n";
 
-    end_graph(theme, stream);
+    end_graph(stream);
+    theme.after_graph(stream);
+    ++id;
 }
 
 template<typename Theme>
 void generate_section_time_graph(Theme& theme, std::ostream& stream, std::size_t& id, const rapidjson::Value& section, const std::vector<cpm::document_cref>& documents){
-    start_graph(theme, stream, id, std::string("Time:") + section["name"].GetString());
+    theme.before_graph(stream, id);
+    start_graph(stream, std::string("chart_") + std::to_string(id), std::string("Time:") + section["name"].GetString());
 
     stream << "xAxis: { type: 'datetime', title: { text: 'Date' } },\n";
 
@@ -419,7 +425,91 @@ void generate_section_time_graph(Theme& theme, std::ostream& stream, std::size_t
 
     stream << "]\n";
 
-    end_graph(theme, stream);
+    end_graph(stream);
+    theme.after_graph(stream);
+    ++id;
+}
+
+template<typename T>
+std::vector<std::string> string_collect(const T& parent, const char* attr){
+    std::vector<std::string> values;
+    for(auto& r : parent){
+        values.emplace_back(r[attr].GetString());
+    }
+    return values;
+}
+
+template<typename Theme>
+void generate_section_compiler_graph(Theme& theme, std::ostream& stream, std::size_t& id, const rapidjson::Value& section, const cpm::document_t& base){
+    std::size_t sub_id = 0;
+
+    theme.before_sub_graphs(stream, id, string_collect(section["results"], "name"));
+
+    for(auto& r : section["results"]){
+        theme.before_sub_graph(stream, id, sub_id++);
+
+        start_graph(stream,
+            std::string("chart_") + std::to_string(id) + "-" + std::to_string(sub_id - 1),
+            std::string("Compiler:") + section["name"].GetString() + "-" + r["name"].GetString());
+
+        stream << "xAxis: { categories: [\n";
+
+        std::string comma = "";
+        for(auto& r : section["results"][static_cast<rapidjson::SizeType>(0)]["results"]){
+            stream << comma << "'" << r["size"].GetString() << "'";
+            comma = ",";
+        }
+
+        stream << "]},\n";
+
+        y_axis_configuration(stream);
+
+        stream << "legend: { align: 'left', verticalAlign: 'top', floating: false, borderWidth: 0, y: 20 },\n";
+
+        stream << "series: [\n";
+
+        comma = "";
+        for(auto& document : theme.data.documents){
+            //Filter different tag
+            if(std::string(document["tag"].GetString()) != std::string(base["tag"].GetString())){
+                continue;
+            }
+
+            for(auto& o_section : document["sections"]){
+                if(std::string(o_section["name"].GetString()) == std::string(section["name"].GetString())){
+
+                    for(auto& o_r : o_section["results"]){
+                        if(std::string(o_r["name"].GetString()) == std::string(r["name"].GetString())){
+                            stream << comma << "{\n";
+                            stream << "name: '" << document["compiler"].GetString() << "',\n";
+                            stream << "data: [";
+
+                            std::string inner_comma = "";
+                            for(auto& o_r_r : o_r["results"]){
+                                stream << inner_comma << o_r_r["duration"].GetInt();
+                                inner_comma = ",";
+                            }
+
+                            stream << "]\n";
+                            stream << "}\n";
+
+                            comma = ",";
+                        }
+                    }
+                }
+            }
+        }
+
+        stream << "]\n";
+
+        end_graph(stream);
+
+        theme.after_sub_graph(stream);
+    }
+
+    theme.after_sub_graphs(stream);
+
+    ++id;
 }
 
 template<typename Theme>
@@ -465,12 +555,16 @@ void generate_standard_page(Theme& theme, const std::string& target_folder, cons
     }
 
     for(auto& section : doc["sections"]){
-        theme.before_result(stream, section["name"].GetString());
+        theme.before_result(stream, section["name"].GetString(), compiler_graphs);
 
         generate_section_run_graph(theme, stream, id, section);
 
         if(time_graphs){
             generate_section_time_graph(theme, stream, id, section, documents);
+        }
+
+        if(compiler_graphs){
+            generate_section_compiler_graph(theme, stream, id, section, doc);
         }
 
         theme.after_result(stream);
