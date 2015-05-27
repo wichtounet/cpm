@@ -216,9 +216,14 @@ void compiler_buttons(std::ostream& stream, const reports_data& data, const docu
     }
 }
 
-void start_graph(std::ostream& stream, cxxopts::Options& options, std::size_t& id, const std::string& title){
+void start_graph(std::ostream& stream, cxxopts::Options& options, const reports_data& data, std::size_t& id, const std::string& title){
     if(options["theme"].as<std::string>() == "bootstrap"){
-        stream << "<div class=\"col-xs-6\">\n";
+        //TODO Improve this to select correctly the width
+        if(data.compilers.size() > 1 && !options.count("disable-compiler")){
+            stream << "<div class=\"col-xs-4\">\n";
+        } else {
+            stream << "<div class=\"col-xs-6\">\n";
+        }
         stream << "<div id=\"chart_" << id << "\" style=\"min-width:400px; height: 400px;\"></div>\n";
     } else {
         stream << "<div id=\"chart_" << id << "\" style=\"float:left; width:600px; height: 400px; margin: 5 auto; padding-right: 10px; \"></div>\n";
@@ -252,8 +257,8 @@ void y_axis_configuration(std::ostream& stream){
     stream << "tooltip: { valueSuffix: 'us' },\n";
 }
 
-void generate_run_graph(std::ostream& stream, cxxopts::Options& options, std::size_t& id, const rapidjson::Value& result){
-    start_graph(stream, options, id, std::string("Last run:") + result["title"].GetString());
+void generate_run_graph(std::ostream& stream, cxxopts::Options& options, const reports_data& data, std::size_t& id, const rapidjson::Value& result){
+    start_graph(stream, options, data, id, std::string("Last run:") + result["title"].GetString());
 
     stream << "xAxis: { categories: [\n";
 
@@ -288,8 +293,59 @@ void generate_run_graph(std::ostream& stream, cxxopts::Options& options, std::si
     end_graph(stream, options);
 }
 
-void generate_time_graph(std::ostream& stream, cxxopts::Options& options, std::size_t& id, const rapidjson::Value& result, const std::vector<document_cref>& documents){
-    start_graph(stream, options, id, std::string("Time:") + result["title"].GetString());
+void generate_compiler_graph(std::ostream& stream, cxxopts::Options& options, const reports_data& data, std::size_t& id, const rapidjson::Value& base_result, const document_t& base){
+    start_graph(stream, options, data, id, std::string("Compiler:") + base_result["title"].GetString());
+
+    stream << "xAxis: { categories: [\n";
+
+    std::string comma = "";
+    for(auto& r : base_result["results"]){
+        stream << comma << "'" << r["size"].GetString() << "'";
+        comma = ",";
+    }
+
+    stream << "]},\n";
+
+    y_axis_configuration(stream);
+
+    stream << "legend: { align: 'left', verticalAlign: 'top', floating: false, borderWidth: 0, y: 20 },\n";
+
+    stream << "series: [\n";
+
+    comma = "";
+    for(auto& document : data.documents){
+        //Filter different tag
+        if(std::string(document["tag"].GetString()) != std::string(base["tag"].GetString())){
+            continue;
+        }
+
+        for(auto& result : document["results"]){
+            if(std::string(result["title"].GetString()) == std::string(base_result["title"].GetString())){
+                stream << comma << "{\n";
+                stream << "name: '" << document["compiler"].GetString() << "',\n";
+                stream << "data: [";
+
+                std::string inner_comma = "";
+                for(auto& r : result["results"]){
+                    stream << inner_comma << r["duration"].GetInt();
+                    inner_comma = ",";
+                }
+
+                stream << "]\n";
+                stream << "}\n";
+
+                comma = ",";
+            }
+        }
+    }
+
+    stream << "]\n";
+
+    end_graph(stream, options);
+}
+
+void generate_time_graph(std::ostream& stream, cxxopts::Options& options, const reports_data& data, std::size_t& id, const rapidjson::Value& result, const std::vector<document_cref>& documents){
+    start_graph(stream, options, data, id, std::string("Time:") + result["title"].GetString());
 
     stream << "xAxis: { type: 'datetime', title: { text: 'Date' } },\n";
 
@@ -361,8 +417,8 @@ void generate_time_graph(std::ostream& stream, cxxopts::Options& options, std::s
     end_graph(stream, options);
 }
 
-void generate_section_run_graph(std::ostream& stream, cxxopts::Options& options, std::size_t& id, const rapidjson::Value& section){
-    start_graph(stream, options, id, std::string("Last run:") + section["name"].GetString());
+void generate_section_run_graph(std::ostream& stream, cxxopts::Options& options, const reports_data& data, std::size_t& id, const rapidjson::Value& section){
+    start_graph(stream, options, data, id, std::string("Last run:") + section["name"].GetString());
 
     stream << "xAxis: { categories: [\n";
 
@@ -404,8 +460,8 @@ void generate_section_run_graph(std::ostream& stream, cxxopts::Options& options,
 
     end_graph(stream, options);
 }
-void generate_section_time_graph(std::ostream& stream, cxxopts::Options& options, std::size_t& id, const rapidjson::Value& section, const std::vector<document_cref>& documents){
-    start_graph(stream, options, id, std::string("Time:") + section["name"].GetString());
+void generate_section_time_graph(std::ostream& stream, cxxopts::Options& options, const reports_data& data, std::size_t& id, const rapidjson::Value& section, const std::vector<document_cref>& documents){
+    start_graph(stream, options, data, id, std::string("Time:") + section["name"].GetString());
 
     stream << "xAxis: { type: 'datetime', title: { text: 'Date' } },\n";
 
@@ -452,7 +508,8 @@ void generate_section_time_graph(std::ostream& stream, cxxopts::Options& options
 }
 
 void generate_standard_page(const std::string& target_folder, const std::string& file, const reports_data& data, const document_t& doc, const std::vector<document_cref>& documents, cxxopts::Options& options){
-    bool time_graphs = !options.count("disable-time");
+    bool time_graphs = !options.count("disable-time") && documents.size() > 1;
+    bool compiler_graphs = !options.count("disable-compiler") && data.compilers.size() > 1;
 
     std::string target_file = target_folder + "/" + file;
 
@@ -482,10 +539,14 @@ void generate_standard_page(const std::string& target_folder, const std::string&
             stream << "<h2 style=\"clear:both\">" << result["title"].GetString() << "</h2>\n";
         }
 
-        generate_run_graph(stream, options, id, result);
+        generate_run_graph(stream, options, data, id, result);
 
         if(time_graphs){
-            generate_time_graph(stream, options, id, result, documents);
+            generate_time_graph(stream, options, data, id, result, documents);
+        }
+
+        if(compiler_graphs){
+            generate_compiler_graph(stream, options, data, id, result, doc);
         }
 
         if(options["theme"].as<std::string>() == "bootstrap"){
@@ -503,10 +564,10 @@ void generate_standard_page(const std::string& target_folder, const std::string&
             stream << "<h2 style=\"clear:both\">" << section["name"].GetString() << "</h2>\n";
         }
 
-        generate_section_run_graph(stream, options, id, section);
+        generate_section_run_graph(stream, options, data, id, section);
 
         if(time_graphs){
-            generate_section_time_graph(stream, options, id, section, documents);
+            generate_section_time_graph(stream, options, data, id, section, documents);
         }
 
         if(options["theme"].as<std::string>() == "bootstrap"){
