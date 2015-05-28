@@ -103,7 +103,11 @@ struct bootstrap_theme {
 
         if(data.compilers.size() > 1 && !options.count("disable-compiler")){
             ++columns;
-        } 
+        }
+
+        if(!options.count("disable-summary")){
+            ++columns;
+        }
 
         stream << "<div class=\"col-xs-" << 12 / columns << "\">\n";
     }

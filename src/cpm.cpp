@@ -610,6 +610,7 @@ int main(int argc, char* argv[]){
             ("input", "Input results", cxxopts::value<std::string>())
             ("d,disable-time", "Disable time graphs")
             ("disable-compiler", "Disable compiler graphs")
+            ("disable-summary", "Disable summary table")
             ("h,help", "Print help")
             ;
 
