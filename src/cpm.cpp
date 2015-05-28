@@ -270,6 +270,9 @@ void generate_summary_table(Theme& theme, std::ostream& stream, const rapidjson:
     stream << "<th>First</th>\n";
     stream << "</tr>\n";
 
+    double previous_acc = 0;
+    double first_acc = 0;
+
     for(auto& r : base_result["results"]){
         stream << "<tr>\n";
         stream << "<td>" << r["size"].GetString() << "</td>\n";
@@ -288,15 +291,18 @@ void generate_summary_table(Theme& theme, std::ostream& stream, const rapidjson:
                                 auto current = r["duration"].GetInt();
                                 auto previous = p_r_r["duration"].GetInt();
 
+                                double diff = 0.0;
                                 if(current < previous){
-                                    auto diff = 100.0 * (static_cast<double>(previous) / current) - 100.0;
-                                    stream << "<td><font color=\"green\">-" << diff << "%</font></td>\n";
+                                    diff = -1.0 * (100.0 * (static_cast<double>(previous) / current) - 100.0);
+                                    stream << "<td><font color=\"green\">" << diff << "%</font></td>\n";
                                 } else if(current > previous){
-                                    auto diff = 100.0 * (static_cast<double>(current) / previous) - 100.0;
+                                    diff = 100.0 * (static_cast<double>(current) / previous) - 100.0;
                                     stream << "<td><font color=\"red\">+" << diff << "%</font></td>\n";
                                 } else {
                                     stream << "<td>+0%</td>\n";
                                 }
+
+                                previous_acc += diff;
 
                                 previous_found = true;
                                 break;
@@ -325,15 +331,18 @@ void generate_summary_table(Theme& theme, std::ostream& stream, const rapidjson:
                             auto current = r["duration"].GetInt();
                             auto previous = p_r_r["duration"].GetInt();
 
+                            double diff = 0.0;
                             if(current < previous){
-                                auto diff = 100.0 * (static_cast<double>(previous) / current) - 100.0;
-                                stream << "<td><font color=\"green\">-" << diff << "%</font></td>\n";
+                                diff = -1.0 * (100.0 * (static_cast<double>(previous) / current) - 100.0);
+                                stream << "<td><font color=\"green\">" << diff << "%</font></td>\n";
                             } else if(current > previous){
-                                auto diff = 100.0 * (static_cast<double>(current) / previous) - 100.0;
+                                diff = 100.0 * (static_cast<double>(current) / previous) - 100.0;
                                 stream << "<td><font color=\"red\">+" << diff << "%</font></td>\n";
                             } else {
                                 stream << "<td>+0%</td>\n";
                             }
+
+                            first_acc += diff;
 
                             previous_found = true;
                             break;
@@ -350,7 +359,34 @@ void generate_summary_table(Theme& theme, std::ostream& stream, const rapidjson:
         } else {
             stream << "<td>N/A</td>\n";
         }
+
+        stream << "</tr>\n";
     }
+
+    stream << "<tr>\n";
+    stream << "<td>&nbsp;</td>\n";
+    stream << "<td>&nbsp;</td>\n";
+
+    previous_acc /= base_result["results"].Size();
+    first_acc /= base_result["results"].Size();
+
+    if(previous_acc < 0.0){
+        stream << "<td><font color=\"green\">" << previous_acc << "%</font></td>\n";
+    } else if(previous_acc > 0.0){
+        stream << "<td><font color=\"red\">+" << previous_acc << "%</font></td>\n";
+    } else {
+        stream << "<td>+0%</td>\n";
+    }
+
+    if(first_acc < 0.0){
+        stream << "<td><font color=\"green\">" << first_acc << "%</font></td>\n";
+    } else if(first_acc > 0.0){
+        stream << "<td><font color=\"red\">+" << first_acc << "%</font></td>\n";
+    } else {
+        stream << "<td>+0%</td>\n";
+    }
+
+    stream << "</tr>\n";
 
     theme.after_summary(stream);
 }
