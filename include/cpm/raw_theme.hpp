@@ -55,6 +55,14 @@ struct raw_theme {
     }
 
     void after_sub_graph(std::ostream& /*stream*/){}
+
+    void before_summary(std::ostream& stream){
+        stream << "<table>\n";
+    }
+
+    void after_summary(std::ostream& stream){
+        stream << "</table>\n";
+    }
 };
 
 } //end of namespace cpm

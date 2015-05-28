@@ -177,6 +177,17 @@ struct bootstrap_theme {
     void after_sub_graph(std::ostream& stream){
         stream << "</div>\n";
     }
+
+    void before_summary(std::ostream& stream){
+        start_column(stream);
+
+        stream << "<table class=\"table\">\n";
+    }
+
+    void after_summary(std::ostream& stream){
+        stream << "</table>\n";
+        stream << "</div>\n";
+    }
 };
 
 } //end of namespace cpm

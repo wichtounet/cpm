@@ -260,6 +260,102 @@ void generate_compiler_graph(Theme& theme, std::ostream& stream, std::size_t& id
 }
 
 template<typename Theme>
+void generate_summary_table(Theme& theme, std::ostream& stream, const rapidjson::Value& base_result, const cpm::document_t& base){
+    theme.before_summary(stream);
+
+    stream << "<tr>\n";
+    stream << "<th>Size</th>\n";
+    stream << "<th>Time [us]</th>\n";
+    stream << "<th>Previous</th>\n";
+    stream << "<th>First</th>\n";
+    stream << "</tr>\n";
+
+    for(auto& r : base_result["results"]){
+        stream << "<tr>\n";
+        stream << "<td>" << r["size"].GetString() << "</td>\n";
+        stream << "<td>" << r["duration"].GetInt() << "</td>\n";
+
+        bool previous_found = false;
+
+        //TODO Only selet documents that are relevant (same compiler)
+
+        for(std::size_t i = 0; i < theme.data.documents.size() - 1; ++i){
+            if(&theme.data.documents[i+1] == &base){
+                for(auto& p_r : theme.data.documents[i]["results"]){
+                    if(std::string(p_r["title"].GetString()) == std::string(base_result["title"].GetString())){
+                        for(auto& p_r_r : p_r["results"]){
+                            if(std::string(p_r_r["size"].GetString()) == std::string(r["size"].GetString())){
+                                auto current = r["duration"].GetInt();
+                                auto previous = p_r_r["duration"].GetInt();
+
+                                if(current < previous){
+                                    auto diff = 100.0 * (static_cast<double>(previous) / current) - 100.0;
+                                    stream << "<td><font color=\"green\">-" << diff << "%</font></td>\n";
+                                } else if(current > previous){
+                                    auto diff = 100.0 * (static_cast<double>(current) / previous) - 100.0;
+                                    stream << "<td><font color=\"red\">+" << diff << "%</font></td>\n";
+                                } else {
+                                    stream << "<td>+0%</td>\n";
+                                }
+
+                                previous_found = true;
+                                break;
+                            }
+                        }
+
+                        break;
+                    }
+                }
+
+                break;
+            }
+        }
+
+        if(!previous_found){
+            stream << "<td>N/A</td>\n";
+        }
+
+        if(theme.data.documents.size() > 1){
+            previous_found = false;
+
+            for(auto& p_r : theme.data.documents[0]["results"]){
+                if(std::string(p_r["title"].GetString()) == std::string(base_result["title"].GetString())){
+                    for(auto& p_r_r : p_r["results"]){
+                        if(std::string(p_r_r["size"].GetString()) == std::string(r["size"].GetString())){
+                            auto current = r["duration"].GetInt();
+                            auto previous = p_r_r["duration"].GetInt();
+
+                            if(current < previous){
+                                auto diff = 100.0 * (static_cast<double>(previous) / current) - 100.0;
+                                stream << "<td><font color=\"green\">-" << diff << "%</font></td>\n";
+                            } else if(current > previous){
+                                auto diff = 100.0 * (static_cast<double>(current) / previous) - 100.0;
+                                stream << "<td><font color=\"red\">+" << diff << "%</font></td>\n";
+                            } else {
+                                stream << "<td>+0%</td>\n";
+                            }
+
+                            previous_found = true;
+                            break;
+                        }
+                    }
+
+                    break;
+                }
+            }
+
+            if(!previous_found){
+                stream << "<td>N/A</td>\n";
+            }
+        } else {
+            stream << "<td>N/A</td>\n";
+        }
+    }
+
+    theme.after_summary(stream);
+}
+
+template<typename Theme>
 void generate_time_graph(Theme& theme, std::ostream& stream, std::size_t& id, const rapidjson::Value& result, const std::vector<cpm::document_cref>& documents){
     theme.before_graph(stream, id);
     start_graph(stream, std::string("chart_") + std::to_string(id), std::string("Time:") + result["title"].GetString());
@@ -519,6 +615,7 @@ template<typename Theme>
 void generate_standard_page(Theme& theme, const std::string& target_folder, const std::string& file, const cpm::reports_data& data, const cpm::document_t& doc, const std::vector<cpm::document_cref>& documents, cxxopts::Options& options){
     bool time_graphs = !options.count("disable-time") && documents.size() > 1;
     bool compiler_graphs = !options.count("disable-compiler") && data.compilers.size() > 1;
+    bool summary_table = !options.count("disable-summary");
 
     std::string target_file = target_folder + "/" + file;
 
@@ -552,6 +649,10 @@ void generate_standard_page(Theme& theme, const std::string& target_folder, cons
 
         if(compiler_graphs){
             generate_compiler_graph(theme, stream, id, result, doc);
+        }
+
+        if(summary_table){
+            generate_summary_table(theme, stream, result, doc);
         }
 
         theme.after_result(stream);
