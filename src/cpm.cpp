@@ -297,7 +297,7 @@ void generate_summary_table(Theme& theme, std::ostream& stream, const rapidjson:
 
     stream << "<tr>\n";
     stream << "<th>Size</th>\n";
-    stream << "<th>Time [us]</th>\n";
+    stream << "<th>Time</th>\n";
     stream << "<th>Previous</th>\n";
     stream << "<th>First</th>\n";
     stream << "</tr>\n";
@@ -675,7 +675,7 @@ void generate_section_summary_table(Theme& theme, std::ostream& stream, std::siz
 
         stream << "<tr>\n";
         stream << "<th>Size</th>\n";
-        stream << "<th>Time [us]</th>\n";
+        stream << "<th>Time</th>\n";
         stream << "<th>Previous</th>\n";
         stream << "<th>First</th>\n";
         stream << "</tr>\n";
