@@ -63,6 +63,18 @@ struct raw_theme {
     void after_summary(std::ostream& stream){
         stream << "</table>\n";
     }
+
+    void cell(std::ostream& stream, const std::string& v){
+        stream << "<td>" << v << "</td>\n";
+    }
+
+    void red_cell(std::ostream& stream, const std::string& v){
+        stream << "<td style=\"color:red;\">" << v << "</td>\n";
+    }
+
+    void green_cell(std::ostream& stream, const std::string& v){
+        stream << "<td style=\"color:green;\">" << v << "</td>\n";
+    }
 };
 
 } //end of namespace cpm

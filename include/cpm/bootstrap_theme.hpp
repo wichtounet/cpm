@@ -194,6 +194,18 @@ struct bootstrap_theme {
 
         close_column(stream);
     }
+
+    void cell(std::ostream& stream, const std::string& v){
+        stream << "<td>" << v << "</td>\n";
+    }
+
+    void red_cell(std::ostream& stream, const std::string& v){
+        stream << "<td class=\"danger\">"<< v << "</td>\n";
+    }
+
+    void green_cell(std::ostream& stream, const std::string& v){
+        stream << "<td class=\"success\">" << v << "</td>\n";
+    }
 };
 
 } //end of namespace cpm

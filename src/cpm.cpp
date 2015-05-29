@@ -259,7 +259,8 @@ void generate_compiler_graph(Theme& theme, std::ostream& stream, std::size_t& id
     ++id;
 }
 
-std::pair<bool,double> compare(std::ostream& stream, const rapidjson::Value& base_result, const rapidjson::Value& r, const cpm::document_t& doc){
+template<typename Theme>
+std::pair<bool,double> compare(Theme& theme, std::ostream& stream, const rapidjson::Value& base_result, const rapidjson::Value& r, const cpm::document_t& doc){
     for(auto& p_r : doc["results"]){
         if(std::string(p_r["title"].GetString()) == std::string(base_result["title"].GetString())){
             for(auto& p_r_r : p_r["results"]){
@@ -270,12 +271,11 @@ std::pair<bool,double> compare(std::ostream& stream, const rapidjson::Value& bas
                     double diff = 0.0;
                     if(current < previous){
                         diff = -1.0 * (100.0 * (static_cast<double>(previous) / current) - 100.0);
-                        stream << "<td><font color=\"green\">" << diff << "%</font></td>\n";
+                        theme.green_cell(stream, std::to_string(diff) + "%");
                     } else if(current > previous){
-                        diff = 100.0 * (static_cast<double>(current) / previous) - 100.0;
-                        stream << "<td><font color=\"red\">+" << diff << "%</font></td>\n";
+                        theme.red_cell(stream, "+" + std::to_string(diff) + "%");
                     } else {
-                        stream << "<td>+0%</td>\n";
+                        theme.cell(stream, "+0%");
                     }
 
                     return std::make_pair(true, diff);
@@ -314,7 +314,7 @@ void generate_summary_table(Theme& theme, std::ostream& stream, const rapidjson:
         for(std::size_t i = 0; i < documents.size() - 1; ++i){
             if(&static_cast<const cpm::document_t&>(documents[i+1]) == &base){
                 auto& doc = static_cast<const cpm::document_t&>(documents[i]);
-                std::tie(previous_found, diff) = compare(stream, base_result, r, doc);
+                std::tie(previous_found, diff) = compare(theme, stream, base_result, r, doc);
 
                 if(previous_found){
                     previous_acc += diff;
@@ -331,7 +331,7 @@ void generate_summary_table(Theme& theme, std::ostream& stream, const rapidjson:
 
         if(documents.size() > 1){
             auto& doc = static_cast<const cpm::document_t&>(documents[0]);
-            std::tie(previous_found, diff) = compare(stream, base_result, r, doc);
+            std::tie(previous_found, diff) = compare(theme, stream, base_result, r, doc);
 
             first_acc += diff;
         }
@@ -351,19 +351,19 @@ void generate_summary_table(Theme& theme, std::ostream& stream, const rapidjson:
     first_acc /= base_result["results"].Size();
 
     if(previous_acc < 0.0){
-        stream << "<td><font color=\"green\">" << previous_acc << "%</font></td>\n";
+        theme.green_cell(stream, std::to_string(previous_acc) + "%");
     } else if(previous_acc > 0.0){
-        stream << "<td><font color=\"red\">+" << previous_acc << "%</font></td>\n";
+        theme.red_cell(stream, "+" + std::to_string(previous_acc) + "%");
     } else {
-        stream << "<td>+0%</td>\n";
+        theme.cell(stream, "+0%");
     }
 
     if(first_acc < 0.0){
-        stream << "<td><font color=\"green\">" << first_acc << "%</font></td>\n";
+        theme.green_cell(stream, std::to_string(first_acc) + "%");
     } else if(first_acc > 0.0){
-        stream << "<td><font color=\"red\">+" << first_acc << "%</font></td>\n";
+        theme.red_cell(stream, "+" + std::to_string(first_acc) + "%");
     } else {
-        stream << "<td>+0%</td>\n";
+        theme.cell(stream, "+0%");
     }
 
     stream << "</tr>\n";
