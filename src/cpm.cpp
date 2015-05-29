@@ -631,6 +631,131 @@ void generate_section_compiler_graph(Theme& theme, std::ostream& stream, std::si
     ++id;
 }
 
+using json_value = const rapidjson::Value&;
+
+template<typename Theme>
+std::pair<bool,double> compare_section(Theme& theme, std::ostream& stream, json_value base_result, json_value base_section, json_value r, const cpm::document_t& doc){
+    for(auto& section : doc["sections"]){
+        if(std::string(section["name"].GetString()) == std::string(base_section["name"].GetString())){
+            for(auto& result : section["results"]){
+                if(std::string(result["name"].GetString()) == std::string(base_result["name"].GetString())){
+                    for(auto& p_r_r : result["results"]){
+                        if(std::string(p_r_r["size"].GetString()) == std::string(r["size"].GetString())){
+                            auto current = r["duration"].GetInt();
+                            auto previous = p_r_r["duration"].GetInt();
+
+                            double diff = 0.0;
+                            if(current < previous){
+                                diff = -1.0 * (100.0 * (static_cast<double>(previous) / current) - 100.0);
+                                theme.green_cell(stream, std::to_string(diff) + "%");
+                            } else if(current > previous){
+                                theme.red_cell(stream, "+" + std::to_string(diff) + "%");
+                            } else {
+                                theme.cell(stream, "+0%");
+                            }
+
+                            return std::make_pair(true, diff);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return std::make_pair(false, 0.0);
+}
+
+template<typename Theme>
+void generate_section_summary_table(Theme& theme, std::ostream& stream, std::size_t id, json_value base_section, const cpm::document_t& base){
+    std::size_t sub_id = 0;
+    theme.before_sub_graphs(stream, id * 1000000, string_collect(base_section["results"], "name"));
+
+    for(auto& base_result : base_section["results"]){
+        theme.before_sub_summary(stream, id * 1000000, sub_id++);
+
+        stream << "<tr>\n";
+        stream << "<th>Size</th>\n";
+        stream << "<th>Time [us]</th>\n";
+        stream << "<th>Previous</th>\n";
+        stream << "<th>First</th>\n";
+        stream << "</tr>\n";
+
+        double previous_acc = 0;
+        double first_acc = 0;
+
+        for(auto& r : base_result["results"]){
+            stream << "<tr>\n";
+            stream << "<td>" << r["size"].GetString() << "</td>\n";
+            stream << "<td>" << r["duration"].GetInt() << "</td>\n";
+
+            bool previous_found = false;
+            double diff = 0.0;
+
+            auto documents = select_documents(theme.data.documents, base);
+
+            for(std::size_t i = 0; i < documents.size() - 1; ++i){
+                if(&static_cast<const cpm::document_t&>(documents[i+1]) == &base){
+                    auto& doc = static_cast<const cpm::document_t&>(documents[i]);
+                    std::tie(previous_found, diff) = compare_section(theme, stream, base_result, base_section, r, doc);
+
+                    if(previous_found){
+                        previous_acc += diff;
+                        break;
+                    }
+                }
+            }
+
+            if(!previous_found){
+                stream << "<td>N/A</td>\n";
+            }
+
+            previous_found = false;
+
+            if(documents.size() > 1){
+                auto& doc = static_cast<const cpm::document_t&>(documents[0]);
+                std::tie(previous_found, diff) = compare_section(theme, stream, base_result, base_section, r, doc);
+
+                first_acc += diff;
+            }
+
+            if(!previous_found){
+                stream << "<td>N/A</td>\n";
+            }
+
+            stream << "</tr>\n";
+        }
+
+        stream << "<tr>\n";
+        stream << "<td>&nbsp;</td>\n";
+        stream << "<td>&nbsp;</td>\n";
+
+        previous_acc /= base_result["results"].Size();
+        first_acc /= base_result["results"].Size();
+
+        if(previous_acc < 0.0){
+            theme.green_cell(stream, std::to_string(previous_acc) + "%");
+        } else if(previous_acc > 0.0){
+            theme.red_cell(stream, "+" + std::to_string(previous_acc) + "%");
+        } else {
+            theme.cell(stream, "+0%");
+        }
+
+        if(first_acc < 0.0){
+            theme.green_cell(stream, std::to_string(first_acc) + "%");
+        } else if(first_acc > 0.0){
+            theme.red_cell(stream, "+" + std::to_string(first_acc) + "%");
+        } else {
+            theme.cell(stream, "+0%");
+        }
+
+        stream << "</tr>\n";
+
+        theme.after_sub_summary(stream);
+    }
+
+    theme.after_sub_graphs(stream);
+}
+
 template<typename Theme>
 void generate_standard_page(Theme& theme, const std::string& target_folder, const std::string& file, const cpm::reports_data& data, const cpm::document_t& doc, const std::vector<cpm::document_cref>& documents, cxxopts::Options& options){
     bool time_graphs = !options.count("disable-time") && documents.size() > 1;
@@ -689,6 +814,10 @@ void generate_standard_page(Theme& theme, const std::string& target_folder, cons
 
         if(compiler_graphs){
             generate_section_compiler_graph(theme, stream, id, section, doc);
+        }
+
+        if(summary_table){
+            generate_section_summary_table(theme, stream, id, section, doc);
         }
 
         theme.after_result(stream);

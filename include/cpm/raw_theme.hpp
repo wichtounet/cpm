@@ -64,6 +64,14 @@ struct raw_theme {
         stream << "</table>\n";
     }
 
+    void before_sub_summary(std::ostream& stream, std::size_t /*id*/, std::size_t /*sub*/){
+        stream << "<table>\n";
+    }
+
+    void after_sub_summary(std::ostream& stream){
+        stream << "</table>\n";
+    }
+
     void cell(std::ostream& stream, const std::string& v){
         stream << "<td>" << v << "</td>\n";
     }

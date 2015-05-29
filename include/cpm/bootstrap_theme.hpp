@@ -195,6 +195,22 @@ struct bootstrap_theme {
         close_column(stream);
     }
 
+    void before_sub_summary(std::ostream& stream, std::size_t id, std::size_t sub){
+        auto sub_id = std::string("sub") + std::to_string(id) + "-" + std::to_string(sub);
+        std::string active;
+        if(sub == 0){
+            active = " active";
+        }
+
+        stream << "<div role=\"tabpanel\" class=\"tab-pane" << active << "\" id=\"" << sub_id << "\">\n";
+        stream << "<table class=\"table\">\n";
+    }
+
+    void after_sub_summary(std::ostream& stream){
+        stream << "</table>\n";
+        stream << "</div>\n";
+    }
+
     void cell(std::ostream& stream, const std::string& v){
         stream << "<td>" << v << "</td>\n";
     }
