@@ -16,16 +16,17 @@ namespace cpm {
 struct raw_theme {
     const cpm::reports_data& data;
     cxxopts::Options& options;
+    std::ostream& stream;
 
-    raw_theme(const cpm::reports_data& data, cxxopts::Options& options) : data(data), options(options) {}
+    raw_theme(const cpm::reports_data& data, cxxopts::Options& options, std::ostream& stream) : data(data), options(options), stream(stream) {}
 
-    void include(std::ostream& /*stream*/){}
-    void header(std::ostream& /*stream*/){}
-    void footer(std::ostream& /*stream*/){}
-    void before_information(std::ostream& /*stream*/){}
-    void after_information(std::ostream& /*stream*/){}
+    void include(){}
+    void header(){}
+    void footer(){}
+    void before_information(){}
+    void after_information(){}
 
-    void compiler_buttons(std::ostream& stream, const std::string& /*current_compiler*/){
+    void compiler_buttons(const std::string& /*current_compiler*/){
         stream << "<div>\n";
         stream << R"=====(<span>Select compiler: </span>)=====";
         for(auto& compiler : data.compilers){
@@ -34,53 +35,53 @@ struct raw_theme {
         stream << "</div>\n";
     }
 
-    void before_graph(std::ostream& stream, std::size_t id){
+    void before_graph(std::size_t id){
         stream << "<div id=\"chart_" << id << "\" style=\"float:left; width:600px; height: 400px; margin: 5 auto; padding-right: 10px; \"></div>\n";
     }
 
-    void after_graph(std::ostream& /*stream*/){}
+    void after_graph(){}
 
-    void before_result(std::ostream& stream, const std::string& title, bool /*sub */ = false){
+    void before_result(const std::string& title, bool /*sub */ = false){
         stream << "<h2 style=\"clear:both\">" << title << "</h2>\n";
     }
 
-    void after_result(std::ostream& /*stream*/){}
+    void after_result(){}
 
-    void before_sub_graphs(std::ostream& /*stream*/, std::size_t /*id*/, std::vector<std::string> /*graphs*/){}
+    void before_sub_graphs(std::size_t /*id*/, std::vector<std::string> /*graphs*/){}
 
-    void after_sub_graphs(std::ostream& /*stream*/){}
+    void after_sub_graphs(){}
 
-    void before_sub_graph(std::ostream& stream, std::size_t id, std::size_t sub){
+    void before_sub_graph(std::size_t id, std::size_t sub){
         stream << "<div id=\"chart_" << id << "-" << sub << "\" style=\"float:left; width:600px; height: 400px; margin: 5 auto; padding-right: 10px; padding-bottom: 10px; \"></div>\n";
     }
 
-    void after_sub_graph(std::ostream& /*stream*/){}
+    void after_sub_graph(){}
 
-    void before_summary(std::ostream& stream){
+    void before_summary(){
         stream << "<table>\n";
     }
 
-    void after_summary(std::ostream& stream){
+    void after_summary(){
         stream << "</table>\n";
     }
 
-    void before_sub_summary(std::ostream& stream, std::size_t /*id*/, std::size_t /*sub*/){
+    void before_sub_summary(std::size_t /*id*/, std::size_t /*sub*/){
         stream << "<table>\n";
     }
 
-    void after_sub_summary(std::ostream& stream){
+    void after_sub_summary(){
         stream << "</table>\n";
     }
 
-    void cell(std::ostream& stream, const std::string& v){
+    void cell(const std::string& v){
         stream << "<td>" << v << "</td>\n";
     }
 
-    void red_cell(std::ostream& stream, const std::string& v){
+    void red_cell(const std::string& v){
         stream << "<td style=\"color:red;\">" << v << "</td>\n";
     }
 
-    void green_cell(std::ostream& stream, const std::string& v){
+    void green_cell(const std::string& v){
         stream << "<td style=\"color:green;\">" << v << "</td>\n";
     }
 };

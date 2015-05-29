@@ -16,16 +16,17 @@ namespace cpm {
 struct bootstrap_theme {
     const reports_data& data;
     cxxopts::Options& options;
+    std::ostream& stream;
 
-    bootstrap_theme(const reports_data& data, cxxopts::Options& options) : data(data), options(options) {}
+    bootstrap_theme(const reports_data& data, cxxopts::Options& options, std::ostream& stream) : data(data), options(options), stream(stream) {}
 
-    void include(std::ostream& stream){
+    void include(){
         stream << "<script src=\"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js\"></script>\n";
         stream << "<link href=\"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css\" rel=\"stylesheet\">\n";
         stream << "<link href=\"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap-theme.min.css\" rel=\"stylesheet\">\n";
     }
 
-    void header(std::ostream& stream){
+    void header(){
         stream << R"=====(
             <nav id="myNavbar" class="navbar navbar-default navbar-inverse navbar-fixed-top" role="navigation">
             <div class="container-fluid">
@@ -49,7 +50,7 @@ struct bootstrap_theme {
         )=====";
     }
 
-    void footer(std::ostream& stream){
+    void footer(){
         stream << R"=====(
             <hr>
             <div class="row">
@@ -63,18 +64,18 @@ struct bootstrap_theme {
         )=====";
     }
 
-    void before_information(std::ostream& stream){
+    void before_information(){
         stream << "<div class=\"jumbotron\">\n";
         stream << "<div class=\"container-fluid\">\n";
     }
 
-    void after_information(std::ostream& stream){
+    void after_information(){
         stream << "</div>\n";
         stream << "</div>\n";
         stream << "<div class=\"container-fluid\">\n";
     }
 
-    void compiler_buttons(std::ostream& stream, const std::string& current_compiler){
+    void compiler_buttons(const std::string& current_compiler){
         stream << R"=====(<div class="row">)=====";
         stream << R"=====(<div class="col-xs-12">)=====";
 
@@ -94,7 +95,7 @@ struct bootstrap_theme {
         stream << "</div>\n";
     }
 
-    virtual void start_column(std::ostream& stream){
+    virtual void start_column(){
         std::size_t columns = 1; //Always the first grapah
 
         if(data.documents.size() > 1 && !options.count("disable-time")){
@@ -112,21 +113,21 @@ struct bootstrap_theme {
         stream << "<div class=\"col-xs-" << 12 / columns << "\">\n";
     }
 
-    virtual void close_column(std::ostream& stream){
+    virtual void close_column(){
         stream << "</div>\n";
     }
 
-    void before_graph(std::ostream& stream, std::size_t id){
-        start_column(stream);
+    void before_graph(std::size_t id){
+        start_column();
 
         stream << "<div id=\"chart_" << id << "\" style=\"height: 400px;\"></div>\n";
     }
 
-    void after_graph(std::ostream& stream){
-        close_column(stream);
+    void after_graph(){
+        close_column();
     }
 
-    void before_result(std::ostream& stream, const std::string& title, bool sub = false){
+    void before_result(const std::string& title, bool sub = false){
         stream << "<div class=\"page-header\">\n";
         stream << "<h2>" << title << "</h2>\n";
         stream << "</div>\n";
@@ -138,12 +139,12 @@ struct bootstrap_theme {
         }
     }
 
-    void after_result(std::ostream& stream){
+    void after_result(){
         stream << "</div>\n";
     }
 
-    void before_sub_graphs(std::ostream& stream, std::size_t id, std::vector<std::string> graphs){
-        start_column(stream);
+    void before_sub_graphs(std::size_t id, std::vector<std::string> graphs){
+        start_column();
 
         stream << "<div role=\"tabpanel\">\n";
         stream << "<ul class=\"nav nav-tabs\" role=\"tablist\">\n";
@@ -161,14 +162,14 @@ struct bootstrap_theme {
         stream << "<div class=\"tab-content\">\n";
     }
 
-    void after_sub_graphs(std::ostream& stream){
+    void after_sub_graphs(){
         stream << "</div>\n";
         stream << "</div>\n";
 
-        close_column(stream);
+        close_column();
     }
 
-    void before_sub_graph(std::ostream& stream, std::size_t id, std::size_t sub){
+    void before_sub_graph(std::size_t id, std::size_t sub){
         auto sub_id = std::string("sub") + std::to_string(id) + "-" + std::to_string(sub);
         std::string active;
         if(sub == 0){
@@ -179,23 +180,23 @@ struct bootstrap_theme {
         stream << "<div id=\"chart_" << id << "-" << sub << "\" style=\"height: 400px;\"></div>\n";
     }
 
-    void after_sub_graph(std::ostream& stream){
+    void after_sub_graph(){
         stream << "</div>\n";
     }
 
-    void before_summary(std::ostream& stream){
-        start_column(stream);
+    void before_summary(){
+        start_column();
 
         stream << "<table class=\"table\">\n";
     }
 
-    void after_summary(std::ostream& stream){
+    void after_summary(){
         stream << "</table>\n";
 
-        close_column(stream);
+        close_column();
     }
 
-    void before_sub_summary(std::ostream& stream, std::size_t id, std::size_t sub){
+    void before_sub_summary(std::size_t id, std::size_t sub){
         auto sub_id = std::string("sub") + std::to_string(id) + "-" + std::to_string(sub);
         std::string active;
         if(sub == 0){
@@ -206,20 +207,20 @@ struct bootstrap_theme {
         stream << "<table class=\"table\">\n";
     }
 
-    void after_sub_summary(std::ostream& stream){
+    void after_sub_summary(){
         stream << "</table>\n";
         stream << "</div>\n";
     }
 
-    void cell(std::ostream& stream, const std::string& v){
+    void cell(const std::string& v){
         stream << "<td>" << v << "</td>\n";
     }
 
-    void red_cell(std::ostream& stream, const std::string& v){
+    void red_cell(const std::string& v){
         stream << "<td class=\"danger\">"<< v << "</td>\n";
     }
 
-    void green_cell(std::ostream& stream, const std::string& v){
+    void green_cell(const std::string& v){
         stream << "<td class=\"success\">" << v << "</td>\n";
     }
 };

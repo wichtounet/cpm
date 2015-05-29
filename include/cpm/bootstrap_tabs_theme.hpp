@@ -18,10 +18,10 @@ struct bootstrap_tabs_theme : bootstrap_theme {
     std::size_t uid = 0;
     std::size_t tid = 0;
 
-    bootstrap_tabs_theme(const reports_data& data, cxxopts::Options& options) : bootstrap_theme(data, options) {}
+    bootstrap_tabs_theme(const reports_data& data, cxxopts::Options& options, std::ostream& stream) : bootstrap_theme(data, options, stream) {}
 
-    void before_result(std::ostream& stream, const std::string& title, bool sub = false){
-        bootstrap_theme::before_result(stream, title, sub);
+    void before_result(const std::string& title, bool sub = false){
+        bootstrap_theme::before_result(title, sub);
 
         stream << "<div class=\"col-xs-12\">\n";
         stream << "<div role=\"tabpanel\">\n";
@@ -53,18 +53,18 @@ struct bootstrap_tabs_theme : bootstrap_theme {
         stream << "<div class=\"tab-content\">\n";
     }
 
-    void after_result(std::ostream& stream){
+    void after_result(){
         stream << "</div>\n";
         stream << "</div>\n";
         stream << "</div>\n";
 
-        bootstrap_theme::after_result(stream);
+        bootstrap_theme::after_result();
 
         ++uid;
         tid = 0;
     }
 
-    virtual void start_column(std::ostream& stream){
+    virtual void start_column(){
         if(tid == 0){
             stream << "<div role=\"tabpanel\" class=\"tab-pane active\" id=\"tab_" << uid << "_" << tid++ << "\">\n";
         } else {
@@ -72,7 +72,7 @@ struct bootstrap_tabs_theme : bootstrap_theme {
         }
     }
 
-    virtual void close_column(std::ostream& stream){
+    virtual void close_column(){
         stream << "</div>\n";
     }
 };
