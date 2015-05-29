@@ -75,6 +75,12 @@ struct bootstrap_tabs_theme : bootstrap_theme {
     virtual void close_column(){
         stream << "</div>\n";
     }
+
+    template<typename T>
+    bootstrap_tabs_theme& operator<<(const T& v){
+        stream << v;
+        return *this;
+    }
 };
 
 } //end of namespace cpm

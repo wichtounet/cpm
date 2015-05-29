@@ -84,6 +84,12 @@ struct raw_theme {
     void green_cell(const std::string& v){
         stream << "<td style=\"color:green;\">" << v << "</td>\n";
     }
+
+    template<typename T>
+    raw_theme& operator<<(const T& v){
+        stream << v;
+        return *this;
+    }
 };
 
 } //end of namespace cpm

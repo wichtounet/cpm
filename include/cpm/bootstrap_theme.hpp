@@ -223,6 +223,12 @@ struct bootstrap_theme {
     void green_cell(const std::string& v){
         stream << "<td class=\"success\">" << v << "</td>\n";
     }
+
+    template<typename T>
+    bootstrap_theme& operator<<(const T& v){
+        stream << v;
+        return *this;
+    }
 };
 
 } //end of namespace cpm
