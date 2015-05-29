@@ -23,7 +23,6 @@
 #include "cpm/bootstrap_theme.hpp"
 
 //TODO Use all the sizes for section graphs to handle timeouts in some of the graphs
-//TODO Align correctly sections when compiler graphs are generated
 
 namespace {
 
@@ -67,7 +66,7 @@ std::vector<cpm::document_t> read(const std::string& source_folder){
 }
 
 //Select relevant documents
-std::vector<cpm::document_cref> select_documents(std::vector<cpm::document_t>& documents, cpm::document_t& base){
+std::vector<cpm::document_cref> select_documents(const std::vector<cpm::document_t>& documents, const cpm::document_t& base){
     std::vector<cpm::document_cref> relevant;
 
     for(auto& doc : documents){
@@ -259,6 +258,34 @@ void generate_compiler_graph(Theme& theme, std::ostream& stream, std::size_t& id
     ++id;
 }
 
+std::pair<bool,double> compare(std::ostream& stream, const rapidjson::Value& base_result, const rapidjson::Value& r, const cpm::document_t& doc){
+    for(auto& p_r : doc["results"]){
+        if(std::string(p_r["title"].GetString()) == std::string(base_result["title"].GetString())){
+            for(auto& p_r_r : p_r["results"]){
+                if(std::string(p_r_r["size"].GetString()) == std::string(r["size"].GetString())){
+                    auto current = r["duration"].GetInt();
+                    auto previous = p_r_r["duration"].GetInt();
+
+                    double diff = 0.0;
+                    if(current < previous){
+                        diff = -1.0 * (100.0 * (static_cast<double>(previous) / current) - 100.0);
+                        stream << "<td><font color=\"green\">" << diff << "%</font></td>\n";
+                    } else if(current > previous){
+                        diff = 100.0 * (static_cast<double>(current) / previous) - 100.0;
+                        stream << "<td><font color=\"red\">+" << diff << "%</font></td>\n";
+                    } else {
+                        stream << "<td>+0%</td>\n";
+                    }
+
+                    return std::make_pair(true, diff);
+                }
+            }
+        }
+    }
+
+    return std::make_pair(false, 0.0);
+}
+
 template<typename Theme>
 void generate_summary_table(Theme& theme, std::ostream& stream, const rapidjson::Value& base_result, const cpm::document_t& base){
     theme.before_summary(stream);
@@ -279,41 +306,19 @@ void generate_summary_table(Theme& theme, std::ostream& stream, const rapidjson:
         stream << "<td>" << r["duration"].GetInt() << "</td>\n";
 
         bool previous_found = false;
+        double diff = 0.0;
 
-        //TODO Only selet documents that are relevant (same compiler)
+        auto documents = select_documents(theme.data.documents, base);
 
-        for(std::size_t i = 0; i < theme.data.documents.size() - 1; ++i){
-            if(&theme.data.documents[i+1] == &base){
-                for(auto& p_r : theme.data.documents[i]["results"]){
-                    if(std::string(p_r["title"].GetString()) == std::string(base_result["title"].GetString())){
-                        for(auto& p_r_r : p_r["results"]){
-                            if(std::string(p_r_r["size"].GetString()) == std::string(r["size"].GetString())){
-                                auto current = r["duration"].GetInt();
-                                auto previous = p_r_r["duration"].GetInt();
+        for(std::size_t i = 0; i < documents.size() - 1; ++i){
+            if(&static_cast<const cpm::document_t&>(documents[i+1]) == &base){
+                auto& doc = static_cast<const cpm::document_t&>(documents[i]);
+                std::tie(previous_found, diff) = compare(stream, base_result, r, doc);
 
-                                double diff = 0.0;
-                                if(current < previous){
-                                    diff = -1.0 * (100.0 * (static_cast<double>(previous) / current) - 100.0);
-                                    stream << "<td><font color=\"green\">" << diff << "%</font></td>\n";
-                                } else if(current > previous){
-                                    diff = 100.0 * (static_cast<double>(current) / previous) - 100.0;
-                                    stream << "<td><font color=\"red\">+" << diff << "%</font></td>\n";
-                                } else {
-                                    stream << "<td>+0%</td>\n";
-                                }
-
-                                previous_acc += diff;
-
-                                previous_found = true;
-                                break;
-                            }
-                        }
-
-                        break;
-                    }
+                if(previous_found){
+                    previous_acc += diff;
+                    break;
                 }
-
-                break;
             }
         }
 
@@ -321,42 +326,16 @@ void generate_summary_table(Theme& theme, std::ostream& stream, const rapidjson:
             stream << "<td>N/A</td>\n";
         }
 
-        if(theme.data.documents.size() > 1){
-            previous_found = false;
+        previous_found = false;
 
-            for(auto& p_r : theme.data.documents[0]["results"]){
-                if(std::string(p_r["title"].GetString()) == std::string(base_result["title"].GetString())){
-                    for(auto& p_r_r : p_r["results"]){
-                        if(std::string(p_r_r["size"].GetString()) == std::string(r["size"].GetString())){
-                            auto current = r["duration"].GetInt();
-                            auto previous = p_r_r["duration"].GetInt();
+        if(documents.size() > 1){
+            auto& doc = static_cast<const cpm::document_t&>(documents[0]);
+            std::tie(previous_found, diff) = compare(stream, base_result, r, doc);
 
-                            double diff = 0.0;
-                            if(current < previous){
-                                diff = -1.0 * (100.0 * (static_cast<double>(previous) / current) - 100.0);
-                                stream << "<td><font color=\"green\">" << diff << "%</font></td>\n";
-                            } else if(current > previous){
-                                diff = 100.0 * (static_cast<double>(current) / previous) - 100.0;
-                                stream << "<td><font color=\"red\">+" << diff << "%</font></td>\n";
-                            } else {
-                                stream << "<td>+0%</td>\n";
-                            }
+            first_acc += diff;
+        }
 
-                            first_acc += diff;
-
-                            previous_found = true;
-                            break;
-                        }
-                    }
-
-                    break;
-                }
-            }
-
-            if(!previous_found){
-                stream << "<td>N/A</td>\n";
-            }
-        } else {
+        if(!previous_found){
             stream << "<td>N/A</td>\n";
         }
 
