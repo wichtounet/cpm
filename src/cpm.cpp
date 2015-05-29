@@ -21,6 +21,7 @@
 #include "cpm/data.hpp"
 #include "cpm/raw_theme.hpp"
 #include "cpm/bootstrap_theme.hpp"
+#include "cpm/bootstrap_tabs_theme.hpp"
 
 //TODO Use all the sizes for section graphs to handle timeouts in some of the graphs
 
@@ -720,7 +721,7 @@ int main(int argc, char* argv[]){
     try {
         options.add_options()
             ("s,time-sizes", "Display multiple sizes in the time graphs")
-            ("t,theme", "Theme name [raw,bootstrap]", cxxopts::value<std::string>()->default_value("raw"))
+            ("t,theme", "Theme name [raw,bootstrap,boostrap-tabs]", cxxopts::value<std::string>()->default_value("raw"))
             ("c,hctheme", "Highcharts Theme name [std,dark_unica]", cxxopts::value<std::string>()->default_value("dark_unica"), "theme_name")
             ("o,output", "Output folder", cxxopts::value<std::string>()->default_value("reports"), "output_folder")
             ("input", "Input results", cxxopts::value<std::string>())
@@ -778,6 +779,8 @@ int main(int argc, char* argv[]){
 
     if(options["theme"].as<std::string>() == "raw"){
         generate_pages<cpm::raw_theme>(target_folder, data, options);
+    } else if(options["theme"].as<std::string>() == "bootstrap-tabs"){
+        generate_pages<cpm::bootstrap_tabs_theme>(target_folder, data, options);
     } else {
         generate_pages<cpm::bootstrap_theme>(target_folder, data, options);
     }

@@ -94,7 +94,7 @@ struct bootstrap_theme {
         stream << "</div>\n";
     }
 
-    void start_column(std::ostream& stream){
+    virtual void start_column(std::ostream& stream){
         std::size_t columns = 1; //Always the first grapah
 
         if(data.documents.size() > 1 && !options.count("disable-time")){
@@ -112,6 +112,10 @@ struct bootstrap_theme {
         stream << "<div class=\"col-xs-" << 12 / columns << "\">\n";
     }
 
+    virtual void close_column(std::ostream& stream){
+        stream << "</div>\n";
+    }
+
     void before_graph(std::ostream& stream, std::size_t id){
         start_column(stream);
 
@@ -119,7 +123,7 @@ struct bootstrap_theme {
     }
 
     void after_graph(std::ostream& stream){
-        stream << "</div>\n";
+        close_column(stream);
     }
 
     void before_result(std::ostream& stream, const std::string& title, bool sub = false){
@@ -160,7 +164,8 @@ struct bootstrap_theme {
     void after_sub_graphs(std::ostream& stream){
         stream << "</div>\n";
         stream << "</div>\n";
-        stream << "</div>\n";
+
+        close_column(stream);
     }
 
     void before_sub_graph(std::ostream& stream, std::size_t id, std::size_t sub){
@@ -186,7 +191,8 @@ struct bootstrap_theme {
 
     void after_summary(std::ostream& stream){
         stream << "</table>\n";
-        stream << "</div>\n";
+
+        close_column(stream);
     }
 };
 
