@@ -27,6 +27,10 @@
 
 namespace {
 
+bool str_equal(const char* lhs, const char* rhs){
+    return std::strcmp(lhs, rhs) == 0;
+}
+
 std::string dark_unica_theme =
 #include "dark_unica.inc.js"
 ;
@@ -53,7 +57,7 @@ std::vector<cpm::document_t> read(const std::string& source_folder){
     }
 
     while((entry = readdir(dp))){
-        if(std::string(entry->d_name) == "." || std::string(entry->d_name) == ".."){
+        if(str_equal(entry->d_name, ".") || str_equal(entry->d_name, "..")){
             continue;
         }
 
@@ -73,7 +77,7 @@ std::vector<cpm::document_cref> select_documents(const std::vector<cpm::document
     for(auto& doc : documents){
         //Two documents are relevant if the configuration
         //is the same
-        if(std::string(doc["compiler"].GetString()) == std::string(base["compiler"].GetString())){
+        if(str_equal(doc["compiler"].GetString(), base["compiler"].GetString())){
             relevant.push_back(std::cref(doc));
         }
     }
@@ -235,12 +239,12 @@ void generate_compiler_graph(Theme& theme, std::size_t& id, const rapidjson::Val
     comma = "";
     for(auto& document : theme.data.documents){
         //Filter different tag
-        if(std::string(document["tag"].GetString()) != std::string(base["tag"].GetString())){
+        if(!str_equal(document["tag"].GetString(), base["tag"].GetString())){
             continue;
         }
 
         for(auto& result : document["results"]){
-            if(std::string(result["title"].GetString()) == std::string(base_result["title"].GetString())){
+            if(str_equal(result["title"].GetString(), base_result["title"].GetString())){
                 theme << comma << "{\n";
                 theme << "name: '" << document["compiler"].GetString() << "',\n";
                 theme << "data: [";
@@ -269,9 +273,9 @@ void generate_compiler_graph(Theme& theme, std::size_t& id, const rapidjson::Val
 
 std::pair<bool,int> find_same_duration(const rapidjson::Value& base_result, const rapidjson::Value& r, const cpm::document_t& doc){
     for(auto& p_r : doc["results"]){
-        if(std::string(p_r["title"].GetString()) == std::string(base_result["title"].GetString())){
+        if(str_equal(p_r["title"].GetString(), base_result["title"].GetString())){
             for(auto& p_r_r : p_r["results"]){
-                if(std::string(p_r_r["size"].GetString()) == std::string(r["size"].GetString())){
+                if(str_equal(p_r_r["size"].GetString(), r["size"].GetString())){
                     return std::make_pair(true, p_r_r["duration"].GetInt());
                 }
             }
@@ -367,7 +371,7 @@ void generate_summary_table(Theme& theme, const rapidjson::Value& base_result, c
 
         for(auto& doc : theme.data.documents){
             //Filter different tag
-            if(std::string(doc["tag"].GetString()) != std::string(base["tag"].GetString())){
+            if(!str_equal(doc["tag"].GetString(), base["tag"].GetString())){
                 continue;
             }
 
@@ -446,7 +450,7 @@ void generate_time_graph(Theme& theme, std::size_t& id, const rapidjson::Value& 
                 auto& document = static_cast<const cpm::document_t&>(document_r);
 
                 for(auto& o_result : document["results"]){
-                    if(std::string(o_result["title"].GetString()) == std::string(result["title"].GetString())){
+                    if(str_equal(o_result["title"].GetString(), result["title"].GetString())){
                         for(auto& o_rr : o_result["results"]){
                             if(o_rr["size"].GetString() == r["size"].GetString()){
                                 theme << inner_comma << "[" << document["timestamp"].GetInt() * 1000 << ",";
@@ -474,7 +478,7 @@ void generate_time_graph(Theme& theme, std::size_t& id, const rapidjson::Value& 
             auto& document = static_cast<const cpm::document_t&>(document_r);
 
             for(auto& o_result : document["results"]){
-                if(std::string(o_result["title"].GetString()) == std::string(result["title"].GetString())){
+                if(str_equal(o_result["title"].GetString(), result["title"].GetString())){
                     theme << comma << "[" << document["timestamp"].GetInt() * 1000 << ",";
                     auto& o_r_results = o_result["results"];
                     theme << o_r_results[o_r_results.Size() - 1]["duration"].GetInt() << "]";
@@ -566,9 +570,9 @@ void generate_section_time_graph(Theme& theme, std::size_t& id, const rapidjson:
             auto& r_doc = static_cast<const cpm::document_t&>(r_doc_r);
 
             for(auto& r_section : r_doc["sections"]){
-                if(std::string(r_section["name"].GetString()) == std::string(section["name"].GetString())){
+                if(str_equal(r_section["name"].GetString(), section["name"].GetString())){
                     for(auto& r_r : r_section["results"]){
-                        if(std::string(r_r["name"].GetString()) == std::string(r["name"].GetString())){
+                        if(str_equal(r_r["name"].GetString(), r["name"].GetString())){
                             theme << comma_inner << "[" << r_doc["timestamp"].GetInt() * 1000 << ",";
                             auto& r_r_results = r_r["results"];
                             theme << r_r_results[r_r_results.Size() - 1]["duration"].GetInt() << "]";
@@ -632,15 +636,14 @@ void generate_section_compiler_graph(Theme& theme, std::size_t& id, const rapidj
         comma = "";
         for(auto& document : theme.data.documents){
             //Filter different tag
-            if(std::string(document["tag"].GetString()) != std::string(base["tag"].GetString())){
+            if(!str_equal(document["tag"].GetString(), base["tag"].GetString())){
                 continue;
             }
 
             for(auto& o_section : document["sections"]){
-                if(std::string(o_section["name"].GetString()) == std::string(section["name"].GetString())){
-
+                if(str_equal(o_section["name"].GetString(), section["name"].GetString())){
                     for(auto& o_r : o_section["results"]){
-                        if(std::string(o_r["name"].GetString()) == std::string(r["name"].GetString())){
+                        if(str_equal(o_r["name"].GetString(), r["name"].GetString())){
                             theme << comma << "{\n";
                             theme << "name: '" << document["compiler"].GetString() << "',\n";
                             theme << "data: [";
@@ -678,11 +681,11 @@ using json_value = const rapidjson::Value&;
 template<typename Theme>
 std::pair<bool,double> compare_section(Theme& theme, json_value base_result, json_value base_section, json_value r, const cpm::document_t& doc){
     for(auto& section : doc["sections"]){
-        if(std::string(section["name"].GetString()) == std::string(base_section["name"].GetString())){
+        if(str_equal(section["name"].GetString(), base_section["name"].GetString())){
             for(auto& result : section["results"]){
-                if(std::string(result["name"].GetString()) == std::string(base_result["name"].GetString())){
+                if(str_equal(result["name"].GetString(), base_result["name"].GetString())){
                     for(auto& p_r_r : result["results"]){
-                        if(std::string(p_r_r["size"].GetString()) == std::string(r["size"].GetString())){
+                        if(str_equal(p_r_r["size"].GetString(), r["size"].GetString())){
                             auto current = r["duration"].GetInt();
                             auto previous = p_r_r["duration"].GetInt();
 
@@ -872,7 +875,6 @@ void generate_standard_page(const std::string& target_folder, const std::string&
 
 template<typename Theme>
 void generate_pages(const std::string& target_folder, cpm::reports_data& data, cxxopts::Options& options){
-
     //Generate the index
     auto& base = data.documents.back();
     generate_standard_page<Theme>(target_folder, "index.html", data, base, select_documents(data.documents, base), options);
