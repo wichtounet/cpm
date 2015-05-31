@@ -295,6 +295,7 @@ std::pair<bool,double> compare(Theme& theme, const rapidjson::Value& base_result
             diff = -1.0 * (100.0 * (static_cast<double>(previous) / current) - 100.0);
             theme.green_cell(std::to_string(diff) + "%");
         } else if(current > previous){
+            diff = (100.0 * (static_cast<double>(current) / previous) - 100.0);
             theme.red_cell("+" + std::to_string(diff) + "%");
         } else {
             theme.cell("+0%");
@@ -393,21 +394,21 @@ void generate_summary_table(Theme& theme, const rapidjson::Value& base_result, c
     previous_acc /= base_result["results"].Size();
     first_acc /= base_result["results"].Size();
 
-    if(previous_acc < 0.0){
+    if(previous_acc < 1e-5 && previous_acc > -1e-5){
+        theme.cell("+0%");
+    } else if(previous_acc < 0.0){
         theme.green_cell(std::to_string(previous_acc) + "%");
     } else if(previous_acc > 0.0){
         theme.red_cell("+" + std::to_string(previous_acc) + "%");
-    } else {
-        theme.cell("+0%");
     }
 
-    if(first_acc < 0.0){
+    if(first_acc < 1e-5 && first_acc > -1e-5){
+        theme.cell("+0%");
+    } else if(first_acc < 0.0){
         theme.green_cell(std::to_string(first_acc) + "%");
     } else if(first_acc > 0.0){
         theme.red_cell("+" + std::to_string(first_acc) + "%");
-    } else {
-        theme.cell("+0%");
-    }
+    } 
 
     theme.cell("&nbsp;");
 
