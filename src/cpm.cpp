@@ -188,20 +188,60 @@ void y_axis_configuration(Theme& theme){
     theme << "tooltip: { valueSuffix: 'us' },\n";
 }
 
+template<typename Theme, typename Elements>
+void json_array_string(Theme& theme, const Elements& elements){
+    theme << "[";
+
+    std::string comma = "";
+    for(auto& element : elements){
+        theme << comma << "'" << element << "'";
+        comma = ",";
+    }
+
+    theme << "]";
+}
+
+template<typename Theme, typename Elements>
+void json_array_int(Theme& theme, const Elements& elements){
+    theme << "[";
+
+    std::string comma = "";
+    for(auto& element : elements){
+        theme << comma << element;
+        comma = ",";
+    }
+
+    theme << "]";
+}
+
+template<typename T>
+std::vector<std::string> string_collect(const T& parent, const char* attr){
+    std::vector<std::string> values;
+    for(auto& r : parent){
+        values.emplace_back(r[attr].GetString());
+    }
+    return values;
+}
+
+template<typename T>
+std::vector<int> int_collect(const T& parent, const char* attr){
+    std::vector<int> values;
+    for(auto& r : parent){
+        values.emplace_back(r[attr].GetInt());
+    }
+    return values;
+}
+
 template<typename Theme>
 void generate_run_graph(Theme& theme, std::size_t& id, const rapidjson::Value& result){
     theme.before_graph(id);
     start_graph(theme, std::string("chart_") + std::to_string(id), std::string("Last run:") + result["title"].GetString());
 
-    theme << "xAxis: { categories: [\n";
+    theme << "xAxis: { categories: \n";
 
-    std::string comma = "";
-    for(auto& r : result["results"]){
-        theme << comma << "'" << r["size"].GetString() << "'";
-        comma = ",";
-    }
+    json_array_string(theme, string_collect(result["results"], "size"));
 
-    theme << "]},\n";
+    theme << "},\n";
 
     y_axis_configuration(theme);
 
@@ -211,16 +251,11 @@ void generate_run_graph(Theme& theme, std::size_t& id, const rapidjson::Value& r
     theme << "{\n";
 
     theme << "name: '',\n";
-    theme << "data: [";
+    theme << "data: ";
 
-    comma = "";
-    for(auto& r : result["results"]){
-        theme << comma << r["duration"].GetInt();
-        comma = ",";
-    }
+    json_array_int(theme, int_collect(result["results"], "duration"));
 
-    theme << "]\n";
-    theme << "}\n";
+    theme << "\n}\n";
     theme << "]\n";
 
     end_graph(theme);
@@ -233,15 +268,11 @@ void generate_compiler_graph(Theme& theme, std::size_t& id, const rapidjson::Val
     theme.before_graph(id);
     start_graph(theme, std::string("chart_") + std::to_string(id), std::string("Compiler:") + base_result["title"].GetString());
 
-    theme << "xAxis: { categories: [\n";
+    theme << "xAxis: { categories: \n";
 
-    std::string comma = "";
-    for(auto& r : base_result["results"]){
-        theme << comma << "'" << r["size"].GetString() << "'";
-        comma = ",";
-    }
+    json_array_string(theme, string_collect(base_result["results"], "size"));
 
-    theme << "]},\n";
+    theme << "},\n";
 
     y_axis_configuration(theme);
 
@@ -249,7 +280,7 @@ void generate_compiler_graph(Theme& theme, std::size_t& id, const rapidjson::Val
 
     theme << "series: [\n";
 
-    comma = "";
+    std::string comma = "";
     for(auto& document : theme.data.documents){
         //Filter different tag
         if(!str_equal(document["tag"].GetString(), base["tag"].GetString())){
@@ -260,16 +291,11 @@ void generate_compiler_graph(Theme& theme, std::size_t& id, const rapidjson::Val
             if(str_equal(result["title"].GetString(), base_result["title"].GetString())){
                 theme << comma << "{\n";
                 theme << "name: '" << document["compiler"].GetString() << "',\n";
-                theme << "data: [";
+                theme << "data: ";
 
-                std::string inner_comma = "";
-                for(auto& r : result["results"]){
-                    theme << inner_comma << r["duration"].GetInt();
-                    inner_comma = ",";
-                }
+                json_array_int(theme, int_collect(result["results"], "duration"));
 
-                theme << "]\n";
-                theme << "}\n";
+                theme << "\n}\n";
 
                 comma = ",";
             }
@@ -543,17 +569,13 @@ void generate_section_run_graph(Theme& theme, std::size_t& id, const rapidjson::
     theme.before_graph(id);
     start_graph(theme, std::string("chart_") + std::to_string(id), std::string("Last run:") + section["name"].GetString());
 
-    theme << "xAxis: { categories: [\n";
+    theme << "xAxis: { categories: \n";
 
     auto sizes = gather_sizes(section);
 
-    std::string comma = "";
-    for(auto& s : sizes){
-        theme << comma << "'" << s << "'";
-        comma = ",";
-    }
+    json_array_string(theme, sizes);
 
-    theme << "]},\n";
+    theme << "},\n";
 
     y_axis_configuration(theme);
 
@@ -561,21 +583,16 @@ void generate_section_run_graph(Theme& theme, std::size_t& id, const rapidjson::
 
     theme << "series: [\n";
 
-    comma = "";
+    std::string comma = "";
     for(auto& r : section["results"]){
         theme << comma << "{\n";
 
         theme << "name: '" << r["name"].GetString() << "',\n";
-        theme << "data: [";
+        theme << "data: ";
 
-        std::string comma_inner = "";
-        for(auto& rr : r["results"]){
-            theme << comma_inner << rr["duration"].GetInt();
-            comma_inner = ",";
-        }
+        json_array_int(theme, int_collect(r["results"], "duration"));
 
-        theme << "]\n";
-        theme << "}\n";
+        theme << "\n}\n";
         comma = ",";
     }
 
@@ -637,15 +654,6 @@ void generate_section_time_graph(Theme& theme, std::size_t& id, const rapidjson:
     ++id;
 }
 
-template<typename T>
-std::vector<std::string> string_collect(const T& parent, const char* attr){
-    std::vector<std::string> values;
-    for(auto& r : parent){
-        values.emplace_back(r[attr].GetString());
-    }
-    return values;
-}
-
 template<typename Theme>
 void generate_section_compiler_graph(Theme& theme, std::size_t& id, const rapidjson::Value& section, const cpm::document_t& base){
     std::size_t sub_id = 0;
@@ -659,17 +667,13 @@ void generate_section_compiler_graph(Theme& theme, std::size_t& id, const rapidj
             std::string("chart_") + std::to_string(id) + "-" + std::to_string(sub_id - 1),
             std::string("Compiler:") + section["name"].GetString() + "-" + r["name"].GetString());
 
-        theme << "xAxis: { categories: [\n";
+        theme << "xAxis: { categories: \n";
 
         auto sizes = gather_sizes(section);
 
-        std::string comma = "";
-        for(auto& s : sizes){
-            theme << comma << "'" << s << "'";
-            comma = ",";
-        }
+        json_array_string(theme, sizes);
 
-        theme << "]},\n";
+        theme << "},\n";
 
         y_axis_configuration(theme);
 
@@ -677,7 +681,7 @@ void generate_section_compiler_graph(Theme& theme, std::size_t& id, const rapidj
 
         theme << "series: [\n";
 
-        comma = "";
+        std::string comma = "";
         for(auto& document : theme.data.documents){
             //Filter different tag
             if(!str_equal(document["tag"].GetString(), base["tag"].GetString())){
@@ -690,16 +694,11 @@ void generate_section_compiler_graph(Theme& theme, std::size_t& id, const rapidj
                         if(str_equal(o_r["name"].GetString(), r["name"].GetString())){
                             theme << comma << "{\n";
                             theme << "name: '" << document["compiler"].GetString() << "',\n";
-                            theme << "data: [";
+                            theme << "data: ";
 
-                            std::string inner_comma = "";
-                            for(auto& o_r_r : o_r["results"]){
-                                theme << inner_comma << o_r_r["duration"].GetInt();
-                                inner_comma = ",";
-                            }
+                            json_array_int(theme, int_collect(o_r["results"], "duration"));
 
-                            theme << "]\n";
-                            theme << "}\n";
+                            theme << "\n}\n";
 
                             comma = ",";
                         }
