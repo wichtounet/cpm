@@ -64,7 +64,7 @@ struct bootstrap_tabs_theme : bootstrap_theme {
         tid = 0;
     }
 
-    virtual void start_column(){
+    virtual void start_column(const std::string& /*style*/) override {
         if(tid == 0){
             stream << "<div role=\"tabpanel\" class=\"tab-pane active\" id=\"tab_" << uid << "_" << tid++ << "\">\n";
         } else {

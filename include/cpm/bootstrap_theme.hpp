@@ -95,7 +95,7 @@ struct bootstrap_theme {
         stream << "</div>\n";
     }
 
-    virtual void start_column(){
+    virtual void start_column(const std::string& style = ""){
         std::size_t columns = 1; //Always the first grapah
 
         if(data.documents.size() > 1 && !options.count("disable-time")){
@@ -110,7 +110,7 @@ struct bootstrap_theme {
             ++columns;
         }
 
-        stream << "<div class=\"col-xs-" << 12 / columns << "\">\n";
+        stream << "<div class=\"col-xs-" << 12 / columns << "\"" << style << ">\n";
     }
 
     virtual void close_column(){
@@ -144,7 +144,7 @@ struct bootstrap_theme {
     }
 
     void before_sub_graphs(std::size_t id, std::vector<std::string> graphs){
-        start_column();
+        start_column("style=\"align-self: flex-start; \"");
 
         stream << "<div role=\"tabpanel\">\n";
         stream << "<ul class=\"nav nav-tabs\" role=\"tablist\">\n";
