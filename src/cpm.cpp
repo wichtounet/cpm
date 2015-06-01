@@ -362,8 +362,12 @@ void generate_summary_table(Theme& theme, const rapidjson::Value& base_result, c
     theme << "<th>Time</th>\n";
     theme << "<th>Previous</th>\n";
     theme << "<th>First</th>\n";
-    theme << "<th>Best compiler</th>\n";
-    theme << "<th>Max difference</th>\n";
+
+    if(theme.data.compilers.size() > 1){
+        theme << "<th>Best compiler</th>\n";
+        theme << "<th>Max difference</th>\n";
+    }
+
     theme << "</tr>\n";
 
     double previous_acc = 0;
@@ -409,35 +413,37 @@ void generate_summary_table(Theme& theme, const rapidjson::Value& base_result, c
             theme.cell("N/A");
         }
 
-        std::string best_compiler = base["compiler"].GetString();
-        auto best_duration = r["duration"].GetInt();
-        auto worse_duration = r["duration"].GetInt();
+        if(theme.data.compilers.size() > 1){
+            std::string best_compiler = base["compiler"].GetString();
+            auto best_duration = r["duration"].GetInt();
+            auto worse_duration = r["duration"].GetInt();
 
-        for(auto& doc : theme.data.documents){
-            //Filter different tag
-            if(!str_equal(doc["tag"].GetString(), base["tag"].GetString())){
-                continue;
-            }
+            for(auto& doc : theme.data.documents){
+                //Filter different tag
+                if(!str_equal(doc["tag"].GetString(), base["tag"].GetString())){
+                    continue;
+                }
 
-            bool found;
-            int duration;
-            std::tie(found, duration) = find_same_duration(base_result, r, doc);
+                bool found;
+                int duration;
+                std::tie(found, duration) = find_same_duration(base_result, r, doc);
 
-            if(found){
-                if(duration < best_duration){
-                    best_duration = duration;
-                    best_compiler = doc["compiler"].GetString();
-                } else if(duration > worse_duration){
-                    worse_duration = duration;
+                if(found){
+                    if(duration < best_duration){
+                        best_duration = duration;
+                        best_compiler = doc["compiler"].GetString();
+                    } else if(duration > worse_duration){
+                        worse_duration = duration;
+                    }
                 }
             }
+
+            theme.cell(best_compiler);
+
+            auto max_diff = (100.0 * (static_cast<double>(worse_duration) / best_duration) - 100.0);
+
+            theme.cell(std::to_string(max_diff) + "%");
         }
-
-        theme.cell(best_compiler);
-
-        auto max_diff = (100.0 * (static_cast<double>(worse_duration) / best_duration) - 100.0);
-
-        theme.cell(std::to_string(max_diff) + "%");
 
         theme << "</tr>\n";
     }
