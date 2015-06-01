@@ -321,6 +321,7 @@ void generate_summary_table(Theme& theme, const rapidjson::Value& base_result, c
     theme << "<th>Previous</th>\n";
     theme << "<th>First</th>\n";
     theme << "<th>Best compiler</th>\n";
+    theme << "<th>Max difference</th>\n";
     theme << "</tr>\n";
 
     double previous_acc = 0;
@@ -368,6 +369,7 @@ void generate_summary_table(Theme& theme, const rapidjson::Value& base_result, c
 
         std::string best_compiler = base["compiler"].GetString();
         auto best_duration = r["duration"].GetInt();
+        auto worse_duration = r["duration"].GetInt();
 
         for(auto& doc : theme.data.documents){
             //Filter different tag
@@ -379,13 +381,21 @@ void generate_summary_table(Theme& theme, const rapidjson::Value& base_result, c
             int duration;
             std::tie(found, duration) = find_same_duration(base_result, r, doc);
 
-            if(found && duration < best_duration){
-                best_duration = duration;
-                best_compiler = doc["compiler"].GetString();
+            if(found){
+                if(duration < best_duration){
+                    best_duration = duration;
+                    best_compiler = doc["compiler"].GetString();
+                } else if(duration > worse_duration){
+                    worse_duration = duration;
+                }
             }
         }
 
         theme.cell(best_compiler);
+
+        auto max_diff = (100.0 * (static_cast<double>(worse_duration) / best_duration) - 100.0);
+
+        theme.cell(std::to_string(max_diff) + "%");
 
         theme << "</tr>\n";
     }
@@ -412,7 +422,7 @@ void generate_summary_table(Theme& theme, const rapidjson::Value& base_result, c
         theme.green_cell(std::to_string(first_acc) + "%");
     } else if(first_acc > 0.0){
         theme.red_cell("+" + std::to_string(first_acc) + "%");
-    } 
+    }
 
     theme.cell("&nbsp;");
 
