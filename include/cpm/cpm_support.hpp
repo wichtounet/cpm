@@ -183,6 +183,7 @@ int main(int argc, char* argv[]){
         options.add_options()
             ("n,name", "Benchmark name", cxxopts::value<std::string>())
             ("t,tag", "Tag name", cxxopts::value<std::string>())
+            ("c,configuration", "Configuration", cxxopts::value<std::string>())
             ("o,output", "Output folder", cxxopts::value<std::string>())
             ("h,help", "Print help")
             ;
@@ -211,13 +212,19 @@ int main(int argc, char* argv[]){
         benchmark_name = options["name"].as<std::string>();
     }
 
-    std::string tag{""};
+    std::string tag;
 
     if (options.count("tag")){
         tag = options["tag"].as<std::string>();
     }
 
-    cpm::benchmark<> bench(benchmark_name, output_folder, tag);
+    std::string configuration;
+
+    if (options.count("configuration")){
+        configuration = options["configuration"].as<std::string>();
+    }
+
+    cpm::benchmark<> bench(benchmark_name, output_folder, tag, configuration);
 
 #ifdef CPM_WARMUP
     bench.warmup = CPM_WARMUP

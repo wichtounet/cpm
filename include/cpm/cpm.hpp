@@ -303,6 +303,7 @@ private:
     const std::string name;
     std::string folder;
     std::string tag;
+    std::string configuration;
     std::string final_file;
     bool folder_ok = false;
 
@@ -320,7 +321,7 @@ public:
     bool auto_save = true;
     bool auto_mkdir = true;
 
-    benchmark(std::string name, std::string f = ".", std::string t = "") : name(std::move(name)), folder(std::move(f)), tag(std::move(t)) {
+    benchmark(std::string name, std::string f = ".", std::string t = "", std::string c = "") : name(std::move(name)), folder(std::move(f)), tag(std::move(t)), configuration(std::move(c)) {
         //Get absolute cwd
         if(folder == "" || folder == "."){
             folder = get_cwd();
@@ -394,6 +395,7 @@ public:
             std::cout << "   Time " << std::ctime(&time) << std::endl;
 
             std::cout << "   Tag: " << tag << std::endl;
+            std::cout << "   Configuration: " << configuration << std::endl;
             std::cout << "   Compiler: " << COMPILER_FULL << std::endl;
             std::cout << "   Operating System: " << operating_system << std::endl;
             std::cout << std::endl;
@@ -568,6 +570,7 @@ private:
 
         write_value(stream, indent, "name", name);
         write_value(stream, indent, "tag", tag);
+        write_value(stream, indent, "configuration", configuration);
         write_value(stream, indent, "compiler", COMPILER_FULL);
         write_value(stream, indent, "os", operating_system);
 
