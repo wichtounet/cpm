@@ -23,8 +23,6 @@
 #include "cpm/bootstrap_theme.hpp"
 #include "cpm/bootstrap_tabs_theme.hpp"
 
-//TODO Use all the sizes for section graphs to handle timeouts in some of the graphs
-
 namespace {
 
 bool str_equal(const char* lhs, const char* rhs){
@@ -523,6 +521,23 @@ void generate_time_graph(Theme& theme, std::size_t& id, const rapidjson::Value& 
     ++id;
 }
 
+std::vector<std::string> gather_sizes(const rapidjson::Value& section){
+    std::vector<std::string> sizes;
+    std::set<std::string> set_sizes;
+
+    for(auto& r : section["results"]){
+        for(auto& rr : r["results"]){
+            auto s = rr["size"].GetString();
+            if(!set_sizes.count(s)){
+                set_sizes.insert(s);
+                sizes.push_back(s);
+            }
+        }
+    }
+
+    return sizes;
+}
+
 template<typename Theme>
 void generate_section_run_graph(Theme& theme, std::size_t& id, const rapidjson::Value& section){
     theme.before_graph(id);
@@ -530,9 +545,11 @@ void generate_section_run_graph(Theme& theme, std::size_t& id, const rapidjson::
 
     theme << "xAxis: { categories: [\n";
 
+    auto sizes = gather_sizes(section);
+
     std::string comma = "";
-    for(auto& r : section["results"][static_cast<rapidjson::SizeType>(0)]["results"]){
-        theme << comma << "'" << r["size"].GetString() << "'";
+    for(auto& s : sizes){
+        theme << comma << "'" << s << "'";
         comma = ",";
     }
 
@@ -644,9 +661,11 @@ void generate_section_compiler_graph(Theme& theme, std::size_t& id, const rapidj
 
         theme << "xAxis: { categories: [\n";
 
+        auto sizes = gather_sizes(section);
+
         std::string comma = "";
-        for(auto& r : section["results"][static_cast<rapidjson::SizeType>(0)]["results"]){
-            theme << comma << "'" << r["size"].GetString() << "'";
+        for(auto& s : sizes){
+            theme << comma << "'" << s << "'";
             comma = ",";
         }
 
