@@ -59,7 +59,9 @@ std::vector<cpm::document_t> read(const std::string& source_folder, cxxopts::Opt
             continue;
         }
 
-        documents.push_back(read_document(source_folder, entry->d_name));
+        if(entry->d_type == DT_REG){
+            documents.push_back(read_document(source_folder, entry->d_name));
+        }
     }
 
     if(options.count("sort-by-size")){
@@ -76,6 +78,7 @@ std::vector<cpm::document_t> read(const std::string& source_folder, cxxopts::Opt
             }
         );
     } else {
+        std::cout << documents.size() << std::endl;
         std::sort(documents.begin(), documents.end(),
             [](cpm::document_t& lhs, cpm::document_t& rhs){ return lhs["timestamp"].GetInt() < rhs["timestamp"].GetInt(); });
     }
