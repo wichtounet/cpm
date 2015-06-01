@@ -46,7 +46,7 @@ cpm::document_t read_document(const std::string& folder, const std::string& file
     return doc;
 }
 
-std::vector<cpm::document_t> read(const std::string& source_folder){
+std::vector<cpm::document_t> read(const std::string& source_folder, cxxopts::Options& options){
     std::vector<cpm::document_t> documents;
 
     struct dirent* entry;
@@ -64,8 +64,23 @@ std::vector<cpm::document_t> read(const std::string& source_folder){
         documents.push_back(read_document(source_folder, entry->d_name));
     }
 
-    std::sort(documents.begin(), documents.end(),
-        [](cpm::document_t& lhs, cpm::document_t& rhs){ return lhs["timestamp"].GetInt() < rhs["timestamp"].GetInt(); });
+    if(options.count("sort-by-size")){
+        std::sort(documents.begin(), documents.end(),
+            [](cpm::document_t& lhs, cpm::document_t& rhs){ 
+                if(std::string(lhs["tag"].GetString()) < std::string(rhs["tag"].GetString())){
+                    return true;
+                } else if(std::string(lhs["tag"].GetString()) > std::string(rhs["tag"].GetString())){
+                    return false;
+                } else {
+                    //If same tag, sort by time
+                    return lhs["timestamp"].GetInt() < rhs["timestamp"].GetInt();
+                }
+            }
+        );
+    } else {
+        std::sort(documents.begin(), documents.end(),
+            [](cpm::document_t& lhs, cpm::document_t& rhs){ return lhs["timestamp"].GetInt() < rhs["timestamp"].GetInt(); });
+    }
 
     return documents;
 }
@@ -908,12 +923,13 @@ int main(int argc, char* argv[]){
 
     try {
         options.add_options()
-            ("s,time-sizes", "Display multiple sizes in the time graphs")
+            ("time-sizes", "Display multiple sizes in the time graphs")
             ("t,theme", "Theme name [raw,bootstrap,boostrap-tabs]", cxxopts::value<std::string>()->default_value("raw"))
             ("c,hctheme", "Highcharts Theme name [std,dark_unica]", cxxopts::value<std::string>()->default_value("dark_unica"), "theme_name")
             ("o,output", "Output folder", cxxopts::value<std::string>()->default_value("reports"), "output_folder")
             ("input", "Input results", cxxopts::value<std::string>())
             ("d,disable-time", "Disable time graphs")
+            ("s,sort-by-tag", "Sort by tag instaed of time")
             ("disable-compiler", "Disable compiler graphs")
             ("disable-summary", "Disable summary table")
             ("h,help", "Print help")
@@ -953,7 +969,7 @@ int main(int argc, char* argv[]){
     cpm::reports_data data;
 
     //Get all the documents
-    data.documents = read(source_folder);
+    data.documents = read(source_folder, options);
 
     if(data.documents.empty()){
         std::cout << "Unable to read any files" << std::endl;
