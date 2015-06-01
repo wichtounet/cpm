@@ -730,33 +730,45 @@ void generate_section_compiler_graph(Theme& theme, std::size_t& id, const rapidj
 
 using json_value = const rapidjson::Value&;
 
-template<typename Theme>
-std::pair<bool,double> compare_section(Theme& theme, json_value base_result, json_value base_section, json_value r, const cpm::document_t& doc){
+std::pair<bool, int> find_same_duration_section(json_value base_result, json_value base_section, json_value r, const cpm::document_t& doc){
     for(auto& section : doc["sections"]){
         if(str_equal(section["name"].GetString(), base_section["name"].GetString())){
             for(auto& result : section["results"]){
                 if(str_equal(result["name"].GetString(), base_result["name"].GetString())){
                     for(auto& p_r_r : result["results"]){
                         if(str_equal(p_r_r["size"].GetString(), r["size"].GetString())){
-                            auto current = r["duration"].GetInt();
-                            auto previous = p_r_r["duration"].GetInt();
-
-                            double diff = 0.0;
-                            if(current < previous){
-                                diff = -1.0 * (100.0 * (static_cast<double>(previous) / current) - 100.0);
-                                theme.green_cell(std::to_string(diff) + "%");
-                            } else if(current > previous){
-                                theme.red_cell("+" + std::to_string(diff) + "%");
-                            } else {
-                                theme.cell("+0%");
-                            }
-
-                            return std::make_pair(true, diff);
+                            return std::make_pair(true, p_r_r["duration"].GetInt());
                         }
                     }
                 }
             }
         }
+    }
+
+    return std::make_pair(false, 0);
+}
+
+template<typename Theme>
+std::pair<bool,double> compare_section(Theme& theme, json_value base_result, json_value base_section, json_value r, const cpm::document_t& doc){
+    bool found;
+    int previous;
+    std::tie(found, previous) = find_same_duration_section(base_result, base_section, r, doc);
+
+    if(found){
+        auto current = r["duration"].GetInt();
+
+        double diff = 0.0;
+        if(current < previous){
+            diff = -1.0 * (100.0 * (static_cast<double>(previous) / current) - 100.0);
+            theme.green_cell(std::to_string(diff) + "%");
+        } else if(current > previous){
+            diff = 1.0 * (100.0 * (static_cast<double>(current) / previous) - 100.0);
+            theme.red_cell("+" + std::to_string(diff) + "%");
+        } else {
+            theme.cell("+0%");
+        }
+
+        return std::make_pair(true, diff);
     }
 
     return std::make_pair(false, 0.0);
@@ -775,6 +787,12 @@ void generate_section_summary_table(Theme& theme, std::size_t id, json_value bas
         theme << "<th>Time</th>\n";
         theme << "<th>Previous</th>\n";
         theme << "<th>First</th>\n";
+
+        if(theme.data.compilers.size() > 1){
+            theme << "<th>Best compiler</th>\n";
+            theme << "<th>Max difference</th>\n";
+        }
+
         theme << "</tr>\n";
 
         double previous_acc = 0;
@@ -817,6 +835,38 @@ void generate_section_summary_table(Theme& theme, std::size_t id, json_value bas
 
             if(!previous_found){
                 theme << "<td>N/A</td>\n";
+            }
+
+            if(theme.data.compilers.size() > 1){
+                std::string best_compiler = base["compiler"].GetString();
+                auto best_duration = r["duration"].GetInt();
+                auto worse_duration = r["duration"].GetInt();
+
+                for(auto& doc : theme.data.documents){
+                    //Filter different tag
+                    if(!str_equal(doc["tag"].GetString(), base["tag"].GetString())){
+                        continue;
+                    }
+
+                    bool found;
+                    int duration;
+                    std::tie(found, duration) = find_same_duration_section(base_result, base_section, r, doc);
+
+                    if(found){
+                        if(duration < best_duration){
+                            best_duration = duration;
+                            best_compiler = doc["compiler"].GetString();
+                        } else if(duration > worse_duration){
+                            worse_duration = duration;
+                        }
+                    }
+                }
+
+                theme.cell(best_compiler);
+
+                auto max_diff = (100.0 * (static_cast<double>(worse_duration) / best_duration) - 100.0);
+
+                theme.cell(std::to_string(max_diff) + "%");
             }
 
             theme << "</tr>\n";
