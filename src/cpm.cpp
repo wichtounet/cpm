@@ -315,20 +315,36 @@ void generate_compare_graph(Theme& theme, std::size_t& id, json_value base_resul
     ++id;
 }
 
+bool is_compiler_relevant(const cpm::document_t& base, const cpm::document_t& doc){
+    return  str_equal(doc["tag"].GetString(), base["tag"].GetString())
+        &&  str_equal(doc["configuration"].GetString(), base["configuration"].GetString());
+}
+
+bool is_configuration_relevant(const cpm::document_t& base, const cpm::document_t& doc){
+    return  str_equal(doc["tag"].GetString(), base["tag"].GetString())
+        &&  str_equal(doc["compiler"].GetString(), base["compiler"].GetString());
+}
+
+auto compiler_filter(const cpm::document_t& base){
+    return [&base](const cpm::document_t& doc){
+        return is_compiler_relevant(base, doc);
+    };
+}
+
+auto configuration_filter(const cpm::document_t& base){
+    return [&base](const cpm::document_t& doc){
+        return is_configuration_relevant(base, doc);
+    };
+}
+
 template<typename Theme>
 void generate_compiler_graph(Theme& theme, std::size_t& id, const rapidjson::Value& base_result, const cpm::document_t& base){
-    generate_compare_graph(theme, id, base_result, "Compiler:", "compiler", [&base](const cpm::document_t& doc){
-        return  str_equal(doc["tag"].GetString(), base["tag"].GetString())
-            &&  str_equal(doc["configuration"].GetString(), base["configuration"].GetString());
-    });
+    generate_compare_graph(theme, id, base_result, "Compiler:", "compiler", compiler_filter(base));
 }
 
 template<typename Theme>
 void generate_configuration_graph(Theme& theme, std::size_t& id, const rapidjson::Value& base_result, const cpm::document_t& base){
-    generate_compare_graph(theme, id, base_result, "Configuration:", "configuration", [&base](const cpm::document_t& doc){
-        return  str_equal(doc["tag"].GetString(), base["tag"].GetString())
-            &&  str_equal(doc["compiler"].GetString(), base["compiler"].GetString());
-    });
+    generate_compare_graph(theme, id, base_result, "Configuration:", "configuration", configuration_filter(base));
 }
 
 std::pair<bool,int> find_same_duration(const rapidjson::Value& base_result, const rapidjson::Value& r, const cpm::document_t& doc){
@@ -442,26 +458,18 @@ void generate_summary_table(Theme& theme, const rapidjson::Value& base_result, c
             auto worse_duration = r["duration"].GetInt();
 
             for(auto& doc : theme.data.documents){
-                //Filter different tag
-                if(!str_equal(doc["tag"].GetString(), base["tag"].GetString())){
-                    continue;
-                }
+                if(is_compiler_relevant(base, doc)){
+                    bool found;
+                    int duration;
+                    std::tie(found, duration) = find_same_duration(base_result, r, doc);
 
-                //Filter different configuration
-                if(!str_equal(doc["configuration"].GetString(), base["configuration"].GetString())){
-                    continue;
-                }
-
-                bool found;
-                int duration;
-                std::tie(found, duration) = find_same_duration(base_result, r, doc);
-
-                if(found){
-                    if(duration < best_duration){
-                        best_duration = duration;
-                        best_compiler = doc["compiler"].GetString();
-                    } else if(duration > worse_duration){
-                        worse_duration = duration;
+                    if(found){
+                        if(duration < best_duration){
+                            best_duration = duration;
+                            best_compiler = doc["compiler"].GetString();
+                        } else if(duration > worse_duration){
+                            worse_duration = duration;
+                        }
                     }
                 }
             }
@@ -479,26 +487,18 @@ void generate_summary_table(Theme& theme, const rapidjson::Value& base_result, c
             auto worse_duration = r["duration"].GetInt();
 
             for(auto& doc : theme.data.documents){
-                //Filter different tag
-                if(!str_equal(doc["tag"].GetString(), base["tag"].GetString())){
-                    continue;
-                }
+                if(is_configuration_relevant(base, doc)){
+                    bool found;
+                    int duration;
+                    std::tie(found, duration) = find_same_duration(base_result, r, doc);
 
-                //Filter different compiler
-                if(!str_equal(doc["compiler"].GetString(), base["compiler"].GetString())){
-                    continue;
-                }
-
-                bool found;
-                int duration;
-                std::tie(found, duration) = find_same_duration(base_result, r, doc);
-
-                if(found){
-                    if(duration < best_duration){
-                        best_duration = duration;
-                        best_configuration = doc["configuration"].GetString();
-                    } else if(duration > worse_duration){
-                        worse_duration = duration;
+                    if(found){
+                        if(duration < best_duration){
+                            best_duration = duration;
+                            best_configuration = doc["configuration"].GetString();
+                        } else if(duration > worse_duration){
+                            worse_duration = duration;
+                        }
                     }
                 }
             }
@@ -800,18 +800,12 @@ void generate_section_compare_graph(Theme& theme, std::size_t& id, const rapidjs
 
 template<typename Theme>
 void generate_section_compiler_graph(Theme& theme, std::size_t& id, const rapidjson::Value& section, const cpm::document_t& base){
-    generate_section_compare_graph(theme, id, section, "Compiler:", "compiler", [&base](const cpm::document_t& doc){
-        return  str_equal(doc["tag"].GetString(), base["tag"].GetString())
-            &&  str_equal(doc["configuration"].GetString(), base["configuration"].GetString());
-    });
+    generate_section_compare_graph(theme, id, section, "Compiler:", "compiler", compiler_filter(base));
 }
 
 template<typename Theme>
 void generate_section_configuration_graph(Theme& theme, std::size_t& id, const rapidjson::Value& section, const cpm::document_t& base){
-    generate_section_compare_graph(theme, id, section, "Configuration:", "configuration", [&base](const cpm::document_t& doc){
-        return  str_equal(doc["tag"].GetString(), base["tag"].GetString())
-            &&  str_equal(doc["compiler"].GetString(), base["compiler"].GetString());
-    });
+    generate_section_compare_graph(theme, id, section, "Configuration:", "configuration", configuration_filter(base));
 }
 
 std::pair<bool, int> find_same_duration_section(json_value base_result, json_value base_section, json_value r, const cpm::document_t& doc){
@@ -927,26 +921,18 @@ void generate_section_summary_table(Theme& theme, std::size_t id, json_value bas
                 auto worse_duration = r["duration"].GetInt();
 
                 for(auto& doc : theme.data.documents){
-                    //Filter different tag
-                    if(!str_equal(doc["tag"].GetString(), base["tag"].GetString())){
-                        continue;
-                    }
+                    if(is_compiler_relevant(base, doc)){
+                        bool found;
+                        int duration;
+                        std::tie(found, duration) = find_same_duration_section(base_result, base_section, r, doc);
 
-                    //Filter different configuration
-                    if(!str_equal(doc["configuration"].GetString(), base["configuration"].GetString())){
-                        continue;
-                    }
-
-                    bool found;
-                    int duration;
-                    std::tie(found, duration) = find_same_duration_section(base_result, base_section, r, doc);
-
-                    if(found){
-                        if(duration < best_duration){
-                            best_duration = duration;
-                            best_compiler = doc["compiler"].GetString();
-                        } else if(duration > worse_duration){
-                            worse_duration = duration;
+                        if(found){
+                            if(duration < best_duration){
+                                best_duration = duration;
+                                best_compiler = doc["compiler"].GetString();
+                            } else if(duration > worse_duration){
+                                worse_duration = duration;
+                            }
                         }
                     }
                 }
