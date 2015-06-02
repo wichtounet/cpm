@@ -149,6 +149,7 @@ void information(Theme& theme, const cpm::document_t& doc){
     theme << "<ul>\n";
     theme << "<li>Tag: " << doc["tag"].GetString() << "</li>\n";
     theme << "<li>Compiler: " << doc["compiler"].GetString() << "</li>\n";
+    theme << "<li>Configuration: " << doc["configuration"].GetString() << "</li>\n";
     theme << "<li>Operating System: " << doc["os"].GetString() << "</li>\n";
     theme << "<li>Time: " << doc["time"].GetString() << "</li>\n";
     theme << "</ul>\n";
