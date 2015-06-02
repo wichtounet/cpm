@@ -18,7 +18,11 @@ struct raw_theme {
     cxxopts::Options& options;
     std::ostream& stream;
 
-    raw_theme(const cpm::reports_data& data, cxxopts::Options& options, std::ostream& stream) : data(data), options(options), stream(stream) {}
+    std::string current_compiler;
+    std::string current_configuration;
+
+    raw_theme(const reports_data& data, cxxopts::Options& options, std::ostream& stream, std::string compiler, std::string configuration) 
+        : data(data), options(options), stream(stream), current_compiler(std::move(compiler)), current_configuration(std::move(configuration)) {}
 
     void include(){}
     void header(){}
@@ -26,11 +30,20 @@ struct raw_theme {
     void before_information(){}
     void after_information(){}
 
-    void compiler_buttons(const std::string& /*current_compiler*/){
+    void compiler_buttons(){
         stream << "<div>\n";
         stream << R"=====(<span>Select compiler: </span>)=====";
         for(auto& compiler : data.compilers){
-            stream << "<a href=\"" << cpm::filify(compiler)  << "\">" << compiler << "</a>\n";
+            stream << "<a href=\"" << cpm::filify(compiler, current_configuration)  << "\">" << compiler << "</a>\n";
+        }
+        stream << "</div>\n";
+    }
+
+    void configuration_buttons(){
+        stream << "<div>\n";
+        stream << R"=====(<span>configuration: </span>)=====";
+        for(auto& configuration : data.configurations){
+            stream << "<a href=\"" << cpm::filify(current_compiler, configuration)  << "\">" << configuration << "</a>\n";
         }
         stream << "</div>\n";
     }

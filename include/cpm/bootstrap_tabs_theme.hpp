@@ -18,7 +18,7 @@ struct bootstrap_tabs_theme : bootstrap_theme {
     std::size_t uid = 0;
     std::size_t tid = 0;
 
-    bootstrap_tabs_theme(const reports_data& data, cxxopts::Options& options, std::ostream& stream) : bootstrap_theme(data, options, stream) {}
+    bootstrap_tabs_theme(const reports_data& data, cxxopts::Options& options, std::ostream& stream, std::string compiler, std::string configuration) : bootstrap_theme(data, options, stream, compiler, configuration) {}
 
     void before_result(const std::string& title, bool sub = false){
         bootstrap_theme::before_result(title, sub);

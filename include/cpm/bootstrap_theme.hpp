@@ -17,8 +17,11 @@ struct bootstrap_theme {
     const reports_data& data;
     cxxopts::Options& options;
     std::ostream& stream;
+    std::string current_compiler;
+    std::string current_configuration;
 
-    bootstrap_theme(const reports_data& data, cxxopts::Options& options, std::ostream& stream) : data(data), options(options), stream(stream) {}
+    bootstrap_theme(const reports_data& data, cxxopts::Options& options, std::ostream& stream, std::string compiler, std::string configuration) 
+        : data(data), options(options), stream(stream), current_compiler(std::move(compiler)), current_configuration(std::move(configuration)) {}
 
     void include(){
         stream << "<script src=\"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js\"></script>\n";
@@ -75,7 +78,7 @@ struct bootstrap_theme {
         stream << "<div class=\"container-fluid\">\n";
     }
 
-    void compiler_buttons(const std::string& current_compiler){
+    void compiler_buttons(){
         stream << R"=====(<div class="row">)=====";
         stream << R"=====(<div class="col-xs-12">)=====";
 
@@ -84,9 +87,34 @@ struct bootstrap_theme {
         stream << R"=====(<div class="btn-group" role="group">)=====";
         for(auto& compiler : data.compilers){
             if(compiler == current_compiler){
-                stream << "<a class=\"btn btn-primary\" href=\"" << cpm::filify(compiler)  << "\">" << compiler << "</a>\n";
+                stream << "<a class=\"btn btn-primary\" href=\"" << cpm::filify(compiler, current_configuration)  << "\">" << compiler << "</a>\n";
             } else {
-                stream << "<a class=\"btn btn-default\" href=\"" << cpm::filify(compiler)  << "\">" << compiler << "</a>\n";
+                stream << "<a class=\"btn btn-default\" href=\"" << cpm::filify(compiler, current_configuration)  << "\">" << compiler << "</a>\n";
+            }
+        }
+        stream << "</div>\n";
+
+        stream << "</div>\n";
+        stream << "</div>\n";
+    }
+
+    void configuration_buttons(){
+        if(data.compilers.size() > 1){
+            stream << R"=====(<div class="row" style="padding-top:5px;">)=====";
+        } else {
+            stream << R"=====(<div class="row">)=====";
+        }
+
+        stream << R"=====(<div class="col-xs-12">)=====";
+
+        stream << R"=====(<span>Select configuration: </span>)=====";
+
+        stream << R"=====(<div class="btn-group" role="group">)=====";
+        for(auto& configuration : data.configurations){
+            if(configuration == current_configuration){
+                stream << "<a class=\"btn btn-primary\" href=\"" << cpm::filify(current_compiler, configuration)  << "\">" << configuration << "</a>\n";
+            } else {
+                stream << "<a class=\"btn btn-default\" href=\"" << cpm::filify(current_compiler, configuration)  << "\">" << configuration << "</a>\n";
             }
         }
         stream << "</div>\n";

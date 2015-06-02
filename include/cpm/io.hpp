@@ -100,6 +100,15 @@ std::string filify(std::string name){
     return n;
 }
 
+std::string filify(std::string compiler, std::string configuration){
+    std::string n1{std::move(compiler)};
+    std::string n2{std::move(configuration)};
+
+    auto n = n1 + "-" + n2;
+
+    return filify(n);
+}
+
 } //end of namespace cpm
 
 #endif //CPM_IO_HPP

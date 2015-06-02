@@ -155,11 +155,16 @@ void information(Theme& theme, const cpm::document_t& doc){
 }
 
 template<typename Theme>
-void compiler_buttons(Theme& theme, const cpm::reports_data& data, const cpm::document_t& base){
-    if(data.compilers.size() > 1){
-        std::string current_compiler{base["compiler"].GetString()};
+void compiler_buttons(Theme& theme){
+    if(theme.data.compilers.size() > 1){
+        theme.compiler_buttons();
+    }
+}
 
-        theme.compiler_buttons(current_compiler);
+template<typename Theme>
+void configuration_buttons(Theme& theme){
+    if(theme.data.configurations.size() > 1){
+        theme.configuration_buttons();
     }
 }
 
@@ -912,7 +917,7 @@ void generate_standard_page(const std::string& target_folder, const std::string&
 
     std::ofstream stream(target_file);
 
-    Theme theme(data, options, stream);
+    Theme theme(data, options, stream, doc["compiler"].GetString(), doc["configuration"].GetString());
 
     //Header of the page
     header(theme);
@@ -928,7 +933,10 @@ void generate_standard_page(const std::string& target_folder, const std::string&
     information(theme, doc);
 
     //Compiler selection
-    compiler_buttons(theme, data, doc);
+    compiler_buttons(theme);
+
+    //Configuration selection
+    configuration_buttons(theme);
 
     std::size_t id = 1;
     for(const auto& result : doc["results"]){
@@ -976,18 +984,20 @@ void generate_standard_page(const std::string& target_folder, const std::string&
 
 template<typename Theme>
 void generate_pages(const std::string& target_folder, cpm::reports_data& data, cxxopts::Options& options){
-    //Generate the index
+    //Select the base document
     auto& base = data.documents.back();
+
+    //Generate the index
     generate_standard_page<Theme>(target_folder, "index.html", data, base, select_documents(data.documents, base), options);
 
-    std::set<std::string> compilers(data.compilers);
+    std::set<std::string> pages;
 
     //Generate the compiler pages
     std::for_each(data.documents.rbegin(), data.documents.rend(), [&](cpm::document_t& d){
-        std::string compiler{d["compiler"].GetString()};
-        if(compilers.count(compiler)){
-            generate_standard_page<Theme>(target_folder, cpm::filify(compiler), data, d, select_documents(data.documents, d), options);
-            compilers.erase(compiler);
+        auto file = cpm::filify(d["compiler"].GetString(), d["configuration"].GetString());
+        if(!pages.count(file)){
+            generate_standard_page<Theme>(target_folder, file, data, d, select_documents(data.documents, d), options);
+            pages.insert(file);
         }
     });
 }
@@ -1055,6 +1065,11 @@ int main(int argc, char* argv[]){
     //Collect the list of compilers
     for(auto& doc : data.documents){
         data.compilers.insert(doc["compiler"].GetString());
+    }
+
+    //Collect the list of configurations
+    for(auto& doc : data.documents){
+        data.configurations.insert(doc["configuration"].GetString());
     }
 
     if(options["theme"].as<std::string>() == "raw"){
