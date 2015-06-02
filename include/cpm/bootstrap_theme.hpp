@@ -20,6 +20,8 @@ struct bootstrap_theme {
     std::string current_compiler;
     std::string current_configuration;
 
+    std::size_t current_column = 0;
+
     bootstrap_theme(const reports_data& data, cxxopts::Options& options, std::ostream& stream, std::string compiler, std::string configuration) 
         : data(data), options(options), stream(stream), current_compiler(std::move(compiler)), current_configuration(std::move(configuration)) {}
 
@@ -142,7 +144,31 @@ struct bootstrap_theme {
             ++columns;
         }
 
-        stream << "<div class=\"col-xs-" << 12 / columns << "\"" << style << ">\n";
+        if(columns < 4){
+            stream << "<div class=\"col-xs-" << 12 / columns << "\"" << style << ">\n";
+        } else if(columns == 4){
+            if(current_column == 2){
+                stream << "</div>\n";
+                stream << "<div class=\"row\" style=\"display:flex; margin-top: 10px;\">\n";
+            }
+
+            stream << "<div class=\"col-xs-6\"" << style << ">\n";
+        } else if(columns == 5){
+            if(current_column == 3){
+                stream << "</div>\n";
+                stream << "<div class=\"row\" style=\"display:flex; margin-top: 10px;\">\n";
+            }
+
+            if(current_column < 3){
+                stream << "<div class=\"col-xs-4\"" << style << ">\n";
+            } else if(current_column == 3){
+                stream << "<div class=\"col-xs-4\"" << style << ">\n";
+            } else if(current_column == 4){
+                stream << "<div class=\"col-xs-8\"" << style << ">\n";
+            }
+        }
+
+        ++current_column;
     }
 
     virtual void close_column(){
@@ -169,6 +195,8 @@ struct bootstrap_theme {
         } else {
             stream << "<div class=\"row\">\n";
         }
+
+        current_column = 0;
     }
 
     void after_result(){
