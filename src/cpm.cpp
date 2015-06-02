@@ -80,7 +80,6 @@ std::vector<cpm::document_t> read(const std::string& source_folder, cxxopts::Opt
             }
         );
     } else {
-        std::cout << documents.size() << std::endl;
         std::sort(documents.begin(), documents.end(),
             [](cpm::document_t& lhs, cpm::document_t& rhs){ return lhs["timestamp"].GetInt() < rhs["timestamp"].GetInt(); });
     }
