@@ -66,7 +66,7 @@ std::vector<cpm::document_t> read(const std::string& source_folder, cxxopts::Opt
         }
     }
 
-    if(options.count("sort-by-size")){
+    if(options.count("sort-by-tag")){
         std::sort(documents.begin(), documents.end(),
             [](cpm::document_t& lhs, cpm::document_t& rhs){ 
                 if(std::string(lhs["tag"].GetString()) < std::string(rhs["tag"].GetString())){
