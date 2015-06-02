@@ -321,6 +321,56 @@ void generate_compiler_graph(Theme& theme, std::size_t& id, const rapidjson::Val
     ++id;
 }
 
+template<typename Theme>
+void generate_configuration_graph(Theme& theme, std::size_t& id, const rapidjson::Value& base_result, const cpm::document_t& base){
+    theme.before_graph(id);
+    start_graph(theme, std::string("chart_") + std::to_string(id), std::string("Configuration:") + base_result["title"].GetString());
+
+    theme << "xAxis: { categories: \n";
+
+    json_array_string(theme, string_collect(base_result["results"], "size"));
+
+    theme << "},\n";
+
+    y_axis_configuration(theme);
+
+    theme << "legend: { align: 'left', verticalAlign: 'top', floating: false, borderWidth: 0, y: 20 },\n";
+
+    theme << "series: [\n";
+
+    std::string comma = "";
+    for(auto& document : theme.data.documents){
+        //Filter different tag
+        if(!str_equal(document["tag"].GetString(), base["tag"].GetString())){
+            continue;
+        }
+
+        //Filter different compilers
+        if(!str_equal(document["compiler"].GetString(), base["compiler"].GetString())){
+            continue;
+        }
+
+        for(auto& result : document["results"]){
+            if(str_equal(result["title"].GetString(), base_result["title"].GetString())){
+                theme << comma << "{\n";
+                theme << "name: '" << document["configuration"].GetString() << "',\n";
+                theme << "data: ";
+
+                json_array_int(theme, int_collect(result["results"], "duration"));
+
+                theme << "\n}\n";
+
+                comma = ",";
+            }
+        }
+    }
+
+    theme << "]\n";
+
+    end_graph(theme);
+    theme.after_graph();
+    ++id;
+}
 
 std::pair<bool,int> find_same_duration(const rapidjson::Value& base_result, const rapidjson::Value& r, const cpm::document_t& doc){
     for(auto& p_r : doc["results"]){
@@ -931,6 +981,7 @@ template<typename Theme>
 void generate_standard_page(const std::string& target_folder, const std::string& file, const cpm::reports_data& data, const cpm::document_t& doc, const std::vector<cpm::document_cref>& documents, cxxopts::Options& options){
     bool time_graphs = !options.count("disable-time") && documents.size() > 1;
     bool compiler_graphs = !options.count("disable-compiler") && data.compilers.size() > 1;
+    bool configuration_graphs = !options.count("disable-configuration") && data.configurations.size() > 1;
     bool summary_table = !options.count("disable-summary");
 
     std::string target_file = target_folder + "/" + file;
@@ -970,6 +1021,10 @@ void generate_standard_page(const std::string& target_folder, const std::string&
 
         if(compiler_graphs){
             generate_compiler_graph(theme, id, result, doc);
+        }
+
+        if(configuration_graphs){
+            generate_configuration_graph(theme, id, result, doc);
         }
 
         if(summary_table){
@@ -1037,6 +1092,7 @@ int main(int argc, char* argv[]){
             ("d,disable-time", "Disable time graphs")
             ("s,sort-by-tag", "Sort by tag instaed of time")
             ("disable-compiler", "Disable compiler graphs")
+            ("disable-configuration", "Disable configuration graphs")
             ("disable-summary", "Disable summary table")
             ("h,help", "Print help")
             ;

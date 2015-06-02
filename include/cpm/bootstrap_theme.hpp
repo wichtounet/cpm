@@ -134,6 +134,10 @@ struct bootstrap_theme {
             ++columns;
         }
 
+        if(data.configurations.size() > 1 && !options.count("disable-configuration")){
+            ++columns;
+        }
+
         if(!options.count("disable-summary")){
             ++columns;
         }
