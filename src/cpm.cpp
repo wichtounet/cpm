@@ -686,8 +686,8 @@ void generate_section_time_graph(Theme& theme, std::size_t& id, const rapidjson:
     ++id;
 }
 
-template<typename Theme>
-void generate_section_compiler_graph(Theme& theme, std::size_t& id, const rapidjson::Value& section, const cpm::document_t& base){
+template<typename Theme, typename Filter>
+void generate_section_compare_graph(Theme& theme, std::size_t& id, const rapidjson::Value& section, const std::string& title, const char* attr, Filter f){
     std::size_t sub_id = 0;
 
     theme.before_sub_graphs(id, string_collect(section["results"], "name"));
@@ -697,7 +697,7 @@ void generate_section_compiler_graph(Theme& theme, std::size_t& id, const rapidj
 
         start_graph(theme,
             std::string("chart_") + std::to_string(id) + "-" + std::to_string(sub_id - 1),
-            std::string("Compiler:") + section["name"].GetString() + "-" + r["name"].GetString());
+            title + section["name"].GetString() + "-" + r["name"].GetString());
 
         theme << "xAxis: { categories: \n";
 
@@ -715,29 +715,21 @@ void generate_section_compiler_graph(Theme& theme, std::size_t& id, const rapidj
 
         std::string comma = "";
         for(auto& document : theme.data.documents){
-            //Filter different tag
-            if(!str_equal(document["tag"].GetString(), base["tag"].GetString())){
-                continue;
-            }
+            if(f(document)){
+                for(auto& o_section : document["sections"]){
+                    if(str_equal(o_section["name"].GetString(), section["name"].GetString())){
+                        for(auto& o_r : o_section["results"]){
+                            if(str_equal(o_r["name"].GetString(), r["name"].GetString())){
+                                theme << comma << "{\n";
+                                theme << "name: '" << document[attr].GetString() << "',\n";
+                                theme << "data: ";
 
-            //Filter different configuration
-            if(!str_equal(document["configuration"].GetString(), base["configuration"].GetString())){
-                continue;
-            }
+                                json_array_int(theme, int_collect(o_r["results"], "duration"));
 
-            for(auto& o_section : document["sections"]){
-                if(str_equal(o_section["name"].GetString(), section["name"].GetString())){
-                    for(auto& o_r : o_section["results"]){
-                        if(str_equal(o_r["name"].GetString(), r["name"].GetString())){
-                            theme << comma << "{\n";
-                            theme << "name: '" << document["compiler"].GetString() << "',\n";
-                            theme << "data: ";
+                                theme << "\n}\n";
 
-                            json_array_int(theme, int_collect(o_r["results"], "duration"));
-
-                            theme << "\n}\n";
-
-                            comma = ",";
+                                comma = ",";
+                            }
                         }
                     }
                 }
@@ -754,6 +746,22 @@ void generate_section_compiler_graph(Theme& theme, std::size_t& id, const rapidj
     theme.after_sub_graphs();
 
     ++id;
+}
+
+template<typename Theme>
+void generate_section_compiler_graph(Theme& theme, std::size_t& id, const rapidjson::Value& section, const cpm::document_t& base){
+    generate_section_compare_graph(theme, id, section, "Compiler:", "compiler", [&base](const cpm::document_t& doc){
+        return  str_equal(doc["tag"].GetString(), base["tag"].GetString())
+            &&  str_equal(doc["configuration"].GetString(), base["configuration"].GetString());
+    });
+}
+
+template<typename Theme>
+void generate_section_configuration_graph(Theme& theme, std::size_t& id, const rapidjson::Value& section, const cpm::document_t& base){
+    generate_section_compare_graph(theme, id, section, "Configuration:", "configuration", [&base](const cpm::document_t& doc){
+        return  str_equal(doc["tag"].GetString(), base["tag"].GetString())
+            &&  str_equal(doc["compiler"].GetString(), base["compiler"].GetString());
+    });
 }
 
 std::pair<bool, int> find_same_duration_section(json_value base_result, json_value base_section, json_value r, const cpm::document_t& doc){
@@ -1002,6 +1010,10 @@ void generate_standard_page(const std::string& target_folder, const std::string&
 
         if(compiler_graphs){
             generate_section_compiler_graph(theme, id, section, doc);
+        }
+
+        if(configuration_graphs){
+            generate_section_configuration_graph(theme, id, section, doc);
         }
 
         if(summary_table){
