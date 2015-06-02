@@ -294,6 +294,11 @@ void generate_compiler_graph(Theme& theme, std::size_t& id, const rapidjson::Val
             continue;
         }
 
+        //Filter different configuration
+        if(!str_equal(document["configuration"].GetString(), base["configuration"].GetString())){
+            continue;
+        }
+
         for(auto& result : document["results"]){
             if(str_equal(result["title"].GetString(), base_result["title"].GetString())){
                 theme << comma << "{\n";
