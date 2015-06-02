@@ -433,6 +433,11 @@ void generate_summary_table(Theme& theme, const rapidjson::Value& base_result, c
                     continue;
                 }
 
+                //Filter different configuration
+                if(!str_equal(doc["configuration"].GetString(), base["configuration"].GetString())){
+                    continue;
+                }
+
                 bool found;
                 int duration;
                 std::tie(found, duration) = find_same_duration(base_result, r, doc);
@@ -706,6 +711,11 @@ void generate_section_compiler_graph(Theme& theme, std::size_t& id, const rapidj
                 continue;
             }
 
+            //Filter different configuration
+            if(!str_equal(document["configuration"].GetString(), base["configuration"].GetString())){
+                continue;
+            }
+
             for(auto& o_section : document["sections"]){
                 if(str_equal(o_section["name"].GetString(), section["name"].GetString())){
                     for(auto& o_r : o_section["results"]){
@@ -854,6 +864,11 @@ void generate_section_summary_table(Theme& theme, std::size_t id, json_value bas
                 for(auto& doc : theme.data.documents){
                     //Filter different tag
                     if(!str_equal(doc["tag"].GetString(), base["tag"].GetString())){
+                        continue;
+                    }
+
+                    //Filter different configuration
+                    if(!str_equal(doc["configuration"].GetString(), base["configuration"].GetString())){
                         continue;
                     }
 
