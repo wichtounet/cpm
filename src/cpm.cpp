@@ -871,6 +871,11 @@ void generate_section_summary_table(Theme& theme, std::size_t id, json_value bas
             theme << "<th>Max difference</th>\n";
         }
 
+        if(theme.data.configurations.size() > 1){
+            theme << "<th>Best configuration</th>\n";
+            theme << "<th>Max difference</th>\n";
+        }
+
         theme << "</tr>\n";
 
         double previous_acc = 0;
@@ -944,10 +949,40 @@ void generate_section_summary_table(Theme& theme, std::size_t id, json_value bas
                 theme.cell(std::to_string(max_diff) + "%");
             }
 
+            if(theme.data.configurations.size() > 1){
+                std::string best_configuration = base["configuration"].GetString();
+                auto best_duration = r["duration"].GetInt();
+                auto worse_duration = r["duration"].GetInt();
+
+                for(auto& doc : theme.data.documents){
+                    if(is_configuration_relevant(base, doc)){
+                        bool found;
+                        int duration;
+                        std::tie(found, duration) = find_same_duration_section(base_result, base_section, r, doc);
+
+                        if(found){
+                            if(duration < best_duration){
+                                best_duration = duration;
+                                best_configuration = doc["configuration"].GetString();
+                            } else if(duration > worse_duration){
+                                worse_duration = duration;
+                            }
+                        }
+                    }
+                }
+
+                theme.cell(best_configuration);
+
+                auto max_diff = (100.0 * (static_cast<double>(worse_duration) / best_duration) - 100.0);
+
+                theme.cell(std::to_string(max_diff) + "%");
+            }
+
             theme << "</tr>\n";
         }
 
         theme << "<tr>\n";
+
         theme << "<td>&nbsp;</td>\n";
         theme << "<td>&nbsp;</td>\n";
 
@@ -968,6 +1003,16 @@ void generate_section_summary_table(Theme& theme, std::size_t id, json_value bas
             theme.red_cell("+" + std::to_string(first_acc) + "%");
         } else {
             theme.cell("+0%");
+        }
+
+        if(theme.data.compilers.size() > 1){
+            theme.cell("&nbsp;");
+            theme.cell("&nbsp;");
+        }
+
+        if(theme.data.configurations.size() > 1){
+            theme.cell("&nbsp;");
+            theme.cell("&nbsp;");
         }
 
         theme << "</tr>\n";
