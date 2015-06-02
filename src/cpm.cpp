@@ -91,9 +91,8 @@ std::vector<cpm::document_cref> select_documents(const std::vector<cpm::document
     std::vector<cpm::document_cref> relevant;
 
     for(auto& doc : documents){
-        //Two documents are relevant if the configuration
-        //is the same
-        if(str_equal(doc["compiler"].GetString(), base["compiler"].GetString())){
+        //Two documents are relevant if the configuration is the same
+        if(str_equal(doc["compiler"].GetString(), base["compiler"].GetString()) && str_equal(doc["configuration"].GetString(), base["configuration"].GetString())){
             relevant.push_back(std::cref(doc));
         }
     }
