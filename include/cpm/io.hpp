@@ -9,6 +9,8 @@
 #define CPM_IO_HPP
 
 #include <unistd.h>
+#include <algorithm>
+
 #include <sys/stat.h>
 
 namespace cpm {
