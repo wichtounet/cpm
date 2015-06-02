@@ -388,9 +388,7 @@ std::pair<bool,double> compare(Theme& theme, const rapidjson::Value& base_result
 }
 
 template<typename Theme>
-void generate_summary_table(Theme& theme, const rapidjson::Value& base_result, const cpm::document_t& base){
-    theme.before_summary();
-
+void summary_header(Theme& theme){
     theme << "<tr>\n";
     theme << "<th>Size</th>\n";
     theme << "<th>Time</th>\n";
@@ -408,6 +406,49 @@ void generate_summary_table(Theme& theme, const rapidjson::Value& base_result, c
     }
 
     theme << "</tr>\n";
+}
+
+template<typename Theme>
+void summary_footer(Theme& theme, double previous_acc, double first_acc){
+    theme << "<tr>\n";
+
+    theme << "<td>&nbsp;</td>\n";
+    theme << "<td>&nbsp;</td>\n";
+
+    if(previous_acc < 0.0){
+        theme.green_cell(std::to_string(previous_acc) + "%");
+    } else if(previous_acc > 0.0){
+        theme.red_cell("+" + std::to_string(previous_acc) + "%");
+    } else {
+        theme.cell("+0%");
+    }
+
+    if(first_acc < 0.0){
+        theme.green_cell(std::to_string(first_acc) + "%");
+    } else if(first_acc > 0.0){
+        theme.red_cell("+" + std::to_string(first_acc) + "%");
+    } else {
+        theme.cell("+0%");
+    }
+
+    if(theme.data.compilers.size() > 1){
+        theme.cell("&nbsp;");
+        theme.cell("&nbsp;");
+    }
+
+    if(theme.data.configurations.size() > 1){
+        theme.cell("&nbsp;");
+        theme.cell("&nbsp;");
+    }
+
+    theme << "</tr>\n";
+}
+
+template<typename Theme>
+void generate_summary_table(Theme& theme, const rapidjson::Value& base_result, const cpm::document_t& base){
+    theme.before_summary();
+
+    summary_header(theme);
 
     double previous_acc = 0;
     double first_acc = 0;
@@ -513,41 +554,10 @@ void generate_summary_table(Theme& theme, const rapidjson::Value& base_result, c
         theme << "</tr>\n";
     }
 
-    theme << "<tr>\n";
-
-    theme.cell("&nbsp;");
-    theme.cell("&nbsp;");
-
     previous_acc /= base_result["results"].Size();
     first_acc /= base_result["results"].Size();
 
-    if(previous_acc < 1e-5 && previous_acc > -1e-5){
-        theme.cell("+0%");
-    } else if(previous_acc < 0.0){
-        theme.green_cell(std::to_string(previous_acc) + "%");
-    } else if(previous_acc > 0.0){
-        theme.red_cell("+" + std::to_string(previous_acc) + "%");
-    }
-
-    if(first_acc < 1e-5 && first_acc > -1e-5){
-        theme.cell("+0%");
-    } else if(first_acc < 0.0){
-        theme.green_cell(std::to_string(first_acc) + "%");
-    } else if(first_acc > 0.0){
-        theme.red_cell("+" + std::to_string(first_acc) + "%");
-    }
-
-    if(theme.data.compilers.size() > 1){
-        theme.cell("&nbsp;");
-        theme.cell("&nbsp;");
-    }
-
-    if(theme.data.configurations.size() > 1){
-        theme.cell("&nbsp;");
-        theme.cell("&nbsp;");
-    }
-
-    theme << "</tr>\n";
+    summary_footer(theme, previous_acc, first_acc);
 
     theme.after_summary();
 }
@@ -860,23 +870,7 @@ void generate_section_summary_table(Theme& theme, std::size_t id, json_value bas
     for(auto& base_result : base_section["results"]){
         theme.before_sub_summary(id * 1000000, sub_id++);
 
-        theme << "<tr>\n";
-        theme << "<th>Size</th>\n";
-        theme << "<th>Time</th>\n";
-        theme << "<th>Previous</th>\n";
-        theme << "<th>First</th>\n";
-
-        if(theme.data.compilers.size() > 1){
-            theme << "<th>Best compiler</th>\n";
-            theme << "<th>Max difference</th>\n";
-        }
-
-        if(theme.data.configurations.size() > 1){
-            theme << "<th>Best configuration</th>\n";
-            theme << "<th>Max difference</th>\n";
-        }
-
-        theme << "</tr>\n";
+        summary_header(theme);
 
         double previous_acc = 0;
         double first_acc = 0;
@@ -981,41 +975,10 @@ void generate_section_summary_table(Theme& theme, std::size_t id, json_value bas
             theme << "</tr>\n";
         }
 
-        theme << "<tr>\n";
-
-        theme << "<td>&nbsp;</td>\n";
-        theme << "<td>&nbsp;</td>\n";
-
         previous_acc /= base_result["results"].Size();
         first_acc /= base_result["results"].Size();
 
-        if(previous_acc < 0.0){
-            theme.green_cell(std::to_string(previous_acc) + "%");
-        } else if(previous_acc > 0.0){
-            theme.red_cell("+" + std::to_string(previous_acc) + "%");
-        } else {
-            theme.cell("+0%");
-        }
-
-        if(first_acc < 0.0){
-            theme.green_cell(std::to_string(first_acc) + "%");
-        } else if(first_acc > 0.0){
-            theme.red_cell("+" + std::to_string(first_acc) + "%");
-        } else {
-            theme.cell("+0%");
-        }
-
-        if(theme.data.compilers.size() > 1){
-            theme.cell("&nbsp;");
-            theme.cell("&nbsp;");
-        }
-
-        if(theme.data.configurations.size() > 1){
-            theme.cell("&nbsp;");
-            theme.cell("&nbsp;");
-        }
-
-        theme << "</tr>\n";
+        summary_footer(theme, previous_acc, first_acc);
 
         theme.after_sub_summary();
     }
