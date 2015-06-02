@@ -40,12 +40,18 @@ struct bootstrap_tabs_theme : bootstrap_theme {
         if(data.compilers.size() > 1 && !options.count("disable-compiler")){
             stream
                 << "<li role=\"presentation\"><a href=\"#tab_" << uid << "_2\" aria-controls=\"tab_"
-                << uid << "_2\" role=\"tab\" data-toggle=\"tab\">Results over compiler</a></li>\n";
+                << uid << "_2\" role=\"tab\" data-toggle=\"tab\">Compilers</a></li>\n";
+        }
+
+        if(data.configurations.size() > 1 && !options.count("disable-configuration")){
+            stream
+                << "<li role=\"presentation\"><a href=\"#tab_" << uid << "_3\" aria-controls=\"tab_"
+                << uid << "_2\" role=\"tab\" data-toggle=\"tab\">Configurations</a></li>\n";
         }
 
         if(!options.count("disable-summary")){
             stream
-                << "<li role=\"presentation\"><a href=\"#tab_" << uid << "_3\" aria-controls=\"tab_"
+                << "<li role=\"presentation\"><a href=\"#tab_" << uid << "_4\" aria-controls=\"tab_"
                 << uid << "_3\" role=\"tab\" data-toggle=\"tab\">Summary</a></li>\n";
         }
 
