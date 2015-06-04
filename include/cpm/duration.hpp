@@ -15,6 +15,8 @@ namespace cpm {
 
 struct measure_result {
     double mean;
+    double mean_lb;
+    double mean_ub;
     double stddev;
     double min;
     double max;

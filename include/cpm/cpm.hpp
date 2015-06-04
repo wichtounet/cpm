@@ -595,6 +595,8 @@ private:
 
                 write_value(stream, indent, "size", sub.first);
                 write_value(stream, indent, "mean", sub.second.mean, false);
+                write_value(stream, indent, "mean_lb", sub.second.mean_lb, false);
+                write_value(stream, indent, "mean_ub", sub.second.mean_ub, false);
                 write_value(stream, indent, "stddev", sub.second.stddev, false);
                 write_value(stream, indent, "min", sub.second.min, false);
                 write_value(stream, indent, "max", sub.second.max, false);
@@ -631,6 +633,8 @@ private:
 
                     write_value(stream, indent, "size", section.sizes[k]);
                     write_value(stream, indent, "mean", section.results[j][k].mean, false);
+                    write_value(stream, indent, "mean_lb", section.results[j][k].mean_lb, false);
+                    write_value(stream, indent, "mean_ub", section.results[j][k].mean_ub, false);
                     write_value(stream, indent, "stddev", section.results[j][k].stddev, false);
                     write_value(stream, indent, "min", section.results[j][k].min, false);
                     write_value(stream, indent, "max", section.results[j][k].max, false);
@@ -669,6 +673,8 @@ private:
     }
 
     measure_result measure(const std::vector<std::size_t>& durations){
+        auto n = durations.size();
+
         double mean = 0.0;
         double min = durations[0];
         double max = durations[0];
@@ -679,7 +685,7 @@ private:
             max = std::max(max, static_cast<double>(duration));
         }
 
-        mean /= durations.size();
+        mean /= n;
 
         double stddev = 0.0;
 
@@ -687,9 +693,14 @@ private:
             stddev += (duration - mean) * (duration - mean);
         }
 
-        stddev = std::sqrt(stddev / durations.size());
+        stddev = std::sqrt(stddev / n);
 
-        return {mean, stddev, min, max};
+        double stderror = stddev / std::sqrt(n);
+
+        double mean_lb = mean - 1.96 * stderror;
+        double mean_ub = mean + 1.96 * stderror;
+
+        return {mean, mean_lb, mean_ub, stddev, min, max};
     }
 
     template<typename Config, typename Functor, typename... Args>
@@ -777,6 +788,7 @@ private:
         if(standard_report){
             std::cout << title << "(" << size_to_string(d) << ") : " 
                 << "mean: " << us_duration_str(duration.mean, 3) 
+                << " (" << us_duration_str(duration.mean_lb, 3) << "," << us_duration_str(duration.mean_ub, 3) << ")"
                 << " stddev: " << us_duration_str(duration.stddev, 3) 
                 << " min: " << us_duration_str(duration.min, 3) 
                 << " max: " << us_duration_str(duration.max, 3) 
