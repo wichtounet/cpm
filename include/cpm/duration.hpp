@@ -16,6 +16,8 @@ namespace cpm {
 struct measure_result {
     double mean;
     double stddev;
+    double min;
+    double max;
 };
 
 using timer_clock = std::chrono::steady_clock;

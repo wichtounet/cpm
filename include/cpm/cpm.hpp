@@ -595,6 +595,8 @@ private:
                 write_value(stream, indent, "size", sub.first);
                 write_value(stream, indent, "mean", sub.second.mean, false);
                 write_value(stream, indent, "stddev", sub.second.stddev, false);
+                write_value(stream, indent, "min", sub.second.min, false);
+                write_value(stream, indent, "max", sub.second.max, false);
 
                 close_sub(stream, indent, j < result.results.size() - 1);
             }
@@ -629,6 +631,8 @@ private:
                     write_value(stream, indent, "size", section.sizes[k]);
                     write_value(stream, indent, "mean", section.results[j][k].mean, false);
                     write_value(stream, indent, "stddev", section.results[j][k].stddev, false);
+                    write_value(stream, indent, "min", section.results[j][k].min, false);
+                    write_value(stream, indent, "max", section.results[j][k].max, false);
 
                     close_sub(stream, indent, k < section.results[j].size() - 1);
                 }
@@ -665,9 +669,13 @@ private:
 
     measure_result measure(const std::vector<std::size_t>& durations){
         double mean = 0.0;
+        double min = durations[0];
+        double max = durations[0];
 
         for(auto& duration : durations){
             mean += duration;
+            min = std::min(min, static_cast<double>(duration));
+            max = std::max(max, static_cast<double>(duration));
         }
 
         mean /= durations.size();
@@ -680,7 +688,7 @@ private:
 
         stddev = std::sqrt(stddev / durations.size());
 
-        return {mean, stddev};
+        return {mean, stddev, min, max};
     }
 
     template<typename Config, typename Functor, typename... Args>
