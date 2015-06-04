@@ -14,7 +14,8 @@
 namespace cpm {
 
 struct measure_result {
-    std::size_t mean;
+    double mean;
+    double stddev;
 };
 
 using timer_clock = std::chrono::steady_clock;
@@ -24,7 +25,7 @@ using seconds = std::chrono::seconds;
 using millseconds = std::chrono::milliseconds;
 using microseconds = std::chrono::microseconds;
 
-inline std::string us_duration_str(std::size_t duration_us){
+inline std::string us_duration_str(double duration_us){
     double duration = duration_us;
 
     if(duration > 1000 * 1000){

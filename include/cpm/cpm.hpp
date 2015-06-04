@@ -232,8 +232,8 @@ public:
 
                 printf(" | %*s | ", widths[0], s.c_str());
 
-                std::size_t max = 0;
-                std::size_t min = std::numeric_limits<int>::max();
+                double max = 0;
+                double min = std::numeric_limits<double>::max();
 
                 for(std::size_t r = 0; r < data.results.size(); ++r){
                     if(i < data.results[r].size()){
@@ -661,6 +661,26 @@ private:
         }
     }
 
+    measure_result measure(const std::vector<std::size_t>& durations){
+        double mean = 0.0;
+
+        for(auto& duration : durations){
+            mean += duration;
+        }
+
+        mean /= durations.size();
+
+        double stddev = 0.0;
+
+        for(auto& duration : durations){
+            stddev += (duration - mean) * (duration - mean);
+        }
+
+        stddev = std::sqrt(stddev / durations.size());
+
+        return {mean, stddev};
+    }
+
     template<typename Config, typename Functor, typename... Args>
     measure_result measure_only_simple(const Config& conf, Functor& functor, Args... args){
         ++measures;
@@ -669,19 +689,19 @@ private:
             call_functor(functor, args...);
         }
 
-        std::size_t duration_acc = 0;
+        std::vector<std::size_t> durations(conf.repeat);
 
         for(std::size_t i = 0; i < conf.repeat; ++i){
             auto start_time = timer_clock::now();
             call_functor(functor, args...);
             auto end_time = timer_clock::now();
             auto duration = std::chrono::duration_cast<microseconds>(end_time - start_time);
-            duration_acc += duration.count();
+            durations[i] = duration.count();
         }
 
         runs += conf.warmup + conf.repeat;
 
-        return {duration_acc / conf.repeat};
+        return measure(durations);
     }
 
     template<bool Sizes, typename Config, typename Init, typename Functor, typename... Args>
@@ -698,7 +718,7 @@ private:
             call_with_data<Sizes>(data, functor, sequence, args...);
         }
 
-        std::size_t duration_acc = 0;
+        std::vector<std::size_t> durations(conf.repeat);
 
         for(std::size_t i = 0; i < conf.repeat; ++i){
             randomize_each(data, sequence);
@@ -706,12 +726,12 @@ private:
             call_with_data<Sizes>(data, functor, sequence, args...);
             auto end_time = timer_clock::now();
             auto duration = std::chrono::duration_cast<microseconds>(end_time - start_time);
-            duration_acc += duration.count();
+            durations[i] = duration.count();
         }
 
         runs += conf.warmup + conf.repeat;
 
-        return {duration_acc / conf.repeat};
+        return measure(durations);
     }
 
     template<typename Config, typename Functor, typename Tuple, typename... T>
@@ -724,7 +744,7 @@ private:
             functor(d);
         }
 
-        std::size_t duration_acc = 0;
+        std::vector<std::size_t> durations(conf.repeat);
 
         for(std::size_t i = 0; i < conf.repeat; ++i){
             using cpm::randomize;
@@ -733,12 +753,12 @@ private:
             functor(d);
             auto end_time = timer_clock::now();
             auto duration = std::chrono::duration_cast<microseconds>(end_time - start_time);
-            duration_acc += duration.count();
+            durations[i] = duration.count();
         }
 
         runs += conf.warmup + conf.repeat;
 
-        return {duration_acc / conf.repeat};
+        return measure(durations);
     }
 
     template<typename Tuple>
