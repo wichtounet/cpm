@@ -10,6 +10,8 @@
 
 #include <array>
 
+#include "duration.hpp"
+
 namespace cpm {
 
 namespace detail {
@@ -34,7 +36,7 @@ struct has_next;
 
 template<typename Tuple, std::size_t... I, typename... Policy>
 struct has_next<Tuple, std::index_sequence<I...>, Policy...> {
-    static constexpr bool value(std::size_t i,Tuple d, std::size_t duration){
+    static constexpr bool value(std::size_t i, Tuple d, measure_result duration){
         return all_and((nth_type<I, Policy...>::type::has_next(i, std::get<I>(d), duration))...);
     }
 };
@@ -82,8 +84,8 @@ struct increasing_policy {
         return S;
     }
 
-    static constexpr bool has_next(std::size_t /*i*/, std::size_t d, std::size_t duration){
-        return SP == stop_policy::STOP ? d != E : duration < E;
+    static constexpr bool has_next(std::size_t /*i*/, std::size_t d, measure_result duration){
+        return SP == stop_policy::STOP ? d != E : duration.mean < E;
     }
 
     static constexpr std::size_t next(std::size_t /*i*/, std::size_t d){
@@ -98,7 +100,7 @@ struct values_policy {
         return values[0];
     }
 
-    static bool has_next(std::size_t i, std::size_t /*d*/, std::size_t /*duration*/){
+    static bool has_next(std::size_t i, std::size_t /*d*/, measure_result /*duration*/){
         return (i + 1) < sizeof...(SS);
     }
 
@@ -122,7 +124,7 @@ struct nary_policy {
     }
 
     template<typename Tuple>
-    static cpp14_constexpr bool has_next(std::size_t i, Tuple d, std::size_t duration){
+    static cpp14_constexpr bool has_next(std::size_t i, Tuple d, measure_result duration){
         return detail::has_next<Tuple, std::make_index_sequence<std::tuple_size<Tuple>::value>, Policy...>::value(i, d, duration);
     }
 

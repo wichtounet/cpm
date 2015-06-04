@@ -114,7 +114,7 @@ struct section_data {
     //TODO This datastructure is probably not ideal
     std::vector<std::string> names;
     std::vector<std::string> sizes;
-    std::vector<std::vector<std::size_t>> results;
+    std::vector<std::vector<measure_result>> results;
 
     section_data() = default;
     section_data(const section_data&) = default;
@@ -207,7 +207,7 @@ public:
 
             for(std::size_t i = 0; i < data.results.size(); ++i){
                 for(auto d : data.results[i]){
-                    widths[i+1] = std::max(widths[i+1], static_cast<int>(us_duration_str(d).size()));
+                    widths[i+1] = std::max(widths[i+1], static_cast<int>(us_duration_str(d.mean).size()));
                 }
             }
 
@@ -237,20 +237,20 @@ public:
 
                 for(std::size_t r = 0; r < data.results.size(); ++r){
                     if(i < data.results[r].size()){
-                        max = std::max(max, data.results[r][i]);
-                        min = std::min(min, data.results[r][i]);
+                        max = std::max(max, data.results[r][i].mean);
+                        min = std::min(min, data.results[r][i].mean);
                     }
                 }
 
                 for(std::size_t r = 0; r < data.results.size(); ++r){
                     if(i < data.results[r].size()){
-                        if(data.results[r][i] >= 0.99 * static_cast<double>(min) && data.results[r][i] <= 1.01 * static_cast<double>(min)){
+                        if(data.results[r][i].mean >= 0.99 * static_cast<double>(min) && data.results[r][i].mean <= 1.01 * static_cast<double>(min)){
                             std::cout << "\033[0;32m";
-                        } else if(data.results[r][i] >= 0.99 * static_cast<double>(max) && data.results[r][i] <= 1.01 * static_cast<double>(max)){
+                        } else if(data.results[r][i].mean >= 0.99 * static_cast<double>(max) && data.results[r][i].mean <= 1.01 * static_cast<double>(max)){
                             std::cout << "\033[0;31m";
                         }
 
-                        printf("%*s", widths[r+1], us_duration_str(data.results[r][i]).c_str());
+                        printf("%*s", widths[r+1], us_duration_str(data.results[r][i].mean).c_str());
                     } else {
                         std::cout << "\033[0;31m";
                         printf("%*s", widths[r+1], "*");
@@ -271,7 +271,7 @@ public:
 
 private:
     template<typename Tuple>
-    void report(const std::string& title, Tuple d, std::size_t duration){
+    void report(const std::string& title, Tuple d, measure_result duration){
         if(data.names.empty() || data.names.back() != title){
             data.names.push_back(title);
             data.results.emplace_back();
@@ -287,7 +287,7 @@ private:
 
 struct measure_data {
     std::string title;
-    std::vector<std::pair<std::string, std::size_t>> results;
+    std::vector<std::pair<std::string, measure_result>> results;
 };
 
 template<typename DefaultPolicy>
@@ -593,7 +593,7 @@ private:
                 start_sub(stream, indent);
 
                 write_value(stream, indent, "size", sub.first);
-                write_value(stream, indent, "duration", sub.second, false);
+                write_value(stream, indent, "mean", sub.second.mean, false);
 
                 close_sub(stream, indent, j < result.results.size() - 1);
             }
@@ -626,7 +626,7 @@ private:
                     start_sub(stream, indent);
 
                     write_value(stream, indent, "size", section.sizes[k]);
-                    write_value(stream, indent, "duration", section.results[j][k], false);
+                    write_value(stream, indent, "duration", section.results[j][k].mean, false);
 
                     close_sub(stream, indent, k < section.results[j].size() - 1);
                 }
@@ -662,7 +662,7 @@ private:
     }
 
     template<typename Config, typename Functor, typename... Args>
-    std::size_t measure_only_simple(const Config& conf, Functor& functor, Args... args){
+    measure_result measure_only_simple(const Config& conf, Functor& functor, Args... args){
         ++measures;
 
         for(std::size_t i = 0; i < conf.warmup; ++i){
@@ -681,11 +681,11 @@ private:
 
         runs += conf.warmup + conf.repeat;
 
-        return duration_acc / conf.repeat;
+        return {duration_acc / conf.repeat};
     }
 
     template<bool Sizes, typename Config, typename Init, typename Functor, typename... Args>
-    std::size_t measure_only_two_pass(const Config& conf, Init& init, Functor& functor, Args... args){
+    measure_result measure_only_two_pass(const Config& conf, Init& init, Functor& functor, Args... args){
         ++measures;
 
         auto data = call_init_functor(init, args...);
@@ -711,11 +711,11 @@ private:
 
         runs += conf.warmup + conf.repeat;
 
-        return duration_acc / conf.repeat;
+        return {duration_acc / conf.repeat};
     }
 
     template<typename Config, typename Functor, typename Tuple, typename... T>
-    std::size_t measure_only_global(const Config& conf, Functor& functor, Tuple d, T&... references){
+    measure_result measure_only_global(const Config& conf, Functor& functor, Tuple d, T&... references){
         ++measures;
 
         for(std::size_t i = 0; i < conf.warmup; ++i){
@@ -738,13 +738,13 @@ private:
 
         runs += conf.warmup + conf.repeat;
 
-        return duration_acc / conf.repeat;
+        return {duration_acc / conf.repeat};
     }
 
     template<typename Tuple>
-    void report(const std::string& title, Tuple d, std::size_t duration){
+    void report(const std::string& title, Tuple d, measure_result duration){
         if(standard_report){
-            std::cout << title << "(" << size_to_string(d) << ") took " << us_duration_str(duration) << "\n";
+            std::cout << title << "(" << size_to_string(d) << ") took " << us_duration_str(duration.mean) << "\n";
         }
     }
 };

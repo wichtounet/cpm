@@ -13,6 +13,10 @@
 
 namespace cpm {
 
+struct measure_result {
+    std::size_t mean;
+};
+
 using timer_clock = std::chrono::steady_clock;
 using wall_clock = std::chrono::system_clock;
 using wall_time_point = wall_clock::time_point;
