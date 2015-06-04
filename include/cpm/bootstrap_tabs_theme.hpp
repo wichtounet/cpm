@@ -67,14 +67,14 @@ struct bootstrap_tabs_theme : bootstrap_theme {
         stream << "<script>\n";
 
         stream << "$(function () {\n";
-        stream << "var max = 0;\n";
+        stream << "var max_height = 0;\n";
 
         for(auto& match : matches){
-            stream << "max = Math.max(max, $('#" << match << "').height());\n";
+            stream << "max_height = Math.max(max_height, $('#" << match << "').height());\n";
         }
 
         for(auto& match : matches){
-            stream << "$('#" << match << "').height(max);\n";
+            stream << "$('#" << match << "').height(max_height);\n";
         }
 
         stream << "});\n";
