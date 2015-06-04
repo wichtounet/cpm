@@ -766,7 +766,7 @@ private:
     template<typename Tuple>
     void report(const std::string& title, Tuple d, measure_result duration){
         if(standard_report){
-            std::cout << title << "(" << size_to_string(d) << ") took " << us_duration_str(duration.mean) << "\n";
+            std::cout << title << "(" << size_to_string(d) << ") : mean: " << us_duration_str(duration.mean) << " stddev: " << us_duration_str(duration.stddev) << "\n";
         }
     }
 };
