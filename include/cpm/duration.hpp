@@ -27,15 +27,21 @@ using seconds = std::chrono::seconds;
 using millseconds = std::chrono::milliseconds;
 using microseconds = std::chrono::microseconds;
 
-inline std::string us_duration_str(double duration_us){
+inline std::string to_string_precision(double duration, int precision = 6){
+    std::ostringstream out;
+    out << std::setprecision(precision) << duration;
+    return out.str();
+}
+
+inline std::string us_duration_str(double duration_us, int precision = 6){
     double duration = duration_us;
 
     if(duration > 1000 * 1000){
-        return std::to_string(duration / 1000.0 / 1000.0) + "s";
+        return to_string_precision(duration / 1000.0 / 1000.0, precision) + "s";
     } else if(duration > 1000){
-        return std::to_string(duration / 1000.0) + "ms";
+        return to_string_precision(duration / 1000.0, precision) + "ms";
     } else {
-        return std::to_string(duration_us) + "us";
+        return to_string_precision(duration_us, precision) + "us";
     }
 }
 

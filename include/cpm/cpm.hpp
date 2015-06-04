@@ -13,6 +13,7 @@
 #include <sstream>
 #include <utility>
 #include <functional>
+#include <iomanip>
 
 #include <sys/utsname.h>
 
@@ -774,7 +775,12 @@ private:
     template<typename Tuple>
     void report(const std::string& title, Tuple d, measure_result duration){
         if(standard_report){
-            std::cout << title << "(" << size_to_string(d) << ") : mean: " << us_duration_str(duration.mean) << " stddev: " << us_duration_str(duration.stddev) << "\n";
+            std::cout << title << "(" << size_to_string(d) << ") : " 
+                << "mean: " << us_duration_str(duration.mean, 3) 
+                << " stddev: " << us_duration_str(duration.stddev, 3) 
+                << " min: " << us_duration_str(duration.min, 3) 
+                << " max: " << us_duration_str(duration.max, 3) 
+                << "\n";
         }
     }
 };
