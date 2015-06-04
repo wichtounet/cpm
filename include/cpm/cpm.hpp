@@ -594,6 +594,7 @@ private:
 
                 write_value(stream, indent, "size", sub.first);
                 write_value(stream, indent, "mean", sub.second.mean, false);
+                write_value(stream, indent, "stddev", sub.second.stddev, false);
 
                 close_sub(stream, indent, j < result.results.size() - 1);
             }
@@ -626,7 +627,8 @@ private:
                     start_sub(stream, indent);
 
                     write_value(stream, indent, "size", section.sizes[k]);
-                    write_value(stream, indent, "duration", section.results[j][k].mean, false);
+                    write_value(stream, indent, "mean", section.results[j][k].mean, false);
+                    write_value(stream, indent, "stddev", section.results[j][k].stddev, false);
 
                     close_sub(stream, indent, k < section.results[j].size() - 1);
                 }
