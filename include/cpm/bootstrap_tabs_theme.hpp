@@ -18,6 +18,8 @@ struct bootstrap_tabs_theme : bootstrap_theme {
     std::size_t uid = 0;
     std::size_t tid = 0;
 
+    std::vector<std::string> matches;
+
     bootstrap_tabs_theme(const reports_data& data, cxxopts::Options& options, std::ostream& stream, std::string compiler, std::string configuration) : bootstrap_theme(data, options, stream, compiler, configuration) {}
 
     void before_result(const std::string& title, bool sub = false){
@@ -57,9 +59,28 @@ struct bootstrap_tabs_theme : bootstrap_theme {
 
         stream << "</ul>\n";
         stream << "<div class=\"tab-content\">\n";
+
+        matches.clear();
     }
 
     void after_result(){
+        stream << "<script>\n";
+
+        stream << "$(function () {\n";
+        stream << "var max = 0;\n";
+
+        for(auto& match : matches){
+            stream << "max = Math.max(max, $('#" << match << "').height());\n";
+        }
+
+        for(auto& match : matches){
+            stream << "$('#" << match << "').height(max);\n";
+        }
+
+        stream << "});\n";
+
+        stream << "</script>\n";
+
         stream << "</div>\n";
         stream << "</div>\n";
         stream << "</div>\n";
@@ -71,11 +92,17 @@ struct bootstrap_tabs_theme : bootstrap_theme {
     }
 
     virtual void start_column(const std::string& /*style*/) override {
+        auto tab_id = std::string("tab_") + std::to_string(uid) + "_" + std::to_string(tid);
+
         if(tid == 0){
-            stream << "<div role=\"tabpanel\" class=\"tab-pane active\" id=\"tab_" << uid << "_" << tid++ << "\">\n";
+            stream << "<div role=\"tabpanel\" class=\"tab-pane active\" id=\"" << tab_id << "\">\n";
         } else {
-            stream << "<div role=\"tabpanel\" class=\"tab-pane\" id=\"tab_" << uid << "_" << tid++ << "\">\n";
+            stream << "<div role=\"tabpanel\" class=\"tab-pane\" id=\"" << tab_id << "\">\n";
         }
+
+        matches.push_back(tab_id);
+
+        ++tid;
     }
 
     virtual void close_column(){
