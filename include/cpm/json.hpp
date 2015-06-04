@@ -49,6 +49,15 @@ void write_value(std::ofstream& stream, std::size_t& indent, const std::string& 
     }
 }
 
+template<>
+void write_value(std::ofstream& stream, std::size_t& indent, const std::string& tag, const double& value, bool comma){
+    if(comma){
+        stream << std::string(indent, ' ') << "\"" << tag << "\": " << value << ",\n";
+    } else {
+        stream << std::string(indent, ' ') << "\"" << tag << "\": " << value << "\n";
+    }
+}
+
 inline void start_array(std::ofstream& stream, std::size_t& indent, const std::string& tag){
     stream << std::string(indent, ' ') << "\"" << tag << "\": " << "[" << "\n";
     indent += 2;
