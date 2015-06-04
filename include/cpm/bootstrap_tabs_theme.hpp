@@ -61,6 +61,19 @@ struct bootstrap_tabs_theme : bootstrap_theme {
         stream << "<div class=\"tab-content\">\n";
 
         matches.clear();
+
+        if(uid == 0){
+            stream << "<script>\n";
+            stream << "$(function () {\n";
+            stream << "$('a[data-toggle=\"tab\"]').on( 'shown.bs.tab', function (e) {\n";
+            stream << "$(\".cpm_chart\").each(function(){\n";
+            stream << "var chart = $(this).highcharts();\n";
+            stream << "chart.reflow();\n";
+            stream << "});\n";
+            stream << "});\n";
+            stream << "});\n";
+            stream << "</script>\n";
+        }
     }
 
     void after_result(){
@@ -107,6 +120,12 @@ struct bootstrap_tabs_theme : bootstrap_theme {
 
     virtual void close_column(){
         stream << "</div>\n";
+    }
+
+    void before_graph(std::size_t id){
+        start_column("");
+
+        stream << "<div id=\"chart_" << id << "\" class=\"cpm_chart\" style=\"height: 400px;\"></div>\n";
     }
 
     template<typename T>
