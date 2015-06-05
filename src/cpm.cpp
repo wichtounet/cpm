@@ -62,7 +62,14 @@ std::vector<cpm::document_t> read(const std::string& source_folder, cxxopts::Opt
         }
 
         if(entry->d_type == DT_REG){
-            documents.push_back(read_document(source_folder, entry->d_name));
+            decltype(auto) doc = read_document(source_folder, entry->d_name);
+            if(doc.HasParseError()){
+                std::cout 
+                    << "Impossible to read document " << entry->d_name << ":" << doc.GetErrorOffset() 
+                    << ", parse error: " << rapidjson::GetParseError_En(doc.GetParseError()) << std::endl;
+            } else {
+                documents.push_back(std::move(doc));
+            }
         }
     }
 
