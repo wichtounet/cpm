@@ -197,11 +197,11 @@ void end_graph(Theme& theme){
 template<typename Theme>
 void y_axis_configuration(Theme& theme){
     theme << "yAxis: {\n";
-    theme << "title: { text: 'Time [us]' },\n";
+    theme << "title: { text: 'Time [ns]' },\n";
     theme << "plotLines: [{ value: 0, width: 1, color: '#808080'}]\n";
     theme << "},\n";
 
-    theme << "tooltip: { valueSuffix: 'us' },\n";
+    theme << "tooltip: { valueSuffix: 'ns' },\n";
 }
 
 template<typename Theme, typename Elements>
