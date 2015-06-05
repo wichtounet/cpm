@@ -22,6 +22,12 @@ struct measure_result {
     double max;
 };
 
+struct measure_full {
+    std::size_t size_ff;
+    std::string size;
+    measure_result result;
+};
+
 using timer_clock = std::chrono::steady_clock;
 using wall_clock = std::chrono::system_clock;
 using wall_time_point = wall_clock::time_point;

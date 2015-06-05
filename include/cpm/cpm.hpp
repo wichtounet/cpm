@@ -288,7 +288,7 @@ private:
 
 struct measure_data {
     std::string title;
-    std::vector<std::pair<std::string, measure_result>> results;
+    std::vector<measure_full> results;
 };
 
 template<typename DefaultPolicy>
@@ -460,7 +460,7 @@ public:
 
         auto duration = measure_only_simple(*this, functor);
         report(title, std::size_t(1), duration);
-        data.results.push_back(std::make_pair(std::string("1"), duration));
+        data.results.push_back({1, std::string("1"), duration});
 
         results.push_back(std::move(data));
     }
@@ -480,7 +480,7 @@ public:
             [&data, &title, &functor, this](auto sizes){
                 auto duration = measure_only_simple(*this, functor, sizes);
                 report(title, sizes, duration);
-                data.results.push_back(std::make_pair(size_to_string(sizes), duration));
+                data.results.push_back({size_to_eff(sizes), size_to_string(sizes), duration});
                 return duration;
             }
         );
@@ -503,7 +503,7 @@ public:
             [&data, &title, &functor, &init, this](auto sizes){
                 auto duration = measure_only_two_pass<Sizes>(*this, init, functor, sizes);
                 report(title, sizes, duration);
-                data.results.push_back(std::make_pair(size_to_string(sizes), duration));
+                data.results.push_back({size_to_eff(sizes), size_to_string(sizes), duration});
                 return duration;
             }
         );
@@ -526,7 +526,7 @@ public:
             [&data, &title, &functor, &references..., this](auto sizes){
                 auto duration = measure_only_global(*this, functor, sizes, references...);
                 report(title, sizes, duration);
-                data.results.push_back(std::make_pair(size_to_string(sizes), duration));
+                data.results.push_back({size_to_eff(sizes), size_to_string(sizes), duration});
                 return duration;
             }
         );
@@ -593,13 +593,13 @@ private:
 
                 start_sub(stream, indent);
 
-                write_value(stream, indent, "size", sub.first);
-                write_value(stream, indent, "mean", sub.second.mean);
-                write_value(stream, indent, "mean_lb", sub.second.mean_lb);
-                write_value(stream, indent, "mean_ub", sub.second.mean_ub);
-                write_value(stream, indent, "stddev", sub.second.stddev);
-                write_value(stream, indent, "min", sub.second.min);
-                write_value(stream, indent, "max", sub.second.max, false);
+                write_value(stream, indent, "size", sub.size);
+                write_value(stream, indent, "mean", sub.result.mean);
+                write_value(stream, indent, "mean_lb", sub.result.mean_lb);
+                write_value(stream, indent, "mean_ub", sub.result.mean_ub);
+                write_value(stream, indent, "stddev", sub.result.stddev);
+                write_value(stream, indent, "min", sub.result.min);
+                write_value(stream, indent, "max", sub.result.max, false);
 
                 close_sub(stream, indent, j < result.results.size() - 1);
             }

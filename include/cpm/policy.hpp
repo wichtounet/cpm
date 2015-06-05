@@ -67,6 +67,21 @@ struct tuple_to_string <Tuple, std::index_sequence<I...>> {
     }
 };
 
+template<typename Tuple, typename Sequence>
+struct tuple_to_eff;
+
+template<typename Tuple, std::size_t... I>
+struct tuple_to_eff <Tuple, std::index_sequence<I...>> {
+    static std::size_t value(Tuple d){
+        std::array<std::size_t, std::tuple_size<Tuple>::value> values {{std::get<I>(d)...}};
+        std::size_t acc = 1;
+        for(std::size_t i = 1; i < values.size(); ++i){
+            acc *= values[i];
+        }
+        return acc;
+    }
+};
+
 } //end of namespace detail
 
 enum class stop_policy {
@@ -147,6 +162,15 @@ std::string size_to_string(std::size_t t){
 template<typename Tuple>
 std::string size_to_string(Tuple t){
     return detail::tuple_to_string<Tuple, std::make_index_sequence<std::tuple_size<Tuple>::value>>::value(t);;
+}
+
+std::size_t size_to_eff(std::size_t t){
+    return t;
+}
+
+template<typename Tuple>
+std::size_t size_to_eff(Tuple t){
+    return detail::tuple_to_eff<Tuple, std::make_index_sequence<std::tuple_size<Tuple>::value>>::value(t);;
 }
 
 } //end of namespace cpm
