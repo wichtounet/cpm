@@ -11,6 +11,7 @@
 #include <array>
 
 #include "duration.hpp"
+#include "compat.hpp"
 
 namespace cpm {
 
@@ -124,12 +125,6 @@ struct values_policy {
         return values[i+1];
     }
 };
-
-#ifdef __clang__
-#define cpp14_constexpr constexpr
-#else
-#define cpp14_constexpr
-#endif
 
 template<nary_combination_policy NCB, typename... Policy>
 struct nary_policy {
