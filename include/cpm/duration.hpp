@@ -23,7 +23,7 @@ struct measure_result {
     double throughput;
 
     constexpr void update(std::size_t size_eff){
-        throughput = size_eff / (mean / 1000.0 / 1000.0);
+        throughput = mean == 0.0 ? 0.0 : size_eff / (mean / 1000.0 / 1000.0);
     }
 };
 
