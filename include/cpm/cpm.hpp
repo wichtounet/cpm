@@ -273,7 +273,7 @@ public:
 
 private:
     template<typename Tuple>
-    void report(const std::string& title, Tuple d, measure_result duration){
+    void report(const std::string& title, Tuple d, measure_result& duration){
         if(data.names.empty() || data.names.back() != title){
             data.names.push_back(title);
             data.results.emplace_back();
@@ -790,7 +790,7 @@ private:
     }
 
     template<typename Tuple>
-    void report(const std::string& title, Tuple d, measure_result duration){
+    void report(const std::string& title, Tuple d, measure_result& duration){
         duration.update(size_to_eff(d));
 
         if(standard_report){
