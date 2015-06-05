@@ -22,6 +22,7 @@
 #include "cpm/raw_theme.hpp"
 #include "cpm/bootstrap_theme.hpp"
 #include "cpm/bootstrap_tabs_theme.hpp"
+#include "cpm/duration.hpp"
 
 namespace {
 
@@ -408,6 +409,7 @@ void summary_header(Theme& theme){
     theme << "<tr>\n";
     theme << "<th>Size</th>\n";
     theme << "<th>Time</th>\n";
+    theme << "<th>Throughput</th>\n";
     theme << "<th>Previous</th>\n";
     theme << "<th>First</th>\n";
 
@@ -428,6 +430,7 @@ template<typename Theme>
 void summary_footer(Theme& theme, double previous_acc, double first_acc){
     theme << "<tr>\n";
 
+    theme << "<td>&nbsp;</td>\n";
     theme << "<td>&nbsp;</td>\n";
     theme << "<td>&nbsp;</td>\n";
 
@@ -474,6 +477,7 @@ void generate_summary_table(Theme& theme, const rapidjson::Value& base_result, c
 
         theme << "<td>" << r["size"].GetString() << "</td>\n";
         theme << "<td>" << r["mean"].GetDouble() << "</td>\n";
+        theme << "<td>" << cpm::throughput_str(r["throughput"].GetDouble()) << "</td>\n";
 
         bool previous_found = false;
         double diff = 0.0;
@@ -895,6 +899,7 @@ void generate_section_summary_table(Theme& theme, std::size_t id, json_value bas
             theme << "<tr>\n";
             theme << "<td>" << r["size"].GetString() << "</td>\n";
             theme << "<td>" << r["mean"].GetDouble() << "</td>\n";
+            theme << "<td>" << cpm::throughput_str(r["throughput"].GetDouble()) << "</td>\n";
 
             bool previous_found = false;
             double diff = 0.0;
