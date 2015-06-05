@@ -115,6 +115,7 @@ struct section_data {
     //TODO This datastructure is probably not ideal
     std::vector<std::string> names;
     std::vector<std::string> sizes;
+    std::vector<std::size_t> sizes_eff;
     std::vector<std::vector<measure_result>> results;
 
     section_data() = default;
@@ -280,6 +281,7 @@ private:
 
         if(data.names.size() == 1){
             data.sizes.push_back(size_to_string(d));
+            data.sizes_eff.push_back(size_to_eff(d));
         }
 
         data.results.back().push_back(duration);
