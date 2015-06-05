@@ -543,7 +543,7 @@ public:
         auto start_time = timer_clock::now();
         functor();
         auto end_time = timer_clock::now();
-        auto duration = std::chrono::duration_cast<measure_precision>(end_time - start_time);
+        auto duration = std::chrono::duration_cast<clock_resolution>(end_time - start_time);
 
         return duration.count();
     }
@@ -723,7 +723,7 @@ private:
             auto start_time = timer_clock::now();
             call_functor(functor, args...);
             auto end_time = timer_clock::now();
-            auto duration = std::chrono::duration_cast<measure_precision>(end_time - start_time);
+            auto duration = std::chrono::duration_cast<clock_resolution>(end_time - start_time);
             durations[i] = duration.count();
         }
 
@@ -753,7 +753,7 @@ private:
             auto start_time = timer_clock::now();
             call_with_data<Sizes>(data, functor, sequence, args...);
             auto end_time = timer_clock::now();
-            auto duration = std::chrono::duration_cast<measure_precision>(end_time - start_time);
+            auto duration = std::chrono::duration_cast<clock_resolution>(end_time - start_time);
             durations[i] = duration.count();
         }
 
@@ -780,7 +780,7 @@ private:
             auto start_time = timer_clock::now();
             functor(d);
             auto end_time = timer_clock::now();
-            auto duration = std::chrono::duration_cast<measure_precision>(end_time - start_time);
+            auto duration = std::chrono::duration_cast<clock_resolution>(end_time - start_time);
             durations[i] = duration.count();
         }
 

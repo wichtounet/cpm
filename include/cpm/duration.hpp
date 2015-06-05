@@ -20,7 +20,7 @@ using seconds = std::chrono::seconds;
 using millseconds = std::chrono::milliseconds;
 using microseconds = std::chrono::microseconds;
 using nanoseconds = std::chrono::nanoseconds;
-using measure_precision = nanoseconds;
+using clock_resolution = nanoseconds;
 
 struct measure_result {
     double mean;
