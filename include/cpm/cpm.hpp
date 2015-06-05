@@ -209,7 +209,7 @@ public:
 
             for(std::size_t i = 0; i < data.results.size(); ++i){
                 for(auto d : data.results[i]){
-                    widths[i+1] = std::max(widths[i+1], static_cast<int>(us_duration_str(d.mean).size()));
+                    widths[i+1] = std::max(widths[i+1], static_cast<int>(duration_str(d.mean).size()));
                 }
             }
 
@@ -252,7 +252,7 @@ public:
                             std::cout << "\033[0;31m";
                         }
 
-                        printf("%*s", widths[r+1], us_duration_str(data.results[r][i].mean).c_str());
+                        printf("%*s", widths[r+1], duration_str(data.results[r][i].mean).c_str());
                     } else {
                         std::cout << "\033[0;31m";
                         printf("%*s", widths[r+1], "*");
@@ -543,7 +543,7 @@ public:
         auto start_time = timer_clock::now();
         functor();
         auto end_time = timer_clock::now();
-        auto duration = std::chrono::duration_cast<microseconds>(end_time - start_time);
+        auto duration = std::chrono::duration_cast<measure_precision>(end_time - start_time);
 
         return duration.count();
     }
@@ -723,7 +723,7 @@ private:
             auto start_time = timer_clock::now();
             call_functor(functor, args...);
             auto end_time = timer_clock::now();
-            auto duration = std::chrono::duration_cast<microseconds>(end_time - start_time);
+            auto duration = std::chrono::duration_cast<measure_precision>(end_time - start_time);
             durations[i] = duration.count();
         }
 
@@ -753,7 +753,7 @@ private:
             auto start_time = timer_clock::now();
             call_with_data<Sizes>(data, functor, sequence, args...);
             auto end_time = timer_clock::now();
-            auto duration = std::chrono::duration_cast<microseconds>(end_time - start_time);
+            auto duration = std::chrono::duration_cast<measure_precision>(end_time - start_time);
             durations[i] = duration.count();
         }
 
@@ -780,7 +780,7 @@ private:
             auto start_time = timer_clock::now();
             functor(d);
             auto end_time = timer_clock::now();
-            auto duration = std::chrono::duration_cast<microseconds>(end_time - start_time);
+            auto duration = std::chrono::duration_cast<measure_precision>(end_time - start_time);
             durations[i] = duration.count();
         }
 
@@ -795,11 +795,11 @@ private:
 
         if(standard_report){
             std::cout << title << "(" << size_to_string(d) << ") : " 
-                << "mean: " << us_duration_str(duration.mean, 3) 
-                << " (" << us_duration_str(duration.mean_lb, 3) << "," << us_duration_str(duration.mean_ub, 3) << ")"
-                << " stddev: " << us_duration_str(duration.stddev, 3) 
-                << " min: " << us_duration_str(duration.min, 3) 
-                << " max: " << us_duration_str(duration.max, 3) 
+                << "mean: " << duration_str(duration.mean, 3) 
+                << " (" << duration_str(duration.mean_lb, 3) << "," << duration_str(duration.mean_ub, 3) << ")"
+                << " stddev: " << duration_str(duration.stddev, 3) 
+                << " min: " << duration_str(duration.min, 3) 
+                << " max: " << duration_str(duration.max, 3) 
                 << " througput: " << throughput_str(duration.throughput, 3) << "Es"
                 << "\n";
         }
