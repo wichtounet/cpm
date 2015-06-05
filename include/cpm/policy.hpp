@@ -74,7 +74,7 @@ template<typename Tuple, std::size_t... I>
 struct tuple_to_eff <Tuple, std::index_sequence<I...>> {
     static std::size_t value(Tuple d){
         std::array<std::size_t, std::tuple_size<Tuple>::value> values {{std::get<I>(d)...}};
-        std::size_t acc = 1;
+        std::size_t acc = values[0];
         for(std::size_t i = 1; i < values.size(); ++i){
             acc *= values[i];
         }

@@ -296,9 +296,7 @@ struct measure_data {
 template<typename DefaultPolicy>
 struct benchmark {
 private:
-    template<typename Bench, typename Policy>
-    friend struct section;
-
+    template<typename Bench, typename Policy> friend struct section; 
     std::size_t tests = 0;
     std::size_t measures = 0;
     std::size_t runs = 0;
@@ -596,6 +594,7 @@ private:
                 start_sub(stream, indent);
 
                 write_value(stream, indent, "size", sub.size);
+                write_value(stream, indent, "size_eff", sub.size_eff);
                 write_value(stream, indent, "mean", sub.result.mean);
                 write_value(stream, indent, "mean_lb", sub.result.mean_lb);
                 write_value(stream, indent, "mean_ub", sub.result.mean_ub);
@@ -634,6 +633,7 @@ private:
                     start_sub(stream, indent);
 
                     write_value(stream, indent, "size", section.sizes[k]);
+                    write_value(stream, indent, "size_eff", section.sizes_eff[k]);
                     write_value(stream, indent, "mean", section.results[j][k].mean);
                     write_value(stream, indent, "mean_lb", section.results[j][k].mean_lb);
                     write_value(stream, indent, "mean_ub", section.results[j][k].mean_ub);

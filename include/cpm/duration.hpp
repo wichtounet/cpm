@@ -23,7 +23,7 @@ struct measure_result {
 };
 
 struct measure_full {
-    std::size_t size_ff;
+    std::size_t size_eff;
     std::string size;
     measure_result result;
 };
