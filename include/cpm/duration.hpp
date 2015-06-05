@@ -20,7 +20,7 @@ using seconds = std::chrono::seconds;
 using millseconds = std::chrono::milliseconds;
 using microseconds = std::chrono::microseconds;
 using nanoseconds = std::chrono::nanoseconds;
-using measure_precision = microseconds;
+using measure_precision = nanoseconds;
 
 struct measure_result {
     double mean;
@@ -32,7 +32,7 @@ struct measure_result {
     double throughput;
 
     constexpr void update(std::size_t size_eff){
-        throughput = mean == 0.0 ? 0.0 : size_eff / (mean / 1000.0 / 1000.0);
+        throughput = mean == 0.0 ? 0.0 : size_eff / (mean / (1000.0 * 1000.0 * 1000.0));
     }
 };
 
@@ -49,12 +49,14 @@ inline std::string to_string_precision(double duration, int precision = 6){
 }
 
 inline std::string duration_str(double duration, int precision = 6){
-    if(duration > 1000 * 1000){
-        return to_string_precision(duration / 1000.0 / 1000.0, precision) + "s";
-    } else if(duration > 1000){
-        return to_string_precision(duration / 1000.0, precision) + "ms";
+    if(duration > 1000.0 * 1000.0 * 1000.0){
+        return to_string_precision(duration / (1000.0 * 1000.0 * 1000.0), precision) + "s";
+    } else if(duration > 1000.0 * 1000.0){
+        return to_string_precision(duration / (1000.0 * 1000.0), precision) + "ms";
+    } else if(duration > 1000.0){
+        return to_string_precision(duration / 1000.0, precision) + "us";
     } else {
-        return to_string_precision(duration, precision) + "us";
+        return to_string_precision(duration, precision) + "ns";
     }
 }
 
