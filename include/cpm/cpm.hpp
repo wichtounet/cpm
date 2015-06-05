@@ -284,6 +284,8 @@ private:
             data.sizes_eff.push_back(size_to_eff(d));
         }
 
+        duration.update(size_to_eff(d));
+
         data.results.back().push_back(duration);
     }
 };
@@ -600,7 +602,8 @@ private:
                 write_value(stream, indent, "mean_ub", sub.result.mean_ub);
                 write_value(stream, indent, "stddev", sub.result.stddev);
                 write_value(stream, indent, "min", sub.result.min);
-                write_value(stream, indent, "max", sub.result.max, false);
+                write_value(stream, indent, "max", sub.result.max);
+                write_value(stream, indent, "throughput", sub.result.throughput, false);
 
                 close_sub(stream, indent, j < result.results.size() - 1);
             }
@@ -639,7 +642,8 @@ private:
                     write_value(stream, indent, "mean_ub", section.results[j][k].mean_ub);
                     write_value(stream, indent, "stddev", section.results[j][k].stddev);
                     write_value(stream, indent, "min", section.results[j][k].min);
-                    write_value(stream, indent, "max", section.results[j][k].max, false);
+                    write_value(stream, indent, "max", section.results[j][k].max);
+                    write_value(stream, indent, "throughput", section.results[j][k].throughput, false);
 
                     close_sub(stream, indent, k < section.results[j].size() - 1);
                 }
@@ -702,7 +706,7 @@ private:
         double mean_lb = mean - 1.96 * stderror;
         double mean_ub = mean + 1.96 * stderror;
 
-        return {mean, mean_lb, mean_ub, stddev, min, max};
+        return {mean, mean_lb, mean_ub, stddev, min, max, 0.0};
     }
 
     template<typename Config, typename Functor, typename... Args>
@@ -787,6 +791,8 @@ private:
 
     template<typename Tuple>
     void report(const std::string& title, Tuple d, measure_result duration){
+        duration.update(size_to_eff(d));
+
         if(standard_report){
             std::cout << title << "(" << size_to_string(d) << ") : " 
                 << "mean: " << us_duration_str(duration.mean, 3) 
@@ -794,6 +800,7 @@ private:
                 << " stddev: " << us_duration_str(duration.stddev, 3) 
                 << " min: " << us_duration_str(duration.min, 3) 
                 << " max: " << us_duration_str(duration.max, 3) 
+                << " througput: " << throughput_str(duration.throughput, 3) << "Es"
                 << "\n";
         }
     }

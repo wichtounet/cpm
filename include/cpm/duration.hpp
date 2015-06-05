@@ -20,6 +20,11 @@ struct measure_result {
     double stddev;
     double min;
     double max;
+    double throughput;
+
+    constexpr void update(std::size_t size_eff){
+        throughput = size_eff / (mean / 1000.0 / 1000.0);
+    }
 };
 
 struct measure_full {
@@ -51,6 +56,26 @@ inline std::string us_duration_str(double duration_us, int precision = 6){
     } else {
         return to_string_precision(duration_us, precision) + "us";
     }
+}
+
+inline std::string throughput_str(double tp, int precision = 6){
+    std::ostringstream out;
+
+    out << std::setprecision(precision);
+
+    if(tp > 1000.0 * 1000.0 * 1000.0 * 1000.0){
+        out << tp / (1000.0 * 1000.0 * 1000.0 * 1000.0) << "T";
+    } else if(tp > 1000 * 1000 * 1000){
+        out << tp / (1000 * 1000 * 1000) << "G";
+    } else if(tp > 1000 * 1000){
+        out << tp / (1000 * 1000) << "M";
+    } else if(tp > 1000){
+        out << tp / (1000) << "K";
+    } else {
+        out << tp;
+    }
+
+    return out.str();
 }
 
 } //end of namespace cpm
