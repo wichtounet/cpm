@@ -594,11 +594,11 @@ private:
                 start_sub(stream, indent);
 
                 write_value(stream, indent, "size", sub.first);
-                write_value(stream, indent, "mean", sub.second.mean, false);
-                write_value(stream, indent, "mean_lb", sub.second.mean_lb, false);
-                write_value(stream, indent, "mean_ub", sub.second.mean_ub, false);
-                write_value(stream, indent, "stddev", sub.second.stddev, false);
-                write_value(stream, indent, "min", sub.second.min, false);
+                write_value(stream, indent, "mean", sub.second.mean);
+                write_value(stream, indent, "mean_lb", sub.second.mean_lb);
+                write_value(stream, indent, "mean_ub", sub.second.mean_ub);
+                write_value(stream, indent, "stddev", sub.second.stddev);
+                write_value(stream, indent, "min", sub.second.min);
                 write_value(stream, indent, "max", sub.second.max, false);
 
                 close_sub(stream, indent, j < result.results.size() - 1);
@@ -632,11 +632,11 @@ private:
                     start_sub(stream, indent);
 
                     write_value(stream, indent, "size", section.sizes[k]);
-                    write_value(stream, indent, "mean", section.results[j][k].mean, false);
-                    write_value(stream, indent, "mean_lb", section.results[j][k].mean_lb, false);
-                    write_value(stream, indent, "mean_ub", section.results[j][k].mean_ub, false);
-                    write_value(stream, indent, "stddev", section.results[j][k].stddev, false);
-                    write_value(stream, indent, "min", section.results[j][k].min, false);
+                    write_value(stream, indent, "mean", section.results[j][k].mean);
+                    write_value(stream, indent, "mean_lb", section.results[j][k].mean_lb);
+                    write_value(stream, indent, "mean_ub", section.results[j][k].mean_ub);
+                    write_value(stream, indent, "stddev", section.results[j][k].stddev);
+                    write_value(stream, indent, "min", section.results[j][k].min);
                     write_value(stream, indent, "max", section.results[j][k].max, false);
 
                     close_sub(stream, indent, k < section.results[j].size() - 1);
