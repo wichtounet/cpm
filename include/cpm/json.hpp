@@ -51,11 +51,13 @@ void write_value(std::ofstream& stream, std::size_t& indent, const std::string& 
 
 template<>
 void write_value(std::ofstream& stream, std::size_t& indent, const std::string& tag, const double& value, bool comma){
+    stream << std::fixed;
     if(comma){
         stream << std::string(indent, ' ') << "\"" << tag << "\": " << value << ",\n";
     } else {
         stream << std::string(indent, ' ') << "\"" << tag << "\": " << value << "\n";
     }
+    stream << std::scientific;
 }
 
 inline void start_array(std::ofstream& stream, std::size_t& indent, const std::string& tag){
