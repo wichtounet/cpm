@@ -231,7 +231,7 @@ int main(int argc, char* argv[]){
 #endif
 
 #ifdef CPM_REPEAT
-    bench.warmup = CPM_REPEAT;
+    bench.repeat = CPM_REPEAT;
 #endif
 
     bench.begin();
