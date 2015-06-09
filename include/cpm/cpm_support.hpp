@@ -227,11 +227,11 @@ int main(int argc, char* argv[]){
     cpm::benchmark<> bench(benchmark_name, output_folder, tag, configuration);
 
 #ifdef CPM_WARMUP
-    bench.warmup = CPM_WARMUP
+    bench.warmup = CPM_WARMUP;
 #endif
 
 #ifdef CPM_REPEAT
-    bench.warmup = CPM_REPEAT
+    bench.warmup = CPM_REPEAT;
 #endif
 
     bench.begin();
