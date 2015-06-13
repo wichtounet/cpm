@@ -172,7 +172,6 @@ struct bootstrap_theme {
             }
         }
 
-
         stream << "</div>\n";
 
         stream << "</div>\n";
