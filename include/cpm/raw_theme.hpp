@@ -27,8 +27,15 @@ struct raw_theme {
     void include(){}
     void header(){}
     void footer(){}
-    void before_information(){}
-    void after_information(){}
+
+    void before_information(std::string name){
+        stream << "<h1>" << name << "</h1>\n";
+        stream << "<ul>\n";
+    }
+
+    void after_information(){
+        stream << "</ul>\n";
+    }
 
     void compiler_buttons(){
         stream << "<div>\n";

@@ -150,17 +150,13 @@ void footer(Theme& theme){
 
 template<typename Theme>
 void information(Theme& theme, const cpm::document_t& doc){
-    theme.before_information();
+    theme.before_information(doc["name"].GetString());
 
-    theme << "<h1>" << doc["name"].GetString() << "</h1>\n";
-
-    theme << "<ul>\n";
     theme << "<li>Tag: " << doc["tag"].GetString() << "</li>\n";
     theme << "<li>Compiler: " << doc["compiler"].GetString() << "</li>\n";
     theme << "<li>Configuration: " << doc["configuration"].GetString() << "</li>\n";
     theme << "<li>Operating System: " << doc["os"].GetString() << "</li>\n";
     theme << "<li>Time: " << doc["time"].GetString() << "</li>\n";
-    theme << "</ul>\n";
 
     theme.after_information();
 }

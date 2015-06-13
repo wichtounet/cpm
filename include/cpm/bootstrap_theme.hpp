@@ -83,12 +83,15 @@ struct bootstrap_theme {
         }
     }
 
-    void before_information(){
+    void before_information(std::string name){
         stream << "<div class=\"jumbotron\">\n";
         stream << "<div class=\"container-fluid\">\n";
+        stream << "<h1>" << name << "</h1>\n";
+        stream << "<ul>\n";
     }
 
     void after_information(){
+        stream << "</ul>\n";
         stream << "</div>\n";
         stream << "</div>\n";
 
