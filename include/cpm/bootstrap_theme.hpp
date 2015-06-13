@@ -29,6 +29,15 @@ struct bootstrap_theme {
         stream << "<script src=\"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js\"></script>\n";
         stream << "<link href=\"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css\" rel=\"stylesheet\">\n";
         stream << "<link href=\"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap-theme.min.css\" rel=\"stylesheet\">\n";
+
+        stream << R"=====(
+            <style>
+                .jumbotron {
+                    padding-top: 38px;
+                    padding-bottom: 8px;
+                }
+            </style>
+        )=====";
     }
 
     void header(){
