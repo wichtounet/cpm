@@ -20,6 +20,10 @@ struct reports_data {
     std::set<std::string> compilers;
     std::set<std::string> configurations;
     std::vector<document_t> documents;
+
+    //Temporary data (changed for each generated file)
+    std::string file;
+    std::string sub_part;
     std::vector<std::pair<std::string, std::string>> files;
 };
 

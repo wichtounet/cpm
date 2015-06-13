@@ -1027,17 +1027,25 @@ void generate_standard_page(const std::string& target_folder, const std::string&
         theme << "</script>\n";
     }
 
-    if(options.count("pages")){
+    if(one){
+        data.file = file;
+
+        if(section){
+            data.sub_part = std::string("section_") + filter;
+        } else {
+            data.sub_part = std::string("bench_") + filter;
+        }
+
         data.files.clear();
 
         for(const auto& result : doc["results"]){
             std::string name(result["title"].GetString());
-            data.files.emplace_back(name, cpm::filify(doc["compiler"].GetString(), doc["configuration"].GetString(), std::string("bench_") + name));
+            data.files.emplace_back(name, cpm::filify(doc["compiler"].GetString(), doc["configuration"].GetString(), data.sub_part));
         }
 
         for(const auto& section : doc["sections"]){
             std::string name(section["name"].GetString());
-            data.files.emplace_back(name, cpm::filify(doc["compiler"].GetString(), doc["configuration"].GetString(), std::string("section_") + name));
+            data.files.emplace_back(name, cpm::filify(doc["compiler"].GetString(), doc["configuration"].GetString(), data.sub_part));
         }
     }
 

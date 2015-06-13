@@ -113,15 +113,27 @@ struct bootstrap_theme {
         stream << R"=====(<div class="col-xs-12">)=====";
 
         stream << R"=====(<span>Select compiler: </span>)=====";
-
         stream << R"=====(<div class="btn-group" role="group">)=====";
-        for(auto& compiler : data.compilers){
-            if(compiler == current_compiler){
-                stream << "<a class=\"btn btn-primary\" href=\"" << cpm::filify(compiler, current_configuration)  << "\">" << compiler << "</a>\n";
-            } else {
-                stream << "<a class=\"btn btn-default\" href=\"" << cpm::filify(compiler, current_configuration)  << "\">" << compiler << "</a>\n";
+
+        if(options.count("pages")){
+            for(auto& compiler : data.compilers){
+                auto file = cpm::filify(compiler, current_configuration, data.sub_part);
+                if(compiler == current_compiler){
+                    stream << "<a class=\"btn btn-primary\" href=\"" << file << "\">" << compiler << "</a>\n";
+                } else {
+                    stream << "<a class=\"btn btn-default\" href=\"" << file << "\">" << compiler << "</a>\n";
+                }
+            }
+        } else {
+            for(auto& compiler : data.compilers){
+                if(compiler == current_compiler){
+                    stream << "<a class=\"btn btn-primary\" href=\"" << cpm::filify(compiler, current_configuration)  << "\">" << compiler << "</a>\n";
+                } else {
+                    stream << "<a class=\"btn btn-default\" href=\"" << cpm::filify(compiler, current_configuration)  << "\">" << compiler << "</a>\n";
+                }
             }
         }
+
         stream << "</div>\n";
 
         stream << "</div>\n";
@@ -140,13 +152,27 @@ struct bootstrap_theme {
         stream << R"=====(<span>Select configuration: </span>)=====";
 
         stream << R"=====(<div class="btn-group" role="group">)=====";
-        for(auto& configuration : data.configurations){
-            if(configuration == current_configuration){
-                stream << "<a class=\"btn btn-primary\" href=\"" << cpm::filify(current_compiler, configuration)  << "\">" << configuration << "</a>\n";
-            } else {
-                stream << "<a class=\"btn btn-default\" href=\"" << cpm::filify(current_compiler, configuration)  << "\">" << configuration << "</a>\n";
+
+        if(options.count("pages")){
+            for(auto& configuration : data.configurations){
+                auto file = cpm::filify(current_compiler, configuration, data.sub_part);
+                if(configuration == current_configuration){
+                    stream << "<a class=\"btn btn-primary\" href=\"" << file  << "\">" << configuration << "</a>\n";
+                } else {
+                    stream << "<a class=\"btn btn-default\" href=\"" << file  << "\">" << configuration << "</a>\n";
+                }
+            }
+        } else {
+            for(auto& configuration : data.configurations){
+                if(configuration == current_configuration){
+                    stream << "<a class=\"btn btn-primary\" href=\"" << cpm::filify(current_compiler, configuration)  << "\">" << configuration << "</a>\n";
+                } else {
+                    stream << "<a class=\"btn btn-default\" href=\"" << cpm::filify(current_compiler, configuration)  << "\">" << configuration << "</a>\n";
+                }
             }
         }
+
+
         stream << "</div>\n";
 
         stream << "</div>\n";
