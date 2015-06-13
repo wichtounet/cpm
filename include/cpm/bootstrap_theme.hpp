@@ -35,6 +35,11 @@ struct bootstrap_theme {
                 .jumbotron {
                     padding-top: 38px;
                     padding-bottom: 8px;
+                    margin-bottom: 5px;
+                }
+
+                .page-header {
+                    margin-top: 10px;
                 }
             </style>
         )=====";
@@ -87,35 +92,20 @@ struct bootstrap_theme {
         stream << "<div class=\"jumbotron\">\n";
         stream << "<div class=\"container-fluid\">\n";
         stream << "<h1>" << name << "</h1>\n";
+        stream << "<div class=\"row\">\n";
+        stream << "<div class=\"col-xs-3\">\n";
         stream << "<ul>\n";
     }
 
     void after_information(){
         stream << "</ul>\n";
-        stream << "</div>\n";
-        stream << "</div>\n";
+        stream << "</div>\n"; //col-xs-3
+        //stream << "</div>\n"; //row
+        //stream << "</div>\n";
+        //stream << "</div>\n";
 
-        if(options.count("pages")){
-            stream << R"=====(
-                <div class=container-fluid>
-                <div class="row">
-                <div class="col-xs-2">
-                <ul class="nav nav-stacked" id="sidebar">
-            )=====";
+        stream << "<div class=\"col-xs-9\">\n";
 
-            for(auto& link : data.files){
-                stream << "<li><a href=\"" << link.second << "\">" << link.first << "</a></li>" << std::endl;
-            }
-
-            stream << R"=====(
-                </ul>
-                </div>
-                <div class="col-xs-10">
-                <div class=container-fluid>
-            )=====";
-        } else {
-            stream << "<div class=\"container-fluid\">\n";
-        }
     }
 
     void compiler_buttons(){
@@ -161,6 +151,32 @@ struct bootstrap_theme {
 
         stream << "</div>\n";
         stream << "</div>\n";
+        stream << "</div>\n";
+        stream << "</div>\n";
+        stream << "</div>\n";
+        stream << "</div>\n";
+
+        if(options.count("pages")){
+            stream << R"=====(
+                <div class=container-fluid>
+                <div class="row">
+                <div class="col-xs-2">
+                <ul class="nav nav-stacked" id="sidebar">
+            )=====";
+
+            for(auto& link : data.files){
+                stream << "<li><a href=\"" << link.second << "\">" << link.first << "</a></li>" << std::endl;
+            }
+
+            stream << R"=====(
+                </ul>
+                </div>
+                <div class="col-xs-10">
+                <div class=container-fluid>
+            )=====";
+        } else {
+            stream << "<div class=\"container-fluid\">\n";
+        }
     }
 
     virtual void start_column(const std::string& style = ""){
