@@ -42,6 +42,10 @@ CPM_BENCH() {
         VALUES_POLICY(1,2,3,4,5,6),
         "simple_c_n",
         [](auto d){ std::this_thread::sleep_for((factor * 3 * d) * 2_ns ); });
+    CPM_SIMPLE_P( //Simply here for renaming
+        VALUES_POLICY(1,2,3,4,5,6),
+        "simple_c_n",
+        [](auto d){ std::this_thread::sleep_for((factor * 3 * d) * 2_ns ); });
 }
 
 CPM_BENCH() {
