@@ -28,9 +28,21 @@ $(eval $(call folder_compile,examples))
 $(eval $(call add_executable,simple,examples/simple.cpp))
 $(eval $(call add_executable,full,examples/full.cpp))
 
+PREFIX = $(DESTDIR)/usr/local
+BINDIR = $(PREFIX)/bin
+INCDIR = $(PREFIX)/include
+
 release: release/bin/cpm
 release_debug: release_debug/bin/cpm
 debug: debug/bin/cpm
+
+install: release
+	install -D release/bin/cpm $(BINDIR)/cpm
+	install -D -m 0644 include/cpm/*.hpp $(INCDIR)/cpm
+
+install-strip: release
+	install -D -s release/bin/cpm $(BINDIR)/cpm
+	install -d -m 0644 include/cpm $(INCDIR)/cpm
 
 examples: debug/bin/simple debug/bin/full
 
