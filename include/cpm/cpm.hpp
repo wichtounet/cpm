@@ -425,23 +425,23 @@ public:
     }
 
     template<typename Policy = DefaultPolicy>
-    section<benchmark<DefaultPolicy>, Policy> multi(std::string name){
+    section<benchmark<DefaultPolicy>, Policy> multi(const std::string& o_name){
+        auto name = o_name;
         bool rename = false;
-        bool found = false;
         std::size_t id = 0;
         while(true){
+            bool found = false;
+
             for(auto& section : section_results){
                 if(section.name == name){
-                    name += "_" + std::to_string(id++);
+                    name = o_name + "_" + std::to_string(id++);
                     rename = true;
                     found = true;
                     break;
                 }
             }
 
-            if(found){
-                found = false;
-            } else {
+            if(!found){
                 break;
             }
         }
@@ -453,10 +453,40 @@ public:
         return {std::move(name), *this};
     }
 
+    std::string check_title(const std::string& o_name){
+        auto name = o_name;
+        bool rename = false;
+        std::size_t id = 0;
+        while(true){
+            bool found = false;
+
+            for(auto& data : results){
+                if(data.title == name){
+                    name = o_name + "_" + std::to_string(id++);
+                    rename = true;
+                    found = true;
+                    break;
+                }
+            }
+
+            if(!found){
+                break;
+            }
+        }
+
+        if(rename){
+            std::cout << "Warning: Bench already exists. Renamed in \"" << name << "\"\n";
+        }
+
+        return name;
+    }
+
     //Measure once functor (no policy, no randomization)
 
     template<typename Functor>
-    void measure_once(const std::string& title, Functor functor){
+    void measure_once(const std::string& o_title, Functor functor){
+        auto title = check_title(o_title);
+
         measure_data data;
         data.title = title;
 
@@ -470,7 +500,9 @@ public:
     //Measure simple functor (no randomization)
 
     template<typename Policy = DefaultPolicy, typename Functor>
-    void measure_simple(const std::string& title, Functor functor){
+    void measure_simple(const std::string& o_title, Functor functor){
+        auto title = check_title(o_title);
+
         if(standard_report){
             std::cout << std::endl;
         }
@@ -493,7 +525,9 @@ public:
     //Measure with two-pass functors (init and functor)
 
     template<bool Sizes = true, typename Policy= DefaultPolicy, typename Init, typename Functor>
-    void measure_two_pass(const std::string& title, Init init, Functor functor){
+    void measure_two_pass(const std::string& o_title, Init init, Functor functor){
+        auto title = check_title(o_title);
+
         if(standard_report){
             std::cout << std::endl;
         }
@@ -516,7 +550,9 @@ public:
     //measure a function with global references
 
     template<typename Policy = DefaultPolicy, typename Functor, typename... T>
-    void measure_global(const std::string& title, Functor functor, T&... references){
+    void measure_global(const std::string& o_title, Functor functor, T&... references){
+        auto title = check_title(o_title);
+
         if(standard_report){
             std::cout << std::endl;
         }
