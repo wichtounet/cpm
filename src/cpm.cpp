@@ -1238,8 +1238,10 @@ int main(int argc, char* argv[]){
         generate_pages<cpm::raw_theme>(target_folder, data, options);
     } else if(options["theme"].as<std::string>() == "bootstrap-tabs"){
         generate_pages<cpm::bootstrap_tabs_theme>(target_folder, data, options);
-    } else {
+    } else if(options["theme"].as<std::string>() == "bootstrap"){
         generate_pages<cpm::bootstrap_theme>(target_folder, data, options);
+    } else {
+        std::cout << "Invalid theme" << std::endl;
     }
 
     return 0;
