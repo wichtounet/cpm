@@ -20,6 +20,7 @@ struct reports_data {
     std::set<std::string> compilers;
     std::set<std::string> configurations;
     std::vector<document_t> documents;
+    std::vector<std::pair<std::string, std::string>> files;
 };
 
 } //end of namespace cpm

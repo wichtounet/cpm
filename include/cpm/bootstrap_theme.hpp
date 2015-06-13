@@ -67,6 +67,11 @@ struct bootstrap_theme {
             </div>
             </div>
         )=====";
+
+        if(options.count("pages")){
+            stream << "</div>\n";
+            stream << "</div>\n";
+        }
     }
 
     void before_information(){
@@ -77,7 +82,28 @@ struct bootstrap_theme {
     void after_information(){
         stream << "</div>\n";
         stream << "</div>\n";
-        stream << "<div class=\"container-fluid\">\n";
+
+        if(options.count("pages")){
+            stream << R"=====(
+                <div class=container-fluid>
+                <div class="row">
+                <div class="col-xs-2">
+                <ul class="nav nav-stacked" id="sidebar">
+            )=====";
+
+            for(auto& link : data.files){
+                stream << "<li><a href=\"" << link.second << "\">" << link.first << "</a></li>" << std::endl;
+            }
+
+            stream << R"=====(
+                </ul>
+                </div>
+                <div class="col-xs-10">
+                <div class=container-fluid>
+            )=====";
+        } else {
+            stream << "<div class=\"container-fluid\">\n";
+        }
     }
 
     void compiler_buttons(){

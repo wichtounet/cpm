@@ -79,7 +79,7 @@ inline std::string get_free_file(const std::string& base_folder){
     return std::to_string(result_name);
 }
 
-bool folder_exists(const std::string& folder){
+inline bool folder_exists(const std::string& folder){
     struct stat buffer;
     if (stat(folder.c_str(), &buffer) == 0 && S_ISDIR(buffer.st_mode)){
         return true;
@@ -88,7 +88,7 @@ bool folder_exists(const std::string& folder){
     }
 }
 
-std::string filify(std::string name){
+inline std::string filify(std::string name){
     std::string n{std::move(name)};
 
     //Replace all spaces
@@ -100,11 +100,21 @@ std::string filify(std::string name){
     return n;
 }
 
-std::string filify(std::string compiler, std::string configuration){
+inline std::string filify(std::string compiler, std::string configuration){
     std::string n1{std::move(compiler)};
     std::string n2{std::move(configuration)};
 
     auto n = n1 + "-" + n2;
+
+    return filify(n);
+}
+
+inline std::string filify(std::string compiler, std::string configuration, std::string bench){
+    std::string n1{std::move(compiler)};
+    std::string n2{std::move(configuration)};
+    std::string n3{std::move(bench)};
+
+    auto n = n1 + "-" + n2 + "-" + n3;
 
     return filify(n);
 }

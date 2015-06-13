@@ -1009,7 +1009,7 @@ void generate_section_summary_table(Theme& theme, std::size_t id, json_value bas
 }
 
 template<typename Theme>
-void generate_standard_page(const std::string& target_folder, const std::string& file, const cpm::reports_data& data, const cpm::document_t& doc, const std::vector<cpm::document_cref>& documents, cxxopts::Options& options){
+void generate_standard_page(const std::string& target_folder, const std::string& file, cpm::reports_data& data, const cpm::document_t& doc, const std::vector<cpm::document_cref>& documents, cxxopts::Options& options, bool one = false, bool section = false, const std::string& filter = ""){
     bool time_graphs = !options.count("disable-time") && documents.size() > 1;
     bool compiler_graphs = !options.count("disable-compiler") && data.compilers.size() > 1;
     bool configuration_graphs = !options.count("disable-configuration") && data.configurations.size() > 1;
@@ -1031,6 +1031,20 @@ void generate_standard_page(const std::string& target_folder, const std::string&
         theme << "</script>\n";
     }
 
+    if(options.count("pages")){
+        data.files.clear();
+
+        for(const auto& result : doc["results"]){
+            std::string name(result["title"].GetString());
+            data.files.emplace_back(name, cpm::filify(doc["compiler"].GetString(), doc["configuration"].GetString(), std::string("bench_") + name));
+        }
+
+        for(const auto& section : doc["sections"]){
+            std::string name(section["name"].GetString());
+            data.files.emplace_back(name, cpm::filify(doc["compiler"].GetString(), doc["configuration"].GetString(), std::string("section_") + name));
+        }
+    }
+
     //Information block about the last run
     information(theme, doc);
 
@@ -1041,52 +1055,61 @@ void generate_standard_page(const std::string& target_folder, const std::string&
     configuration_buttons(theme);
 
     std::size_t id = 1;
-    for(const auto& result : doc["results"]){
-        theme.before_result(result["title"].GetString());
 
-        generate_run_graph(theme, id, result);
+    if(!one || !section){
+        for(const auto& result : doc["results"]){
+            if(!one || filter == result["title"].GetString()){
+                theme.before_result(result["title"].GetString());
 
-        if(time_graphs){
-            generate_time_graph(theme, id, result, documents);
+                generate_run_graph(theme, id, result);
+
+                if(time_graphs){
+                    generate_time_graph(theme, id, result, documents);
+                }
+
+                if(compiler_graphs){
+                    generate_compiler_graph(theme, id, result, doc);
+                }
+
+                if(configuration_graphs){
+                    generate_configuration_graph(theme, id, result, doc);
+                }
+
+                if(summary_table){
+                    generate_summary_table(theme, result, doc);
+                }
+
+                theme.after_result();
+            }
         }
-
-        if(compiler_graphs){
-            generate_compiler_graph(theme, id, result, doc);
-        }
-
-        if(configuration_graphs){
-            generate_configuration_graph(theme, id, result, doc);
-        }
-
-        if(summary_table){
-            generate_summary_table(theme, result, doc);
-        }
-
-        theme.after_result();
     }
 
-    for(auto& section : doc["sections"]){
-        theme.before_result(section["name"].GetString(), compiler_graphs);
+    if(!one || section){
+        for(auto& section : doc["sections"]){
+            if(!one || filter == section["name"].GetString()){
+                theme.before_result(section["name"].GetString(), compiler_graphs);
 
-        generate_section_run_graph(theme, id, section);
+                generate_section_run_graph(theme, id, section);
 
-        if(time_graphs){
-            generate_section_time_graph(theme, id, section, documents);
+                if(time_graphs){
+                    generate_section_time_graph(theme, id, section, documents);
+                }
+
+                if(compiler_graphs){
+                    generate_section_compiler_graph(theme, id, section, doc);
+                }
+
+                if(configuration_graphs){
+                    generate_section_configuration_graph(theme, id, section, doc);
+                }
+
+                if(summary_table){
+                    generate_section_summary_table(theme, id, section, doc);
+                }
+
+                theme.after_result();
+            }
         }
-
-        if(compiler_graphs){
-            generate_section_compiler_graph(theme, id, section, doc);
-        }
-
-        if(configuration_graphs){
-            generate_section_configuration_graph(theme, id, section, doc);
-        }
-
-        if(summary_table){
-            generate_section_summary_table(theme, id, section, doc);
-        }
-
-        theme.after_result();
     }
 
     footer(theme);
@@ -1097,19 +1120,50 @@ void generate_pages(const std::string& target_folder, cpm::reports_data& data, c
     //Select the base document
     auto& base = data.documents.back();
 
-    //Generate the index
-    generate_standard_page<Theme>(target_folder, "index.html", data, base, select_documents(data.documents, base), options);
-
     std::set<std::string> pages;
 
-    //Generate the compiler pages
-    std::for_each(data.documents.rbegin(), data.documents.rend(), [&](cpm::document_t& d){
-        auto file = cpm::filify(d["compiler"].GetString(), d["configuration"].GetString());
-        if(!pages.count(file)){
-            generate_standard_page<Theme>(target_folder, file, data, d, select_documents(data.documents, d), options);
-            pages.insert(file);
-        }
-    });
+    if(options.count("pages")){
+        //Generate pages for each (bench-section)/configuration/compiler
+        std::for_each(data.documents.rbegin(), data.documents.rend(), [&](cpm::document_t& d){
+            for(const auto& result : d["results"]){
+                auto file = cpm::filify(d["compiler"].GetString(), d["configuration"].GetString(), std::string("bench_") + result["title"].GetString());
+                if(!pages.count(file)){
+                    generate_standard_page<Theme>(target_folder, file, data, d, select_documents(data.documents, d), options, true, false, result["title"].GetString());
+
+                    if(pages.empty()){
+                        generate_standard_page<Theme>(target_folder, "index.html", data, d, select_documents(data.documents, d), options, true, false, result["title"].GetString());
+                    }
+
+                    pages.insert(file);
+                }
+            }
+
+            for(const auto& section : d["sections"]){
+                auto file = cpm::filify(d["compiler"].GetString(), d["configuration"].GetString(), std::string("section_") + section["name"].GetString());
+                if(!pages.count(file)){
+                    generate_standard_page<Theme>(target_folder, file, data, d, select_documents(data.documents, d), options, true, true, section["name"].GetString());
+
+                    if(pages.empty()){
+                        generate_standard_page<Theme>(target_folder, "index.html", data, d, select_documents(data.documents, d), options, true, true, section["name"].GetString());
+                    }
+
+                    pages.insert(file);
+                }
+            }
+        });
+    } else {
+        //Generate the index
+        generate_standard_page<Theme>(target_folder, "index.html", data, base, select_documents(data.documents, base), options);
+
+        //Generate the compiler pages
+        std::for_each(data.documents.rbegin(), data.documents.rend(), [&](cpm::document_t& d){
+            auto file = cpm::filify(d["compiler"].GetString(), d["configuration"].GetString());
+            if(!pages.count(file)){
+                generate_standard_page<Theme>(target_folder, file, data, d, select_documents(data.documents, d), options);
+                pages.insert(file);
+            }
+        });
+    }
 }
 
 } //end of anonymous namespace
