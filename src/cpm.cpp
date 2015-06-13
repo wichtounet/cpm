@@ -10,6 +10,7 @@
 #include <vector>
 #include <algorithm>
 #include <set>
+#include <regex>
 
 #include <stdio.h>
 #include <dirent.h>
@@ -184,7 +185,7 @@ void start_graph(Theme& theme, const std::string& id, const std::string& title){
 
     theme << "$(function () {\n";
     theme << "$('#" << id << "').highcharts({\n";
-    theme << "title: { text: '" << title << "', x: -20 },\n";
+    theme << "title: { text: '" << std::regex_replace(title, std::regex("'"), "\\'") << "', x: -20 },\n";
 }
 
 template<typename Theme>
