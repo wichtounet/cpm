@@ -1178,7 +1178,7 @@ int main(int argc, char* argv[]){
     try {
         options.add_options()
             ("time-sizes", "Display multiple sizes in the time graphs")
-            ("t,theme", "Theme name [raw,bootstrap,boostrap-tabs]", cxxopts::value<std::string>()->default_value("raw"))
+            ("t,theme", "Theme name [raw,bootstrap,boostrap-tabs]", cxxopts::value<std::string>()->default_value("bootstrap"))
             ("c,hctheme", "Highcharts Theme name [std,dark_unica]", cxxopts::value<std::string>()->default_value("dark_unica"), "theme_name")
             ("o,output", "Output folder", cxxopts::value<std::string>()->default_value("reports"), "output_folder")
             ("input", "Input results", cxxopts::value<std::string>())
