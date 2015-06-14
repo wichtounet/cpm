@@ -17,6 +17,16 @@
 
 namespace cpm {
 
+#ifdef CPM_NO_RANDOMIZATION
+
+template<typename... TT>
+void randomize(TT&... /*values*/){}
+
+template<typename Tuple, std::size_t... I>
+void randomize_each(Tuple& /*data*/, std::index_sequence<I...> /*indices*/){}
+
+#else
+
 #ifndef CPM_PARALLEL_THRESHOLD
 #define CPM_PARALLEL_THRESHOLD 10000
 #endif
@@ -170,6 +180,8 @@ void randomize_each(Tuple& data, std::index_sequence<I...> /*indices*/){
     using cpm::randomize;
     randomize(std::get<I>(data)...);
 }
+
+#endif
 
 } //end of namespace cpm
 
