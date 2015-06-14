@@ -9,6 +9,7 @@ Build
 The benchmark helper is header-only, but the report generator needs to be built. You simple need to use make for building and installing it: 
 
 .. code:: bash
+
    make
    sudo make install
 
