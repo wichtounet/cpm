@@ -66,8 +66,8 @@ std::vector<cpm::document_t> read(const std::string& source_folder, cxxopts::Opt
         if(entry->d_type == DT_REG){
             decltype(auto) doc = read_document(source_folder, entry->d_name);
             if(doc.HasParseError()){
-                std::cout 
-                    << "Impossible to read document " << entry->d_name << ":" << doc.GetErrorOffset() 
+                std::cout
+                    << "Impossible to read document " << entry->d_name << ":" << doc.GetErrorOffset()
                     << ", parse error: " << rapidjson::GetParseError_En(doc.GetParseError()) << std::endl;
             } else {
                 documents.push_back(std::move(doc));
@@ -77,7 +77,7 @@ std::vector<cpm::document_t> read(const std::string& source_folder, cxxopts::Opt
 
     if(options.count("sort-by-tag")){
         std::sort(documents.begin(), documents.end(),
-            [](cpm::document_t& lhs, cpm::document_t& rhs){ 
+            [](cpm::document_t& lhs, cpm::document_t& rhs){
                 if(std::string(lhs["tag"].GetString()) < std::string(rhs["tag"].GetString())){
                     return true;
                 } else if(std::string(lhs["tag"].GetString()) > std::string(rhs["tag"].GetString())){
@@ -124,12 +124,12 @@ void header(Theme& theme){
     theme << "<title>" << theme.data.documents.back()["name"].GetString() << "</title>\n";
 
     //We need JQuery
-    theme << "<script src=\"http://code.jquery.com/jquery-1.11.3.min.js\"></script>\n";
-    theme << "<script src=\"http://code.jquery.com/jquery-migrate-1.2.1.min.js\"></script>\n";
+    theme << "<script src=\"https://code.jquery.com/jquery-1.11.3.min.js\"></script>\n";
+    theme << "<script src=\"https://code.jquery.com/jquery-migrate-1.2.1.min.js\"></script>\n";
 
     //We need Highcharts
-    theme << "<script src=\"http://code.highcharts.com/highcharts.js\"></script>\n";
-    theme << "<script src=\"http://code.highcharts.com/modules/exporting.js\"></script>\n";
+    theme << "<script src=\"https://code.highcharts.com/highcharts.js\"></script>\n";
+    theme << "<script src=\"https://code.highcharts.com/modules/exporting.js\"></script>\n";
 
     theme.include();
 

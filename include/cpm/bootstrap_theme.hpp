@@ -22,7 +22,7 @@ struct bootstrap_theme {
 
     std::size_t current_column = 0;
 
-    bootstrap_theme(const reports_data& data, cxxopts::Options& options, std::ostream& stream, std::string compiler, std::string configuration) 
+    bootstrap_theme(const reports_data& data, cxxopts::Options& options, std::ostream& stream, std::string compiler, std::string configuration)
         : data(data), options(options), stream(stream), current_compiler(std::move(compiler)), current_configuration(std::move(configuration)) {}
 
     void include(){
@@ -61,7 +61,7 @@ struct bootstrap_theme {
             <div class="collapse navbar-collapse" id="navbarCollapse">
             <ul class="nav navbar-nav">
             <li class="active"><a href="index.html">Home</a></li>
-            <li><a href="http://github.com/wichtounet/cpm">Generated with CPM</a></li>
+            <li><a href="https://github.com/wichtounet/cpm">Generated with CPM</a></li>
             </ul>
             </div>
             </div>
