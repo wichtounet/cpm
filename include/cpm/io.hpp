@@ -116,6 +116,9 @@ inline std::string filify(std::string name){
     //Replace all spaces
     std::replace(n.begin(), n.end(), ' ', '_');
 
+    //Replace all forward slashes
+    std::replace(n.begin(), n.end(), '/', '|');
+
     //Append extension
     n += ".html";
 
