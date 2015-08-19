@@ -14,10 +14,13 @@ namespace cpm {
 
 struct cpm_registry {
     cpm_registry(void (*function)(cpm::benchmark<>&)){
-        benchs.emplace_back(function);
+        benchs().emplace_back(function);
     }
 
-    static std::vector<void(*)(cpm::benchmark<>&)> benchs;
+    static std::vector<void(*)(cpm::benchmark<>&)>& benchs(){
+        static std::vector<void(*)(cpm::benchmark<>&)> vec;
+        return vec;
+    }
 };
 
 template<template<typename...> class TT, typename T>
@@ -236,14 +239,12 @@ int main(int argc, char* argv[]){
 
     bench.begin();
 
-    for(auto f : cpm::cpm_registry::benchs){
+    for(auto f : cpm::cpm_registry::benchs()){
         f(bench);
     }
 
     return 0;
 }
-
-std::vector<void(*)(cpm::benchmark<>&)> cpm::cpm_registry::benchs;
 
 #endif //CPM_BENCHMARK
 
