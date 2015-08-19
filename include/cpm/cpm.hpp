@@ -298,7 +298,7 @@ struct measure_data {
 template<typename DefaultPolicy>
 struct benchmark {
 private:
-    template<typename Bench, typename Policy> friend struct section; 
+    template<typename Bench, typename Policy> friend struct section;
     std::size_t tests = 0;
     std::size_t measures = 0;
     std::size_t runs = 0;
@@ -830,12 +830,12 @@ private:
         duration.update(size_to_eff(d));
 
         if(standard_report){
-            std::cout << title << "(" << size_to_string(d) << ") : " 
-                << "mean: " << duration_str(duration.mean, 3) 
+            std::cout << title << "(" << size_to_string(d) << ") : "
+                << "mean: " << duration_str(duration.mean, 3)
                 << " (" << duration_str(duration.mean_lb, 3) << "," << duration_str(duration.mean_ub, 3) << ")"
-                << " stddev: " << duration_str(duration.stddev, 3) 
-                << " min: " << duration_str(duration.min, 3) 
-                << " max: " << duration_str(duration.max, 3) 
+                << " stddev: " << duration_str(duration.stddev, 3)
+                << " min: " << duration_str(duration.min, 3)
+                << " max: " << duration_str(duration.max, 3)
                 << " througput: " << throughput_str(duration.throughput, 3) << "Es"
                 << "\n";
         }
@@ -845,6 +845,8 @@ private:
 } //end of namespace cpm
 
 #ifdef CPM_BENCHMARK
+#include "cpm_support.hpp"
+#elif defined(CPM_LIB)
 #include "cpm_support.hpp"
 #endif
 

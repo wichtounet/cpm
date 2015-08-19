@@ -14,7 +14,7 @@
 namespace cpm {
 
 template<typename T>
-void write_value(std::ofstream& stream, std::size_t& indent, const std::string& tag, const T& value, bool comma = true){
+inline void write_value(std::ofstream& stream, std::size_t& indent, const std::string& tag, const T& value, bool comma = true){
     if(comma){
         stream << std::string(indent, ' ') << "\"" << tag << "\": \"" << value << "\",\n";
     } else {
@@ -23,7 +23,7 @@ void write_value(std::ofstream& stream, std::size_t& indent, const std::string& 
 }
 
 template<>
-void write_value(std::ofstream& stream, std::size_t& indent, const std::string& tag, const std::size_t& value, bool comma){
+inline void write_value(std::ofstream& stream, std::size_t& indent, const std::string& tag, const std::size_t& value, bool comma){
     if(comma){
         stream << std::string(indent, ' ') << "\"" << tag << "\": " << value << ",\n";
     } else {
@@ -32,7 +32,7 @@ void write_value(std::ofstream& stream, std::size_t& indent, const std::string& 
 }
 
 template<>
-void write_value(std::ofstream& stream, std::size_t& indent, const std::string& tag, const int64_t& value, bool comma){
+inline void write_value(std::ofstream& stream, std::size_t& indent, const std::string& tag, const int64_t& value, bool comma){
     if(comma){
         stream << std::string(indent, ' ') << "\"" << tag << "\": " << value << ",\n";
     } else {
@@ -41,7 +41,7 @@ void write_value(std::ofstream& stream, std::size_t& indent, const std::string& 
 }
 
 template<>
-void write_value(std::ofstream& stream, std::size_t& indent, const std::string& tag, const long long& value, bool comma){
+inline void write_value(std::ofstream& stream, std::size_t& indent, const std::string& tag, const long long& value, bool comma){
     if(comma){
         stream << std::string(indent, ' ') << "\"" << tag << "\": " << value << ",\n";
     } else {
@@ -50,7 +50,7 @@ void write_value(std::ofstream& stream, std::size_t& indent, const std::string& 
 }
 
 template<>
-void write_value(std::ofstream& stream, std::size_t& indent, const std::string& tag, const double& value, bool comma){
+inline void write_value(std::ofstream& stream, std::size_t& indent, const std::string& tag, const double& value, bool comma){
     stream << std::fixed;
     if(comma){
         stream << std::string(indent, ' ') << "\"" << tag << "\": " << value << ",\n";

@@ -150,7 +150,7 @@ using std_timeout_policy = increasing_policy<10, 1000, 0, 10, stop_policy::TIMEO
 template<typename... Policy>
 using simple_nary_policy = nary_policy<nary_combination_policy::PARALLEL, Policy...>;
 
-std::string size_to_string(std::size_t t){
+inline std::string size_to_string(std::size_t t){
     return std::to_string(t);
 }
 
@@ -159,7 +159,7 @@ std::string size_to_string(Tuple t){
     return detail::tuple_to_string<Tuple, std::make_index_sequence<std::tuple_size<Tuple>::value>>::value(t);;
 }
 
-std::size_t size_to_eff(std::size_t t){
+inline std::size_t size_to_eff(std::size_t t){
     return t;
 }
 
