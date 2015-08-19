@@ -43,36 +43,36 @@ struct is_section : is_specialization_of<cpm::section, std::decay_t<T>> {};
 //Declarations of benchs functions
 
 #define CPM_BENCH()  \
-    void CPM_UNIQUE_NAME(bench_) (cpm::benchmark<>& bench); \
+    static void CPM_UNIQUE_NAME(bench_) (cpm::benchmark<>& bench); \
     namespace { cpm::cpm_registry CPM_UNIQUE_NAME(register_) (& CPM_UNIQUE_NAME(bench_)); }              \
-    void CPM_UNIQUE_NAME(bench_) (cpm::benchmark<>& bench)
+    static void CPM_UNIQUE_NAME(bench_) (cpm::benchmark<>& bench)
 
 //Declaration of section functions
 
 #define CPM_SECTION(name)                                       \
-    void CPM_UNIQUE_NAME(section_) (cpm::benchmark<>& master);      \
+    static void CPM_UNIQUE_NAME(section_) (cpm::benchmark<>& master);      \
     namespace { cpm::cpm_registry CPM_UNIQUE_NAME(register_) (& CPM_UNIQUE_NAME(section_)); }        \
     void CPM_UNIQUE_NAME(section_) (cpm::benchmark<>& master) {     \
     auto bench = master.multi(name);
 
 #define CPM_SECTION_O(name, W, R)                                       \
-    void CPM_UNIQUE_NAME(section_) (cpm::benchmark<>& master);      \
+    static void CPM_UNIQUE_NAME(section_) (cpm::benchmark<>& master);      \
     namespace { cpm::cpm_registry CPM_UNIQUE_NAME(register_) (& CPM_UNIQUE_NAME(section_)); }        \
-    void CPM_UNIQUE_NAME(section_) (cpm::benchmark<>& master) {     \
+    static void CPM_UNIQUE_NAME(section_) (cpm::benchmark<>& master) {     \
     auto bench = master.multi(name);    \
     bench.warmup = W;                   \
     bench.repeat = R;
 
 #define CPM_SECTION_P(name, policy)                                       \
-    void CPM_UNIQUE_NAME(section_) (cpm::benchmark<>& master);      \
+    static void CPM_UNIQUE_NAME(section_) (cpm::benchmark<>& master);      \
     namespace { cpm::cpm_registry CPM_UNIQUE_NAME(register_) (& CPM_UNIQUE_NAME(section_)); }        \
-    void CPM_UNIQUE_NAME(section_) (cpm::benchmark<>& master) {     \
+    static void CPM_UNIQUE_NAME(section_) (cpm::benchmark<>& master) {     \
     auto bench = master.multi<policy>(name);
 
 #define CPM_SECTION_PO(name, policy, W, R)                                       \
-    void CPM_UNIQUE_NAME(section_) (cpm::benchmark<>& master);      \
+    static void CPM_UNIQUE_NAME(section_) (cpm::benchmark<>& master);      \
     namespace { cpm::cpm_registry CPM_UNIQUE_NAME(register_) (& CPM_UNIQUE_NAME(section_)); }        \
-    void CPM_UNIQUE_NAME(section_) (cpm::benchmark<>& master) {     \
+    static void CPM_UNIQUE_NAME(section_) (cpm::benchmark<>& master) {     \
     auto bench = master.multi<policy>(name);      \
     bench.warmup = W;                             \
     bench.repeat = R;
