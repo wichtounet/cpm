@@ -512,6 +512,8 @@ public:
 
         policy_run<Policy>(
             [&data, &title, &functor, this](auto sizes){
+                using namespace cpm;
+
                 auto duration = measure_only_simple(*this, functor, sizes);
                 report(title, sizes, duration);
                 data.results.push_back({size_to_eff(sizes), size_to_string(sizes), duration});
@@ -537,6 +539,8 @@ public:
 
         policy_run<Policy>(
             [&data, &title, &functor, &init, this](auto sizes){
+                using namespace cpm;
+
                 auto duration = measure_only_two_pass<Sizes>(*this, init, functor, sizes);
                 report(title, sizes, duration);
                 data.results.push_back({size_to_eff(sizes), size_to_string(sizes), duration});
@@ -562,6 +566,8 @@ public:
 
         policy_run<Policy>(
             [&data, &title, &functor, &references..., this](auto sizes){
+                using namespace cpm;
+
                 auto duration = measure_only_global(*this, functor, sizes, references...);
                 report(title, sizes, duration);
                 data.results.push_back({size_to_eff(sizes), size_to_string(sizes), duration});
