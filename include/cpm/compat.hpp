@@ -14,4 +14,12 @@
 #define cpp14_constexpr
 #endif
 
+//Fix an assertion failed in Intel C++ Compiler
+
+#ifdef __INTEL_COMPILER
+#define intel_decltype_auto auto
+#else
+#define intel_decltype_auto decltype(auto)
+#endif
+
 #endif //CPM_COMPAT_HPP
