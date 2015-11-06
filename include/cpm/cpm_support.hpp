@@ -99,7 +99,7 @@ struct is_section : is_specialization_of<cpm::section, std::decay_t<T>> {};
 
 #define CPM_TWO_PASS_NS_P(policy, ...)  \
     static_assert(!cpm::is_section<decltype(bench)>::value, "CPM_TWO_PASS_NS_P cannot be used inside CPM_SECTION");  \
-    bench.template measure_two_pass<false, policy>(__VA_ARGS__);
+    bench.measure_two_pass<false, policy>(__VA_ARGS__);
 
 //Direct bench functions
 
