@@ -23,6 +23,7 @@
 #include "policy.hpp"
 #include "io.hpp"
 #include "json.hpp"
+#include "config.hpp"
 
 namespace cpm {
 
@@ -785,22 +786,50 @@ private:
 
         //0. Initialization
 
+        std::size_t steps = conf.repeat;
+
+#ifdef CPM_AUTO_STEPS
         random_init_each(data, sequence);
 
+        steps = 1;
+        double seconds = 0.0;
+
+        while(true){
+            auto start_time = timer_clock::now();
+            for(std::size_t i = 0; i < steps; ++i){
+                call_with_data<Sizes>(data, functor, sequence, args...);
+            }
+            auto end_time = timer_clock::now();
+            auto duration = std::chrono::duration_cast<clock_resolution>(end_time - start_time);
+
+            seconds = duration.count() / (1000.0 * 1000.0 * 1000.0);
+
+            if(seconds > cpm::step_estimation_min){
+                break;
+            }
+
+            steps *= 2;
+        }
+
+        steps = (cpm::runtime_target * steps) / seconds;
+#else
         //1. Warmup
 
         for(std::size_t i = 0; i < conf.warmup; ++i){
-            call_with_data<Sizes>(data, functor, sequence, args...);
             randomize_each(data, sequence);
+            call_with_data<Sizes>(data, functor, sequence, args...);
         }
+
+        runs += conf.warmup;
+#endif
 
         //2. Measures
 
         random_init_each(data, sequence);
 
-        std::vector<std::size_t> durations(conf.repeat);
+        std::vector<std::size_t> durations(steps);
 
-        for(std::size_t i = 0; i < conf.repeat; ++i){
+        for(std::size_t i = 0; i < steps; ++i){
             randomize_each(data, sequence);
             auto start_time = timer_clock::now();
             call_with_data<Sizes>(data, functor, sequence, args...);
@@ -809,7 +838,7 @@ private:
             durations[i] = duration.count();
         }
 
-        runs += conf.warmup + conf.repeat;
+        runs += steps;
 
         return measure(durations);
     }
