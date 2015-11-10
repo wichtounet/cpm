@@ -393,7 +393,12 @@ public:
                 std::cout << "   Results will be saved on-demand in " << final_file << std::endl;
             }
             std::cout << "   Each test is warmed-up " << warmup << " times" << std::endl;
+
+#ifdef CPM_AUTO_STEPS
+            std::cout << "   Number of steps will be automatically computed" << std::endl;
+#else
             std::cout << "   Each test is repeated " << repeat << " times" << std::endl;
+#endif
 
             auto time = wall_clock::to_time_t(start_time);
             std::cout << "   Time " << std::ctime(&time) << std::endl;
@@ -756,13 +761,41 @@ private:
     measure_result measure_only_simple(const Config& conf, Functor& functor, Args... args){
         ++measures;
 
+        std::size_t steps = conf.repeat;
+
+#ifdef CPM_AUTO_STEPS
+        steps = 1;
+        double seconds = 0.0;
+
+        while(true){
+            auto start_time = timer_clock::now();
+            for(std::size_t i = 0; i < steps; ++i){
+                call_functor(functor, args...);
+            }
+            auto end_time = timer_clock::now();
+            auto duration = std::chrono::duration_cast<clock_resolution>(end_time - start_time);
+
+            seconds = duration.count() / (1000.0 * 1000.0 * 1000.0);
+
+            if(seconds > cpm::step_estimation_min){
+                break;
+            }
+
+            steps *= 2;
+        }
+
+        steps = (cpm::runtime_target * steps) / seconds;
+#else
         for(std::size_t i = 0; i < conf.warmup; ++i){
             call_functor(functor, args...);
         }
 
-        std::vector<std::size_t> durations(conf.repeat);
+        runs += conf.warmup;
+#endif
 
-        for(std::size_t i = 0; i < conf.repeat; ++i){
+        std::vector<std::size_t> durations(steps);
+
+        for(std::size_t i = 0; i < steps; ++i){
             auto start_time = timer_clock::now();
             call_functor(functor, args...);
             auto end_time = timer_clock::now();
@@ -770,7 +803,7 @@ private:
             durations[i] = duration.count();
         }
 
-        runs += conf.warmup + conf.repeat;
+        runs += steps;
 
         return measure(durations);
     }
@@ -849,23 +882,51 @@ private:
 
         //0. Initialization
 
+        std::size_t steps = conf.repeat;
+
+#ifdef CPM_AUTO_STEPS
         random_init(references...);
 
+        steps = 1;
+        double seconds = 0.0;
+
+        while(true){
+            auto start_time = timer_clock::now();
+            for(std::size_t i = 0; i < steps; ++i){
+                functor(d);
+            }
+            auto end_time = timer_clock::now();
+            auto duration = std::chrono::duration_cast<clock_resolution>(end_time - start_time);
+
+            seconds = duration.count() / (1000.0 * 1000.0 * 1000.0);
+
+            if(seconds > cpm::step_estimation_min){
+                break;
+            }
+
+            steps *= 2;
+        }
+
+        steps = (cpm::runtime_target * steps) / seconds;
+#else
         //1. Warmup
 
         for(std::size_t i = 0; i < conf.warmup; ++i){
-            functor(d);
             using cpm::randomize;
             randomize(references...);
+            functor(d);
         }
+
+        runs += conf.warmup;
+#endif
 
         //2. Measures
 
         random_init(references...);
 
-        std::vector<std::size_t> durations(conf.repeat);
+        std::vector<std::size_t> durations(steps);
 
-        for(std::size_t i = 0; i < conf.repeat; ++i){
+        for(std::size_t i = 0; i < steps; ++i){
             using cpm::randomize;
             randomize(references...);
             auto start_time = timer_clock::now();
@@ -875,7 +936,7 @@ private:
             durations[i] = duration.count();
         }
 
-        runs += conf.warmup + conf.repeat;
+        runs += steps;
 
         return measure(durations);
     }
