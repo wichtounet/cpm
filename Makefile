@@ -46,6 +46,8 @@ install-strip: release
 
 examples: debug/bin/simple debug/bin/full
 
+release_examples: release_debug/bin/simple release_debug/bin/full
+
 all: release release_debug debug
 
 clean: base_clean
