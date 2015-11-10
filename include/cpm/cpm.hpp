@@ -783,10 +783,20 @@ private:
         static constexpr const std::size_t tuple_s = std::tuple_size<decltype(data)>::value;
         std::make_index_sequence<tuple_s> sequence;
 
+        //0. Initialization
+
+        random_init_each(data, sequence);
+
+        //1. Warmup
+
         for(std::size_t i = 0; i < conf.warmup; ++i){
-            randomize_each(data, sequence);
             call_with_data<Sizes>(data, functor, sequence, args...);
+            randomize_each(data, sequence);
         }
+
+        //2. Measures
+
+        random_init_each(data, sequence);
 
         std::vector<std::size_t> durations(conf.repeat);
 
@@ -808,11 +818,21 @@ private:
     measure_result measure_only_global(const Config& conf, Functor& functor, Tuple d, T&... references){
         ++measures;
 
+        //0. Initialization
+
+        random_init(references...);
+
+        //1. Warmup
+
         for(std::size_t i = 0; i < conf.warmup; ++i){
+            functor(d);
             using cpm::randomize;
             randomize(references...);
-            functor(d);
         }
+
+        //2. Measures
+
+        random_init(references...);
 
         std::vector<std::size_t> durations(conf.repeat);
 

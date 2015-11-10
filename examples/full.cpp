@@ -7,6 +7,7 @@
 
 #define CPM_PROPAGATE_TUPLE
 #define CPM_BENCHMARK "Tests Benchmarks"
+#define CPM_NO_RANDOMIZATION
 #include "cpm/cpm.hpp"
 
 #include <thread>
@@ -19,6 +20,7 @@ constexpr std::chrono::nanoseconds operator ""_ns(unsigned long long us){
 
 struct test { std::size_t d; };
 void randomize(test&){}
+void random_init(test&){}
 
 #define CPM_WARMUP 10
 #define CPM_REPEAT 50

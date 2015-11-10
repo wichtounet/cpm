@@ -18,6 +18,7 @@ constexpr std::chrono::nanoseconds operator ""_ns(unsigned long long us){
 
 struct test { std::size_t d; };
 void randomize(test&){}
+void random_init(test&){}
 
 int main(){
     cpm::benchmark<> bench("Test benchmark", "./results");
