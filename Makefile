@@ -38,11 +38,13 @@ debug: debug/bin/cpm
 
 install: release
 	install -D release/bin/cpm $(BINDIR)/cpm
+	@mkdir -p $(INCDIR)/cpm
 	install -D -m 0644 include/cpm/*.hpp $(INCDIR)/cpm
 
 install-strip: release
 	install -D -s release/bin/cpm $(BINDIR)/cpm
-	install -d -m 0644 include/cpm $(INCDIR)/cpm
+	@mkdir -p $(INCDIR)/cpm
+	install -D -m 0644 include/cpm/*.hpp $(INCDIR)/cpm
 
 examples: debug/bin/simple debug/bin/full
 
