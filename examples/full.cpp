@@ -8,6 +8,10 @@
 #define CPM_PROPAGATE_TUPLE
 #define CPM_BENCHMARK "Tests Benchmarks"
 #define CPM_NO_RANDOMIZATION
+#define CPM_AUTO_STEPS
+#define CPM_STEP_ESTIMATION_MIN 0.05
+#define CPM_RUNTIME_TARGET 0.25
+
 #include "cpm/cpm.hpp"
 
 #include <thread>
