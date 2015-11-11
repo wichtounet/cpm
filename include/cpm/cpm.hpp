@@ -86,6 +86,33 @@ void call_functor(Functor& functor, std::tuple<TT...> d){
 #endif
 
 template<typename Functor>
+auto call_flops(Functor& functor){
+    return functor();
+}
+
+template<typename Functor>
+auto call_flops(Functor& functor, std::size_t d){
+    return functor(d);
+}
+
+#ifndef CPM_PROPAGATE_TUPLE
+template<typename Functor, typename... TT, std::size_t... I>
+auto propagate_call_flops(Functor& functor, std::tuple<TT...> d, std::index_sequence<I...> /*s*/){
+    return functor(std::get<I>(d)...);
+}
+
+template<typename Functor, typename... TT>
+auto call_flops(Functor& functor, std::tuple<TT...> d){
+    return propagate_call_flops(functor, d, std::make_index_sequence<sizeof...(TT)>());
+}
+#else
+template<typename Functor, typename... TT>
+auto call_flops(Functor& functor, std::tuple<TT...> d){
+    return functor(d);
+}
+#endif
+
+template<typename Functor>
 auto call_init_functor(Functor& functor, std::size_t d){
     return functor(d);
 }
@@ -868,7 +895,7 @@ private:
 
         runs += steps;
 
-        return measure(durations, flops(args...));
+        return measure(durations, call_flops(flops, args...));
     }
 
     template<bool Sizes, typename Config, typename Init, typename Functor, typename Flops, typename... Args>
@@ -936,7 +963,7 @@ private:
 
         runs += steps;
 
-        return measure(durations, flops(args...));
+        return measure(durations, call_flops(flops, args...));
     }
 
     template<typename Config, typename Functor, typename Flops, typename Tuple, typename... T>
@@ -1001,7 +1028,7 @@ private:
 
         runs += steps;
 
-        return measure(durations, flops(d));
+        return measure(durations, call_flops(flops, d));
     }
 
     template<typename Tuple>
