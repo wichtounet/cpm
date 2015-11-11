@@ -246,6 +246,7 @@ int main(int argc, char* argv[]){
             ("c,configuration", "Configuration", cxxopts::value<std::string>())
             ("o,output", "Output folder", cxxopts::value<std::string>())
             ("f,oneshot", "Don't save result")
+            ("mflops", "Print section summary with MFlops/s")
             ("h,help", "Print help")
             ;
 
@@ -301,6 +302,10 @@ int main(int argc, char* argv[]){
 
     if(options.count("oneshot")){
         bench.auto_save = false;
+    }
+
+    if(options.count("mflops")){
+        bench.section_mflops = true;
     }
 
     bench.begin();
