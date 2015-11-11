@@ -24,7 +24,7 @@ int main(){
     cpm::benchmark<> bench("Test benchmark", "./results");
 
     ++bench.warmup;
-    ++bench.repeat;
+    ++bench.steps;
 
     bench.begin();
 
@@ -76,7 +76,7 @@ int main(){
         auto sec = bench.multi("conv");
 
         sec.warmup = 20;
-        sec.repeat = 100;
+        sec.steps = 100;
 
         sec.measure_two_pass("std",
             [](std::size_t d){ return std::make_tuple(test{d}); },
