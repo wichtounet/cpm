@@ -245,6 +245,7 @@ int main(int argc, char* argv[]){
             ("t,tag", "Tag name", cxxopts::value<std::string>())
             ("c,configuration", "Configuration", cxxopts::value<std::string>())
             ("o,output", "Output folder", cxxopts::value<std::string>())
+            ("f,oneshot", "Don't save result")
             ("h,help", "Print help")
             ;
 
@@ -297,6 +298,10 @@ int main(int argc, char* argv[]){
 #ifdef CPM_STEPS
     bench.steps = CPM_STEPS;
 #endif
+
+    if(options.count("oneshot")){
+        bench.auto_save = false;
+    }
 
     bench.begin();
 
