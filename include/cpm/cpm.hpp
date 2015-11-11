@@ -737,8 +737,8 @@ private:
                 write_value(stream, indent, "stddev", sub.result.stddev);
                 write_value(stream, indent, "min", sub.result.min);
                 write_value(stream, indent, "max", sub.result.max);
-                write_value(stream, indent, "throughput", sub.result.throughput_e, false);
-                write_value(stream, indent, "throughput_e", sub.result.throughput_e, false);
+                write_value(stream, indent, "throughput", sub.result.throughput_e);
+                write_value(stream, indent, "throughput_e", sub.result.throughput_e);
                 write_value(stream, indent, "throughput_f", sub.result.throughput_f, false);
 
                 close_sub(stream, indent, j < result.results.size() - 1);
@@ -779,8 +779,8 @@ private:
                     write_value(stream, indent, "stddev", section.results[j][k].stddev);
                     write_value(stream, indent, "min", section.results[j][k].min);
                     write_value(stream, indent, "max", section.results[j][k].max);
-                    write_value(stream, indent, "throughput", section.results[j][k].throughput_e, false);
-                    write_value(stream, indent, "throughput_e", section.results[j][k].throughput_e, false);
+                    write_value(stream, indent, "throughput", section.results[j][k].throughput_e);
+                    write_value(stream, indent, "throughput_e", section.results[j][k].throughput_e);
                     write_value(stream, indent, "throughput_f", section.results[j][k].throughput_f, false);
 
                     close_sub(stream, indent, k < section.results[j].size() - 1);
