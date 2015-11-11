@@ -149,10 +149,11 @@ struct section_data {
     section_data& operator=(section_data&&) = default;
 };
 
-template<typename Bench, typename Policy>
+template<typename Bench, typename Policy, typename Flops>
 struct section {
 private:
     Bench& bench;
+    Flops flops;
 
     section_data data;
 
@@ -160,7 +161,7 @@ public:
     std::size_t warmup = 10;
     std::size_t steps = 50;
 
-    section(std::string name, Bench& bench) : bench(bench), warmup(bench.warmup), steps(bench.steps) {
+    section(std::string name, Bench& bench, Flops flops) : bench(bench), flops(flops), warmup(bench.warmup), steps(bench.steps) {
         data.name = std::move(name);
 
         if(bench.standard_report){
@@ -172,7 +173,7 @@ public:
 
     template<typename Functor>
     void measure_once(const std::string& title, Functor functor){
-        auto duration = bench.measure_only_simple(*this, functor);
+        auto duration = bench.measure_only_simple(*this, functor, flops);
         report(title, std::size_t(1), duration);
     }
 
@@ -182,7 +183,7 @@ public:
     void measure_simple(const std::string& title, Functor functor){
         bench.template policy_run<Policy>(
             [&title, &functor, this](auto sizes){
-                auto duration = bench.measure_only_simple(*this, functor, sizes);
+                auto duration = bench.measure_only_simple(*this, functor, flops, sizes);
                 this->report(title, sizes, duration);
                 return duration;
             }
@@ -195,7 +196,7 @@ public:
     void measure_two_pass(const std::string& title, Init init, Functor functor){
         bench.template policy_run<Policy>(
             [&title, &functor, &init, this](auto sizes){
-                auto duration = bench.template measure_only_two_pass<Sizes>(*this, init, functor, sizes);
+                auto duration = bench.template measure_only_two_pass<Sizes>(*this, init, functor, flops, sizes);
                 this->report(title, sizes, duration);
                 return duration;
             }
@@ -208,7 +209,7 @@ public:
     void measure_global(const std::string& title, Functor functor, T&... references){
         bench.template policy_run<Policy>(
             [&title, &functor, &references..., this](auto sizes){
-                auto duration = bench.measure_only_global(*this, functor, sizes, references...);
+                auto duration = bench.measure_only_global(*this, functor, flops, sizes, references...);
                 this->report(title, sizes, duration);
                 return duration;
             }
@@ -322,7 +323,7 @@ struct measure_data {
 template<typename DefaultPolicy>
 struct benchmark {
 private:
-    template<typename Bench, typename Policy> friend struct section;
+    template<typename Bench, typename Policy, typename Flops> friend struct section;
     std::size_t tests = 0;
     std::size_t measures = 0;
     std::size_t runs = 0;
@@ -454,7 +455,12 @@ public:
     }
 
     template<typename Policy = DefaultPolicy>
-    section<benchmark<DefaultPolicy>, Policy> multi(const std::string& o_name){
+    auto multi(const std::string& o_name){
+        return multi<Policy>(o_name, [](auto... args) { return mul_all(args...); });
+    }
+
+    template<typename Policy = DefaultPolicy, typename Flops>
+    section<benchmark<DefaultPolicy>, Policy, Flops> multi(const std::string& o_name, Flops&& flops){
         auto name = o_name;
         bool rename = false;
         std::size_t id = 0;
@@ -479,7 +485,7 @@ public:
             std::cout << "Warning: Section already exists. Renamed in \"" << name << "\"\n";
         }
 
-        return {std::move(name), *this};
+        return {std::move(name), *this, std::forward<Flops>(flops)};
     }
 
     std::string check_title(const std::string& o_name){
@@ -524,7 +530,7 @@ public:
         measure_data data;
         data.title = title;
 
-        auto duration = measure_only_simple_flops(*this, std::forward<Functor>(functor), std::forward<Flops>(flops));
+        auto duration = measure_only_simple(*this, std::forward<Functor>(functor), std::forward<Flops>(flops));
         report(title, std::size_t(1), duration);
         data.results.push_back({1, std::string("1"), duration});
 
@@ -553,7 +559,7 @@ public:
             [&data, &title, functor = std::forward<Functor>(functor), flops = std::forward<Flops>(flops), this](auto sizes){
                 using namespace cpm;
 
-                auto duration = measure_only_simple_flops(*this, functor, flops, sizes);
+                auto duration = measure_only_simple(*this, functor, flops, sizes);
                 report(title, sizes, duration);
                 data.results.push_back({size_to_eff(sizes), size_to_string(sizes), duration});
                 return duration;
@@ -585,7 +591,7 @@ public:
             [&data, &title, functor = std::forward<Functor>(functor), init = std::forward<Init>(init), flops = std::forward<Flops>(flops), this](auto sizes){
                 using namespace cpm;
 
-                auto duration = measure_only_two_pass_flops<Sizes>(*this, init, functor, flops, sizes);
+                auto duration = measure_only_two_pass<Sizes>(*this, init, functor, flops, sizes);
                 report(title, sizes, duration);
                 data.results.push_back({size_to_eff(sizes), size_to_string(sizes), duration});
                 return duration;
@@ -617,7 +623,7 @@ public:
             [&data, &title, functor = std::forward<Functor>(functor), flops = std::forward<Flops>(flops), &references..., this](auto sizes){
                 using namespace cpm;
 
-                auto duration = measure_only_global_flops(*this, functor, flops, sizes, references...);
+                auto duration = measure_only_global(*this, functor, flops, sizes, references...);
                 report(title, sizes, duration);
                 data.results.push_back({size_to_eff(sizes), size_to_string(sizes), duration});
                 return duration;
@@ -804,13 +810,8 @@ private:
         return {mean, mean_lb, mean_ub, stddev, min, max, 0.0, 0.0, flops};
     }
 
-    template<typename Config, typename Functor, typename... Args>
-    measure_result measure_only_simple(const Config& conf, Functor&& functor, Args... args){
-        return measure_only_simple_flops(conf, std::forward<Functor>(functor), [](Args... /*args*/) -> std::size_t { return 1; }, args...);
-    }
-
     template<typename Config, typename Functor, typename Flops, typename... Args>
-    measure_result measure_only_simple_flops(const Config& conf, Functor&& functor, Flops&& flops, Args... args){
+    measure_result measure_only_simple(const Config& conf, Functor&& functor, Flops&& flops, Args... args){
         ++measures;
 
         std::size_t steps = conf.steps;
@@ -860,14 +861,8 @@ private:
         return measure(durations, flops(args...));
     }
 
-    template<bool Sizes, typename Config, typename Init, typename Functor, typename... Args>
-    measure_result measure_only_two_pass(const Config& conf, Init&& init, Functor&& functor, Args... args){
-        return measure_only_two_pass_flops<Sizes>(conf, std::forward<Init>(init), std::forward<Functor>(functor),
-            [](auto... values){ return mul_all(values...); }, args...);
-    }
-
     template<bool Sizes, typename Config, typename Init, typename Functor, typename Flops, typename... Args>
-    measure_result measure_only_two_pass_flops(const Config& conf, Init&& init, Functor functor, Flops flops, Args... args){
+    measure_result measure_only_two_pass(const Config& conf, Init&& init, Functor functor, Flops flops, Args... args){
         ++measures;
 
         auto data = call_init_functor(std::forward<Init>(init), args...);
@@ -934,13 +929,8 @@ private:
         return measure(durations, flops(args...));
     }
 
-    template<typename Config, typename Functor, typename Tuple, typename... T>
-    measure_result measure_only_global(const Config& conf, Functor&& functor, Tuple d, T&... references){
-        return measure_only_global_flops(conf, std::forward<Functor>(functor), [](auto... args){ return mul_all(args...); }, d, references...);
-    }
-
     template<typename Config, typename Functor, typename Flops, typename Tuple, typename... T>
-    measure_result measure_only_global_flops(const Config& conf, Functor&& functor, Flops&& flops, Tuple d, T&... references){
+    measure_result measure_only_global(const Config& conf, Functor&& functor, Flops&& flops, Tuple d, T&... references){
         ++measures;
 
         //0. Initialization

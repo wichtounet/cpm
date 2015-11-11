@@ -94,6 +94,14 @@ int main(){
     }
 
     {
+        auto sec = bench.multi("mmul_flops", [](std::size_t d) { return 3 * d; });
+
+        sec.measure_simple("std", [](std::size_t d){ std::this_thread::sleep_for((factor * d) * 9_ns ); });
+        sec.measure_simple("fast", [](std::size_t d){ std::this_thread::sleep_for((factor * (d / 3)) * 1_ns ); });
+        sec.measure_simple("common", [](std::size_t d){ std::this_thread::sleep_for((factor * (d / 2)) * 3_ns ); });
+    }
+
+    {
         auto sec = bench.multi("mega");
 
         sec.measure_once("std", [](){ std::this_thread::sleep_for((factor * 999) * 9_ns ); });
@@ -147,6 +155,17 @@ int main(){
 
     {
         auto sec = bench.multi<cpm::simple_nary_policy<cpm::std_stop_policy, cpm::values_policy<1,2,3,4,5,6>, cpm::values_policy<2,4,8,16,32,64>>>("mamul");
+
+        test a{3};
+        test b{5};
+        sec.measure_global("std", [&a](auto dd){ auto d = std::get<0>(dd) + 2 * std::get<1>(dd) + 4 * std::get<2>(dd); std::this_thread::sleep_for(factor * d * 1_ns ); }, a);
+        sec.measure_global("mkl", [&a](auto dd){ auto d = std::get<0>(dd) + std::get<1>(dd) + std::get<2>(dd); std::this_thread::sleep_for(factor * d * 1_ns ); }, b);
+        sec.measure_global("bla", [&a](auto dd){ auto d = std::get<0>(dd) + 2 * std::get<1>(dd) + 2 * std::get<2>(dd); std::this_thread::sleep_for(factor * d * 1_ns ); }, a, b);
+    }
+
+    {
+        auto sec = bench.multi<cpm::simple_nary_policy<cpm::std_stop_policy, cpm::values_policy<1,2,3,4,5,6>, cpm::values_policy<2,4,8,16,32,64>>>(
+            "mamul_flops", [](auto dd) { return 2 * std::get<0>(dd) * std::get<1>(dd) * std::get<2>(dd) - std::get<0>(dd) * std::get<2>(dd); });
 
         test a{3};
         test b{5};
