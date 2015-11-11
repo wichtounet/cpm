@@ -33,14 +33,30 @@ int main(){
 
     bench.measure_simple("simple_a", [](std::size_t d){ std::this_thread::sleep_for((factor * d) * 1_ns ); });
     bench.measure_simple("simple_b", [](std::size_t d){ std::this_thread::sleep_for((factor * d) * 2_ns ); });
+    bench.measure_simple("simple_c", [](std::size_t d){ std::this_thread::sleep_for((factor * d) * 2_ns ); }, [](std::size_t d){ return 2 * d; });
 
     bench.measure_simple<cpm::simple_nary_policy<cpm::values_policy<1,2,3,4,5,6>, cpm::values_policy<2,4,8,16,32,64>>>("simple_a_n", [](auto d){ std::this_thread::sleep_for((factor * std::get<0>(d)) * 1_ns ); });
     bench.measure_simple<cpm::simple_nary_policy<cpm::values_policy<1,2,3,4,5,6>>>("simple_b_n", [](auto d){ std::this_thread::sleep_for((factor * std::get<0>(d)) * 2_ns ); });
+    bench.measure_simple<cpm::simple_nary_policy<cpm::values_policy<1,2,3,4,5,6>, cpm::values_policy<2,4,8,16,32,64>>>("simple_c_n",
+        [](auto d){ std::this_thread::sleep_for((factor * std::get<0>(d)) * 2_ns ); },
+        [](auto d){ return 2 * std::get<1>(d) + std::get<0>(d); }
+        );
 
     test a{3};
     test b{5};
     bench.measure_global("global_a", [&a](std::size_t d){ std::this_thread::sleep_for((factor * d * a.d) * 1_ns ); }, a);
     bench.measure_global("global_b", [&b](std::size_t d){ std::this_thread::sleep_for((factor * d * b.d) * 1_ns ); }, b);
+    bench.measure_global_flops("global_c",
+        [&b](std::size_t d){ std::this_thread::sleep_for((factor * d * b.d) * 1_ns ); },
+        [](std::size_t d){ return 3 * d; }, b);
+
+    bench.measure_global<cpm::simple_nary_policy<cpm::values_policy<1,2,3,4,5,6>, cpm::values_policy<2,4,8,16,32,64>>>("global_a_n",
+        [&a](auto d){ std::this_thread::sleep_for((factor * std::get<0>(d) * a.d + std::get<1>(d)) * 1_ns ); }, a);
+    bench.measure_global<cpm::simple_nary_policy<cpm::values_policy<1,2,3,4,5,6>, cpm::values_policy<2,4,8,16,32,64>>>("global_b_n",
+        [&b](auto d){ std::this_thread::sleep_for((factor * std::get<0>(d) * std::get<1>(d) * b.d) * 1_ns ); }, b);
+    bench.measure_global_flops<cpm::simple_nary_policy<cpm::values_policy<1,2,3,4,5,6>, cpm::values_policy<2,4,8,16,32,64>>>("global_c_n",
+        [&b](auto d){ std::this_thread::sleep_for((factor * std::get<0>(d) * std::get<1>(d) * b.d) * 1_ns ); },
+        [](auto d){ return 3 * std::get<0>(d) + 2 * std::get<1>(d); }, b);
 
     bench.measure_two_pass("2p_a",
         [](std::size_t d){ return std::make_tuple(test{d}); },
@@ -52,9 +68,21 @@ int main(){
         [](std::size_t d, test& d2){ std::this_thread::sleep_for((factor * 2 * (d + d2.d)) * 1_ns ); }
         );
 
+    bench.measure_two_pass("2p_c",
+        [](std::size_t d){ return std::make_tuple(test{d}); },
+        [](std::size_t d, test& d2){ std::this_thread::sleep_for((factor * 2 * (d + d2.d)) * 1_ns ); },
+        [](std::size_t d){ return 2 * d; }
+        );
+
     bench.measure_two_pass<true, cpm::simple_nary_policy<cpm::std_stop_policy, cpm::std_stop_policy>>("2p_b_n",
         [](auto dd){ return std::make_tuple(test{std::get<0>(dd)}); },
         [](auto dd, test& d2){ std::this_thread::sleep_for((factor * 2 * (std::get<0>(dd) + std::get<1>(dd) + d2.d)) * 1_ns ); }
+        );
+
+    bench.measure_two_pass<true, cpm::simple_nary_policy<cpm::std_stop_policy, cpm::std_stop_policy>>("2p_c_n",
+        [](auto dd){ return std::make_tuple(test{std::get<0>(dd)}); },
+        [](auto dd, test& d2){ std::this_thread::sleep_for((factor * 2 * (std::get<0>(dd) + std::get<1>(dd) + d2.d)) * 1_ns ); },
+        [](auto dd) { return std::get<0>(dd) * std::get<0>(dd) * std::get<1>(dd); }
         );
 
     {

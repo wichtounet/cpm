@@ -107,6 +107,29 @@ auto call_init_functor(Functor& functor, std::tuple<TT...> d){
 }
 #endif
 
+inline std::size_t mul_all() {
+    return 1;
+}
+
+template <typename... T>
+inline std::size_t mul_all(std::size_t first, T... args) {
+    return first * mul_all(args...);
+}
+
+inline std::size_t mul_all(std::size_t first) {
+    return first;
+}
+
+template<typename... TT, std::size_t... I>
+inline std::size_t mul_all(std::tuple<TT...> tuple, std::index_sequence<I...> /*sequence*/) {
+    return mul_all(std::get<I>(tuple)...);
+}
+
+template<typename... TT>
+inline std::size_t mul_all(std::tuple<TT...> tuple) {
+    return mul_all(tuple, std::make_index_sequence<sizeof...(TT)>());
+}
+
 template<typename DefaultPolicy = std_stop_policy>
 struct benchmark;
 
@@ -489,29 +512,34 @@ public:
 
     //Measure once functor (no policy, no randomization)
 
+    template<typename Functor>
+    void measure_once(const std::string& o_title, Functor&& functor){
+        measure_once(o_title, std::forward<Functor>(functor), [](){return 1UL; });
+    }
+
     template<typename Functor, typename Flops>
-    void measure_once(const std::string& o_title, Functor functor, Flops&& flops){
+    void measure_once(const std::string& o_title, Functor&& functor, Flops&& flops){
         auto title = check_title(o_title);
 
         measure_data data;
         data.title = title;
 
-        auto duration = measure_only_simple_flops(*this, functor, std::forward<Flops>(flops));
+        auto duration = measure_only_simple_flops(*this, std::forward<Functor>(functor), std::forward<Flops>(flops));
         report(title, std::size_t(1), duration);
         data.results.push_back({1, std::string("1"), duration});
 
         results.push_back(std::move(data));
     }
 
-    template<typename Functor>
-    void measure_once(const std::string& o_title, Functor&& functor){
-        measure_once(o_title, std::forward<Functor>(functor), [](){return 1UL; });
-    }
-
     //Measure simple functor (no randomization)
 
     template<typename Policy = DefaultPolicy, typename Functor>
-    void measure_simple(const std::string& o_title, Functor functor){
+    void measure_simple(const std::string& o_title, Functor&& functor){
+        measure_simple<Policy>(o_title, std::forward<Functor>(functor), [](auto... args){ return mul_all(args...); });
+    }
+
+    template<typename Policy = DefaultPolicy, typename Functor, typename Flops>
+    void measure_simple(const std::string& o_title, Functor&& functor, Flops&& flops){
         auto title = check_title(o_title);
 
         if(standard_report){
@@ -522,10 +550,10 @@ public:
         data.title = title;
 
         policy_run<Policy>(
-            [&data, &title, &functor, this](auto sizes){
+            [&data, &title, functor = std::forward<Functor>(functor), flops = std::forward<Flops>(flops), this](auto sizes){
                 using namespace cpm;
 
-                auto duration = measure_only_simple(*this, functor, sizes);
+                auto duration = measure_only_simple_flops(*this, functor, flops, sizes);
                 report(title, sizes, duration);
                 data.results.push_back({size_to_eff(sizes), size_to_string(sizes), duration});
                 return duration;
@@ -538,7 +566,12 @@ public:
     //Measure with two-pass functors (init and functor)
 
     template<bool Sizes = true, typename Policy= DefaultPolicy, typename Init, typename Functor>
-    void measure_two_pass(const std::string& o_title, Init init, Functor functor){
+    void measure_two_pass(const std::string& o_title, Init&& init, Functor&& functor){
+        return measure_two_pass<Sizes, Policy>(o_title, std::forward<Init>(init), std::forward<Functor>(functor), [](auto... args){return mul_all(args...);});
+    }
+
+    template<bool Sizes = true, typename Policy= DefaultPolicy, typename Init, typename Functor, typename Flops>
+    void measure_two_pass(const std::string& o_title, Init&& init, Functor&& functor, Flops&& flops){
         auto title = check_title(o_title);
 
         if(standard_report){
@@ -549,10 +582,10 @@ public:
         data.title = title;
 
         policy_run<Policy>(
-            [&data, &title, &functor, &init, this](auto sizes){
+            [&data, &title, functor = std::forward<Functor>(functor), init = std::forward<Init>(init), flops = std::forward<Flops>(flops), this](auto sizes){
                 using namespace cpm;
 
-                auto duration = measure_only_two_pass<Sizes>(*this, init, functor, sizes);
+                auto duration = measure_only_two_pass_flops<Sizes>(*this, init, functor, flops, sizes);
                 report(title, sizes, duration);
                 data.results.push_back({size_to_eff(sizes), size_to_string(sizes), duration});
                 return duration;
@@ -565,7 +598,12 @@ public:
     //measure a function with global references
 
     template<typename Policy = DefaultPolicy, typename Functor, typename... T>
-    void measure_global(const std::string& o_title, Functor functor, T&... references){
+    void measure_global(const std::string& o_title, Functor&& functor, T&... references){
+        measure_global_flops<Policy>(o_title, std::forward<Functor>(functor), [](auto... args){ return mul_all(args...); }, references...);
+    }
+
+    template<typename Policy = DefaultPolicy, typename Functor, typename Flops, typename... T>
+    void measure_global_flops(const std::string& o_title, Functor&& functor, Flops&& flops, T&... references){
         auto title = check_title(o_title);
 
         if(standard_report){
@@ -576,10 +614,10 @@ public:
         data.title = title;
 
         policy_run<Policy>(
-            [&data, &title, &functor, &references..., this](auto sizes){
+            [&data, &title, functor = std::forward<Functor>(functor), flops = std::forward<Flops>(flops), &references..., this](auto sizes){
                 using namespace cpm;
 
-                auto duration = measure_only_global(*this, functor, sizes, references...);
+                auto duration = measure_only_global_flops(*this, functor, flops, sizes, references...);
                 report(title, sizes, duration);
                 data.results.push_back({size_to_eff(sizes), size_to_string(sizes), duration});
                 return duration;
@@ -767,12 +805,12 @@ private:
     }
 
     template<typename Config, typename Functor, typename... Args>
-    measure_result measure_only_simple(const Config& conf, Functor& functor, Args... args){
-        return measure_only_simple_flops(conf, functor, [](Args... /*args*/) -> std::size_t { return 1; }, args...);
+    measure_result measure_only_simple(const Config& conf, Functor&& functor, Args... args){
+        return measure_only_simple_flops(conf, std::forward<Functor>(functor), [](Args... /*args*/) -> std::size_t { return 1; }, args...);
     }
 
     template<typename Config, typename Functor, typename Flops, typename... Args>
-    measure_result measure_only_simple_flops(const Config& conf, Functor& functor, Flops&& flops, Args... args){
+    measure_result measure_only_simple_flops(const Config& conf, Functor&& functor, Flops&& flops, Args... args){
         ++measures;
 
         std::size_t steps = conf.steps;
@@ -823,10 +861,16 @@ private:
     }
 
     template<bool Sizes, typename Config, typename Init, typename Functor, typename... Args>
-    measure_result measure_only_two_pass(const Config& conf, Init& init, Functor& functor, Args... args){
+    measure_result measure_only_two_pass(const Config& conf, Init&& init, Functor&& functor, Args... args){
+        return measure_only_two_pass_flops<Sizes>(conf, std::forward<Init>(init), std::forward<Functor>(functor),
+            [](auto... values){ return mul_all(values...); }, args...);
+    }
+
+    template<bool Sizes, typename Config, typename Init, typename Functor, typename Flops, typename... Args>
+    measure_result measure_only_two_pass_flops(const Config& conf, Init&& init, Functor functor, Flops flops, Args... args){
         ++measures;
 
-        auto data = call_init_functor(init, args...);
+        auto data = call_init_functor(std::forward<Init>(init), args...);
 
         static constexpr const std::size_t tuple_s = std::tuple_size<decltype(data)>::value;
         std::make_index_sequence<tuple_s> sequence;
@@ -887,11 +931,16 @@ private:
 
         runs += steps;
 
-        return measure(durations);
+        return measure(durations, flops(args...));
     }
 
     template<typename Config, typename Functor, typename Tuple, typename... T>
-    measure_result measure_only_global(const Config& conf, Functor& functor, Tuple d, T&... references){
+    measure_result measure_only_global(const Config& conf, Functor&& functor, Tuple d, T&... references){
+        return measure_only_global_flops(conf, std::forward<Functor>(functor), [](auto... args){ return mul_all(args...); }, d, references...);
+    }
+
+    template<typename Config, typename Functor, typename Flops, typename Tuple, typename... T>
+    measure_result measure_only_global_flops(const Config& conf, Functor&& functor, Flops&& flops, Tuple d, T&... references){
         ++measures;
 
         //0. Initialization
@@ -907,7 +956,7 @@ private:
         while(true){
             auto start_time = timer_clock::now();
             for(std::size_t i = 0; i < steps; ++i){
-                functor(d);
+                call_functor(functor, d);
             }
             auto end_time = timer_clock::now();
             auto duration = std::chrono::duration_cast<clock_resolution>(end_time - start_time);
@@ -928,7 +977,7 @@ private:
         for(std::size_t i = 0; i < conf.warmup; ++i){
             using cpm::randomize;
             randomize(references...);
-            functor(d);
+            call_functor(functor, d);
         }
 
         runs += conf.warmup;
@@ -944,7 +993,7 @@ private:
             using cpm::randomize;
             randomize(references...);
             auto start_time = timer_clock::now();
-            functor(d);
+            call_functor(functor, d);
             auto end_time = timer_clock::now();
             auto duration = std::chrono::duration_cast<clock_resolution>(end_time - start_time);
             durations[i] = duration.count();
@@ -952,7 +1001,7 @@ private:
 
         runs += steps;
 
-        return measure(durations);
+        return measure(durations, flops(d));
     }
 
     template<typename Tuple>
