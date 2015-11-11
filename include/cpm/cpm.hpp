@@ -234,7 +234,11 @@ public:
 
             for(std::size_t i = 0; i < data.results.size(); ++i){
                 for(auto d : data.results[i]){
-                    widths[i+1] = std::max(widths[i+1], static_cast<int>(duration_str(d.mean).size()));
+                    if(bench.section_mflops){
+                        widths[i+1] = std::max(widths[i+1], static_cast<int>(mthroughput_str(d.throughput_f).size()));
+                    } else {
+                        widths[i+1] = std::max(widths[i+1], static_cast<int>(duration_str(d.mean).size()));
+                    }
                 }
             }
 
@@ -277,7 +281,11 @@ public:
                             std::cout << "\033[0;31m";
                         }
 
-                        printf("%*s", widths[r+1], duration_str(data.results[r][i].mean).c_str());
+                        if(bench.section_mflops){
+                            printf("%*s", widths[r+1], mthroughput_str(data.results[r][i].throughput_f).c_str());
+                        } else {
+                            printf("%*s", widths[r+1], duration_str(data.results[r][i].mean).c_str());
+                        }
                     } else {
                         std::cout << "\033[0;31m";
                         printf("%*s", widths[r+1], "*");
@@ -348,6 +356,8 @@ public:
     bool standard_report = true;
     bool auto_save = true;
     bool auto_mkdir = true;
+
+    bool section_mflops = false;
 
     benchmark(std::string name, std::string f = ".", std::string t = "", std::string c = "") : name(std::move(name)), folder(std::move(f)), tag(std::move(t)), configuration(std::move(c)) {
         //Get absolute cwd

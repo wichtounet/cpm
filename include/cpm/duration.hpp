@@ -66,6 +66,15 @@ inline std::string duration_str(double duration, int precision = 6){
     }
 }
 
+inline std::string mthroughput_str(double tp, int precision = 6){
+    std::ostringstream out;
+
+    out << std::setprecision(precision);
+    out << tp / (1000 * 1000);
+
+    return out.str();
+}
+
 inline std::string throughput_str(double tp, int precision = 6){
     std::ostringstream out;
 

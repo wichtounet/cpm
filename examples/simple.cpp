@@ -6,6 +6,7 @@
 //=======================================================================
 
 #define CPM_PROPAGATE_TUPLE
+#define CPM_SECTION_FLOPS
 #include "cpm/cpm.hpp"
 
 #include <thread>
@@ -25,6 +26,8 @@ int main(){
 
     ++bench.warmup;
     ++bench.steps;
+
+    bench.section_mflops = true;
 
     bench.begin();
 
