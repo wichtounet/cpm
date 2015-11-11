@@ -135,9 +135,9 @@ private:
 
 public:
     std::size_t warmup = 10;
-    std::size_t repeat = 50;
+    std::size_t steps = 50;
 
-    section(std::string name, Bench& bench) : bench(bench), warmup(bench.warmup), repeat(bench.repeat) {
+    section(std::string name, Bench& bench) : bench(bench), warmup(bench.warmup), steps(bench.steps) {
         data.name = std::move(name);
 
         if(bench.standard_report){
@@ -319,7 +319,7 @@ private:
 
 public:
     std::size_t warmup = 10;
-    std::size_t repeat = 50;
+    std::size_t steps = 50;
 
     bool standard_report = true;
     bool auto_save = true;
@@ -397,7 +397,7 @@ public:
 #ifdef CPM_AUTO_STEPS
             std::cout << "   Number of steps will be automatically computed" << std::endl;
 #else
-            std::cout << "   Each test is repeated " << repeat << " times" << std::endl;
+            std::cout << "   Each test is repeated " << steps << " times" << std::endl;
 #endif
 
             auto time = wall_clock::to_time_t(start_time);
@@ -761,7 +761,7 @@ private:
     measure_result measure_only_simple(const Config& conf, Functor& functor, Args... args){
         ++measures;
 
-        std::size_t steps = conf.repeat;
+        std::size_t steps = conf.steps;
 
 #ifdef CPM_AUTO_STEPS
         steps = 1;
@@ -819,7 +819,7 @@ private:
 
         //0. Initialization
 
-        std::size_t steps = conf.repeat;
+        std::size_t steps = conf.steps;
 
 #ifdef CPM_AUTO_STEPS
         random_init_each(data, sequence);
@@ -882,7 +882,7 @@ private:
 
         //0. Initialization
 
-        std::size_t steps = conf.repeat;
+        std::size_t steps = conf.steps;
 
 #ifdef CPM_AUTO_STEPS
         random_init(references...);

@@ -61,7 +61,7 @@ struct is_section : is_specialization_of<cpm::section, std::decay_t<T>> {};
     static void CPM_UNIQUE_NAME(section_) (cpm::benchmark<>& master) {     \
     auto bench = master.multi(name);    \
     bench.warmup = W;                   \
-    bench.repeat = R;
+    bench.steps = R;
 
 #define CPM_SECTION_P(name, policy)                                       \
     static void CPM_UNIQUE_NAME(section_) (cpm::benchmark<>& master);      \
@@ -75,7 +75,7 @@ struct is_section : is_specialization_of<cpm::section, std::decay_t<T>> {};
     static void CPM_UNIQUE_NAME(section_) (cpm::benchmark<>& master) {     \
     auto bench = master.multi<policy>(name);      \
     bench.warmup = W;                             \
-    bench.repeat = R;
+    bench.steps = R;
 
 //Normal versions for simple bench
 #define CPM_SIMPLE(...) bench.measure_simple(__VA_ARGS__);
@@ -234,7 +234,11 @@ int main(int argc, char* argv[]){
 #endif
 
 #ifdef CPM_REPEAT
-    bench.repeat = CPM_REPEAT;
+    bench.steps = CPM_REPEAT;
+#endif
+
+#ifdef CPM_STEPS
+    bench.steps = CPM_STEPS;
 #endif
 
     bench.begin();
