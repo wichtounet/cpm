@@ -49,13 +49,19 @@ struct is_section : is_specialization_of<cpm::section, std::decay_t<T>> {};
 
 //Declaration of section functions
 
-#define CPM_SECTION(name)                                       \
+#define CPM_SECTION(name)\
     static void CPM_UNIQUE_NAME(section_) (cpm::benchmark<>& master);      \
     namespace { cpm::cpm_registry CPM_UNIQUE_NAME(register_) (& CPM_UNIQUE_NAME(section_)); }        \
     void CPM_UNIQUE_NAME(section_) (cpm::benchmark<>& master) {     \
     auto bench = master.multi(name);
 
-#define CPM_SECTION_O(name, W, R)                                       \
+#define CPM_SECTION_F(name, ...)\
+    static void CPM_UNIQUE_NAME(section_) (cpm::benchmark<>& master);      \
+    namespace { cpm::cpm_registry CPM_UNIQUE_NAME(register_) (& CPM_UNIQUE_NAME(section_)); }        \
+    void CPM_UNIQUE_NAME(section_) (cpm::benchmark<>& master) {     \
+    auto bench = master.multi(name, __VA_ARGS__);
+
+#define CPM_SECTION_O(name, W, R)\
     static void CPM_UNIQUE_NAME(section_) (cpm::benchmark<>& master);      \
     namespace { cpm::cpm_registry CPM_UNIQUE_NAME(register_) (& CPM_UNIQUE_NAME(section_)); }        \
     static void CPM_UNIQUE_NAME(section_) (cpm::benchmark<>& master) {     \
@@ -63,13 +69,27 @@ struct is_section : is_specialization_of<cpm::section, std::decay_t<T>> {};
     bench.warmup = W;                   \
     bench.steps = R;
 
-#define CPM_SECTION_P(name, policy)                                       \
+#define CPM_SECTION_OF(name, W, R, ...)\
+    static void CPM_UNIQUE_NAME(section_) (cpm::benchmark<>& master);      \
+    namespace { cpm::cpm_registry CPM_UNIQUE_NAME(register_) (& CPM_UNIQUE_NAME(section_)); }        \
+    static void CPM_UNIQUE_NAME(section_) (cpm::benchmark<>& master) {     \
+    auto bench = master.multi(name, __VA_ARGS__);    \
+    bench.warmup = W;                   \
+    bench.steps = R;
+
+#define CPM_SECTION_P(name, policy)\
     static void CPM_UNIQUE_NAME(section_) (cpm::benchmark<>& master);      \
     namespace { cpm::cpm_registry CPM_UNIQUE_NAME(register_) (& CPM_UNIQUE_NAME(section_)); }        \
     static void CPM_UNIQUE_NAME(section_) (cpm::benchmark<>& master) {     \
     auto bench = master.multi<policy>(name);
 
-#define CPM_SECTION_PO(name, policy, W, R)                                       \
+#define CPM_SECTION_PF(name, policy, ...)\
+    static void CPM_UNIQUE_NAME(section_) (cpm::benchmark<>& master);      \
+    namespace { cpm::cpm_registry CPM_UNIQUE_NAME(register_) (& CPM_UNIQUE_NAME(section_)); }        \
+    static void CPM_UNIQUE_NAME(section_) (cpm::benchmark<>& master) {     \
+    auto bench = master.multi<policy>(name, __VA_ARGS__);
+
+#define CPM_SECTION_PO(name, policy, W, R)\
     static void CPM_UNIQUE_NAME(section_) (cpm::benchmark<>& master);      \
     namespace { cpm::cpm_registry CPM_UNIQUE_NAME(register_) (& CPM_UNIQUE_NAME(section_)); }        \
     static void CPM_UNIQUE_NAME(section_) (cpm::benchmark<>& master) {     \
@@ -77,9 +97,18 @@ struct is_section : is_specialization_of<cpm::section, std::decay_t<T>> {};
     bench.warmup = W;                             \
     bench.steps = R;
 
+#define CPM_SECTION_POF(name, policy, W, R, ...)\
+    static void CPM_UNIQUE_NAME(section_) (cpm::benchmark<>& master);      \
+    namespace { cpm::cpm_registry CPM_UNIQUE_NAME(register_) (& CPM_UNIQUE_NAME(section_)); }        \
+    static void CPM_UNIQUE_NAME(section_) (cpm::benchmark<>& master) {     \
+    auto bench = master.multi<policy>(name, __VA_ARGS__);      \
+    bench.warmup = W;                             \
+    bench.steps = R;
+
 //Normal versions for simple bench
 #define CPM_SIMPLE(...) bench.measure_simple(__VA_ARGS__);
 #define CPM_GLOBAL(...) bench.measure_global(__VA_ARGS__);
+#define CPM_GLOBAL_F(...) bench.measure_global_flops(__VA_ARGS__);
 #define CPM_TWO_PASS(...) bench.measure_two_pass(__VA_ARGS__);
 #define CPM_TWO_PASS_NS(...) bench.measure_two_pass<false>(__VA_ARGS__);
 
@@ -92,6 +121,10 @@ struct is_section : is_specialization_of<cpm::section, std::decay_t<T>> {};
 #define CPM_GLOBAL_P(policy, ...) \
     static_assert(!cpm::is_section<decltype(bench)>::value, "CPM_GLOBAL_P cannot be used inside CPM_SECTION");  \
     bench.measure_global<policy>(__VA_ARGS__);
+
+#define CPM_GLOBAL_FP(policy, ...) \
+    static_assert(!cpm::is_section<decltype(bench)>::value, "CPM_GLOBAL_FP cannot be used inside CPM_SECTION");  \
+    bench.measure_global_flops<policy>(__VA_ARGS__);
 
 #define CPM_TWO_PASS_P(policy, ...) \
     static_assert(!cpm::is_section<decltype(bench)>::value, "CPM_TWO_PASS_P cannot be used inside CPM_SECTION");  \
@@ -152,8 +185,18 @@ struct is_section : is_specialization_of<cpm::section, std::decay_t<T>> {};
     F_FOR_EACH(EMIT_TWO_PASS, init, __VA_ARGS__) \
     }
 
+#define CPM_DIRECT_SECTION_TWO_PASS_F(name, flops, init, ...) \
+    CPM_SECTION_F(name, flops) \
+    F_FOR_EACH(EMIT_TWO_PASS, init, __VA_ARGS__) \
+    }
+
 #define CPM_DIRECT_SECTION_TWO_PASS_P(name, policy, init, ...) \
     CPM_SECTION_P(name, POLICY(policy)) \
+    F_FOR_EACH(EMIT_TWO_PASS, init, __VA_ARGS__) \
+    }
+
+#define CPM_DIRECT_SECTION_TWO_PASS_PF(name, policy, flops, init, ...) \
+    CPM_SECTION_PF(name, POLICY(policy), flops) \
     F_FOR_EACH(EMIT_TWO_PASS, init, __VA_ARGS__) \
     }
 
@@ -162,10 +205,21 @@ struct is_section : is_specialization_of<cpm::section, std::decay_t<T>> {};
     F_FOR_EACH(EMIT_TWO_PASS_NS, init, __VA_ARGS__) \
     }
 
+#define CPM_DIRECT_SECTION_TWO_PASS_NS_F(name, flops, init, ...) \
+    CPM_SECTION_F(name, flops) \
+    F_FOR_EACH(EMIT_TWO_PASS_NS, init, __VA_ARGS__) \
+    }
+
 #define CPM_DIRECT_SECTION_TWO_PASS_NS_P(name, policy, init, ...) \
     CPM_SECTION_P(name, POLICY(policy)) \
     F_FOR_EACH(EMIT_TWO_PASS_NS, init, __VA_ARGS__) \
     }
+
+#define CPM_DIRECT_SECTION_TWO_PASS_NS_PF(name, policy, flops, init, ...) \
+    CPM_SECTION_PF(name, POLICY(policy), flops) \
+    F_FOR_EACH(EMIT_TWO_PASS_NS, init, __VA_ARGS__) \
+    }
+
 
 #define CPM_SECTION_INIT(...) (__VA_ARGS__)
 
@@ -176,6 +230,9 @@ struct is_section : is_specialization_of<cpm::section, std::decay_t<T>> {};
 #define STD_STOP_POLICY cpm::std_stop_policy
 #define STOP_POLICY(start, stop, add, mul) cpm::increasing_policy<start, stop, add, mul, stop_policy::STOP>
 #define TIMEOUT_POLICY(start, stop, add, mul) cpm::increasing_policy<start, stop, add, mul, stop_policy::TIMEOUT>
+
+//Helpers for flops function
+#define FLOPS(...) __VA_ARGS__
 
 #ifdef CPM_BENCHMARK
 
