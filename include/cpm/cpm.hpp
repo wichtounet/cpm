@@ -489,18 +489,23 @@ public:
 
     //Measure once functor (no policy, no randomization)
 
-    template<typename Functor>
-    void measure_once(const std::string& o_title, Functor functor){
+    template<typename Functor, typename Flops>
+    void measure_once(const std::string& o_title, Functor functor, Flops&& flops){
         auto title = check_title(o_title);
 
         measure_data data;
         data.title = title;
 
-        auto duration = measure_only_simple(*this, functor);
+        auto duration = measure_only_simple_flops(*this, functor, std::forward<Flops>(flops));
         report(title, std::size_t(1), duration);
         data.results.push_back({1, std::string("1"), duration});
 
         results.push_back(std::move(data));
+    }
+
+    template<typename Functor>
+    void measure_once(const std::string& o_title, Functor&& functor){
+        measure_once(o_title, std::forward<Functor>(functor), [](){return 1UL; });
     }
 
     //Measure simple functor (no randomization)
@@ -651,7 +656,9 @@ private:
                 write_value(stream, indent, "stddev", sub.result.stddev);
                 write_value(stream, indent, "min", sub.result.min);
                 write_value(stream, indent, "max", sub.result.max);
-                write_value(stream, indent, "throughput", sub.result.throughput, false);
+                write_value(stream, indent, "throughput", sub.result.throughput_e, false);
+                write_value(stream, indent, "throughput_e", sub.result.throughput_e, false);
+                write_value(stream, indent, "throughput_f", sub.result.throughput_f, false);
 
                 close_sub(stream, indent, j < result.results.size() - 1);
             }
@@ -691,7 +698,9 @@ private:
                     write_value(stream, indent, "stddev", section.results[j][k].stddev);
                     write_value(stream, indent, "min", section.results[j][k].min);
                     write_value(stream, indent, "max", section.results[j][k].max);
-                    write_value(stream, indent, "throughput", section.results[j][k].throughput, false);
+                    write_value(stream, indent, "throughput", section.results[j][k].throughput_e, false);
+                    write_value(stream, indent, "throughput_e", section.results[j][k].throughput_e, false);
+                    write_value(stream, indent, "throughput_f", section.results[j][k].throughput_f, false);
 
                     close_sub(stream, indent, k < section.results[j].size() - 1);
                 }
@@ -726,7 +735,7 @@ private:
         }
     }
 
-    measure_result measure(const std::vector<std::size_t>& durations){
+    measure_result measure(const std::vector<std::size_t>& durations, std::size_t flops = 1){
         auto n = durations.size();
 
         double mean = 0.0;
@@ -754,11 +763,16 @@ private:
         double mean_lb = mean - 1.96 * stderror;
         double mean_ub = mean + 1.96 * stderror;
 
-        return {mean, mean_lb, mean_ub, stddev, min, max, 0.0};
+        return {mean, mean_lb, mean_ub, stddev, min, max, 0.0, 0.0, flops};
     }
 
     template<typename Config, typename Functor, typename... Args>
     measure_result measure_only_simple(const Config& conf, Functor& functor, Args... args){
+        return measure_only_simple_flops(conf, functor, [](Args... /*args*/) -> std::size_t { return 1; }, args...);
+    }
+
+    template<typename Config, typename Functor, typename Flops, typename... Args>
+    measure_result measure_only_simple_flops(const Config& conf, Functor& functor, Flops&& flops, Args... args){
         ++measures;
 
         std::size_t steps = conf.steps;
@@ -805,7 +819,7 @@ private:
 
         runs += steps;
 
-        return measure(durations);
+        return measure(durations, flops(args...));
     }
 
     template<bool Sizes, typename Config, typename Init, typename Functor, typename... Args>
@@ -952,7 +966,8 @@ private:
                 << " stddev: " << duration_str(duration.stddev, 3)
                 << " min: " << duration_str(duration.min, 3)
                 << " max: " << duration_str(duration.max, 3)
-                << " througput: " << throughput_str(duration.throughput, 3) << "Es"
+                << " througput: " << throughput_str(duration.throughput_e, 3) << "Es"
+                << ", " << throughput_str(duration.throughput_f, 3) << "Flop/s"
                 << "\n";
         }
     }

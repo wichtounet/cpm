@@ -29,6 +29,7 @@ int main(){
     bench.begin();
 
     bench.measure_once("once_a", [](){ std::this_thread::sleep_for((factor * 666) * 1_ns ); });
+    bench.measure_once("once_b", [](){ std::this_thread::sleep_for((factor * 666) * 1_ns ); }, [](){ return 33; });
 
     bench.measure_simple("simple_a", [](std::size_t d){ std::this_thread::sleep_for((factor * d) * 1_ns ); });
     bench.measure_simple("simple_b", [](std::size_t d){ std::this_thread::sleep_for((factor * d) * 2_ns ); });

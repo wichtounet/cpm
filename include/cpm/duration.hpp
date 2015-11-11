@@ -32,10 +32,13 @@ struct measure_result {
     double stddev;
     double min;
     double max;
-    double throughput;
+    double throughput_e;
+    double throughput_f;
+    std::size_t flops;
 
     cpp14_constexpr void update(std::size_t size_eff){
-        throughput = mean == 0.0 ? 0.0 : size_eff / (mean / (1000.0 * 1000.0 * 1000.0));
+        throughput_e = mean == 0.0 ? 0.0 : size_eff / (mean / (1000.0 * 1000.0 * 1000.0));
+        throughput_f = mean == 0.0 ? 0.0 : flops / (mean / (1000.0 * 1000.0 * 1000.0));
     }
 };
 
