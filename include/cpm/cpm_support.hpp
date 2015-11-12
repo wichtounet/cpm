@@ -237,7 +237,7 @@ struct is_section : is_specialization_of<cpm::section, std::decay_t<T>> {};
 #ifdef CPM_BENCHMARK
 
 int main(int argc, char* argv[]){
-    cxxopts::Options options(argv[0], "");
+    cxxopts::Options options(argv[0], "filter");
 
     try {
         options.add_options()
@@ -247,9 +247,11 @@ int main(int argc, char* argv[]){
             ("o,output", "Output folder", cxxopts::value<std::string>())
             ("f,oneshot", "Don't save result")
             ("mflops", "Print section summary with MFlops/s")
+            ("filter", "Filter tests/sections to run", cxxopts::value<std::string>())
             ("h,help", "Print help")
             ;
 
+        options.parse_positional("filter");
         options.parse(argc, argv);
 
         if (options.count("help")){
@@ -299,6 +301,10 @@ int main(int argc, char* argv[]){
 #ifdef CPM_STEPS
     bench.steps = CPM_STEPS;
 #endif
+
+    if(options.count("filter")){
+        bench.set_filter(options["filter"].as<std::string>());
+    }
 
     if(options.count("oneshot")){
         bench.auto_save = false;

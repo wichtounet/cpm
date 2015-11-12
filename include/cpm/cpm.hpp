@@ -27,6 +27,50 @@
 
 namespace cpm {
 
+std::string& trim(std::string& s) {
+    //rtrim
+    s.erase(std::find_if(s.rbegin(), s.rend(), std::not1(std::ptr_fun<int, int>(std::isspace))).base(), s.end());
+    //ltrim
+    s.erase(s.begin(), std::find_if(s.begin(), s.end(), std::not1(std::ptr_fun<int, int>(std::isspace))));
+    return s;
+}
+
+std::string extract_title(const std::string& title){
+    return {title.begin(), title.begin() + title.find('[')};
+}
+
+std::vector<std::string> extract_tags(const std::string& title, bool strict){
+    std::string filter = title;
+    trim(filter);
+
+    std::vector<std::string> tags;
+
+    std::size_t end = 0;
+
+    if(strict && filter.find('[') > 0){
+        return {};
+    } else if(end == std::string::npos){
+        return {};
+    } else {
+        std::size_t start;
+        while((start = filter.find('[', end)) != std::string::npos){
+            end = filter.find(']', start);
+
+            if(end == std::string::npos){
+                return {};
+            }
+
+            std::string tag(filter.begin() + start + 1, filter.begin() + end);
+
+            trim(tag);
+
+            tags.emplace_back(std::move(tag));
+        }
+    }
+
+    return tags;
+}
+
 template<bool Sizes, typename Tuple, typename Functor, std::size_t... I, typename... Args, std::enable_if_t<Sizes, int> = 42>
 inline void call_with_data_final(Tuple& data, Functor& functor, std::index_sequence<I...> /*indices*/, Args... args){
     functor(args..., std::get<I>(data)...);
@@ -181,6 +225,7 @@ struct section {
 private:
     Bench& bench;
     Flops flops;
+    bool enabled;
 
     section_data data;
 
@@ -188,10 +233,10 @@ public:
     std::size_t warmup = 10;
     std::size_t steps = 50;
 
-    section(std::string name, Bench& bench, Flops flops) : bench(bench), flops(flops), warmup(bench.warmup), steps(bench.steps) {
+    section(std::string name, Bench& bench, Flops flops, bool enabled) : bench(bench), flops(flops), enabled(enabled), warmup(bench.warmup), steps(bench.steps) {
         data.name = std::move(name);
 
-        if(bench.standard_report){
+        if(enabled && bench.standard_report){
             std::cout << std::endl;
         }
     }
@@ -200,47 +245,55 @@ public:
 
     template<typename Functor>
     void measure_once(const std::string& title, Functor functor){
-        auto duration = bench.measure_only_simple(*this, functor, flops);
-        report(title, std::size_t(1), duration);
+        if(enabled){
+            auto duration = bench.measure_only_simple(*this, functor, flops);
+            report(title, std::size_t(1), duration);
+        }
     }
 
     //Measure simple functor (no randomization)
 
     template<typename Functor>
     void measure_simple(const std::string& title, Functor functor){
-        bench.template policy_run<Policy>(
-            [&title, &functor, this](auto sizes){
-                auto duration = bench.measure_only_simple(*this, functor, flops, sizes);
-                this->report(title, sizes, duration);
-                return duration;
-            }
-        );
+        if(enabled){
+            bench.template policy_run<Policy>(
+                [&title, &functor, this](auto sizes){
+                    auto duration = bench.measure_only_simple(*this, functor, flops, sizes);
+                    this->report(title, sizes, duration);
+                    return duration;
+                }
+            );
+        }
     }
 
     //Measure with two-pass functors (init and functor)
 
     template<bool Sizes = true, typename Init, typename Functor>
     void measure_two_pass(const std::string& title, Init init, Functor functor){
-        bench.template policy_run<Policy>(
-            [&title, &functor, &init, this](auto sizes){
-                auto duration = bench.template measure_only_two_pass<Sizes>(*this, init, functor, flops, sizes);
-                this->report(title, sizes, duration);
-                return duration;
-            }
-        );
+        if(enabled){
+            bench.template policy_run<Policy>(
+                [&title, &functor, &init, this](auto sizes){
+                    auto duration = bench.template measure_only_two_pass<Sizes>(*this, init, functor, flops, sizes);
+                    this->report(title, sizes, duration);
+                    return duration;
+                }
+            );
+        }
     }
 
     //measure a function with global references
 
     template<typename Functor, typename... T>
     void measure_global(const std::string& title, Functor functor, T&... references){
-        bench.template policy_run<Policy>(
-            [&title, &functor, &references..., this](auto sizes){
-                auto duration = bench.measure_only_global(*this, functor, flops, sizes, references...);
-                this->report(title, sizes, duration);
-                return duration;
-            }
-        );
+        if(enabled){
+            bench.template policy_run<Policy>(
+                [&title, &functor, &references..., this](auto sizes){
+                    auto duration = bench.measure_only_global(*this, functor, flops, sizes, references...);
+                    this->report(title, sizes, duration);
+                    return duration;
+                }
+            );
+        }
     }
 
     ~section(){
@@ -376,6 +429,10 @@ private:
     std::vector<measure_data> results;
     std::vector<section_data> section_results;
 
+    std::string filter;
+    std::string filter_title;
+    std::vector<std::string> filter_tags;
+
 public:
     std::size_t warmup = 10;
     std::size_t steps = 50;
@@ -443,6 +500,52 @@ public:
         start_time = wall_clock::now();
     }
 
+    void set_filter(std::string filter){
+        this->filter = trim(filter);
+
+        auto open = std::count(filter.begin(), filter.end(), '[');
+        auto close = std::count(filter.begin(), filter.end(), '[');
+        if(open == close && open > 0){
+            this->filter_tags = extract_tags(filter, true);
+
+            //Fall back to title if not able to parse the tags
+            if(filter_tags.empty()){
+                this->filter_title = filter;
+            }
+        } else {
+            this->filter_title = filter;
+        }
+
+        auto_save = false;
+    }
+
+    bool bench_should_run(std::string title){
+        if(filter_title.empty() && filter_tags.empty()){
+            return true;
+        }
+
+        trim(title);
+
+        auto tags = extract_tags(title, false);
+        auto title_only = tags.empty() ? title : extract_title(title);
+
+        if(!filter_title.empty()){
+            return title_only == filter_title;
+        } else if(!filter_tags.empty()){
+            for(auto& tag : tags){
+                for(auto& filter_tag : filter_tags){
+                    if(tag == filter_tag){
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        return true;
+    }
+
     void begin(){
         if(standard_report){
             std::cout << "Start CPM benchmarks" << std::endl;
@@ -468,6 +571,19 @@ public:
             std::cout << "   Configuration: " << configuration << std::endl;
             std::cout << "   Compiler: " << COMPILER_FULL << std::endl;
             std::cout << "   Operating System: " << operating_system << std::endl;
+
+            if(!filter_title.empty()){
+                std::cout << "   Filter by title: " << filter_title << std::endl;
+            }
+
+            if(!filter_tags.empty()){
+                std::cout << "   Filter by tags: "
+                    << std::accumulate(filter_tags.begin(), filter_tags.end(), std::string(),
+                                       [](auto a, auto b){ return a + "[" + b + "]"; })
+                    << std::endl;
+            }
+
+
             std::cout << std::endl;
         }
     }
@@ -522,7 +638,7 @@ public:
             std::cout << "Warning: Section already exists. Renamed in \"" << name << "\"\n";
         }
 
-        return {std::move(name), *this, std::forward<Flops>(flops)};
+        return {std::move(name), *this, std::forward<Flops>(flops), bench_should_run(o_name)};
     }
 
     std::string check_title(const std::string& o_name){
@@ -562,16 +678,18 @@ public:
 
     template<typename Functor, typename Flops>
     void measure_once(const std::string& o_title, Functor&& functor, Flops&& flops){
-        auto title = check_title(o_title);
+        if(bench_should_run(o_title)){
+            auto title = check_title(o_title);
 
-        measure_data data;
-        data.title = title;
+            measure_data data;
+            data.title = title;
 
-        auto duration = measure_only_simple(*this, std::forward<Functor>(functor), std::forward<Flops>(flops));
-        report(title, std::size_t(1), duration);
-        data.results.push_back({1, std::string("1"), duration});
+            auto duration = measure_only_simple(*this, std::forward<Functor>(functor), std::forward<Flops>(flops));
+            report(title, std::size_t(1), duration);
+            data.results.push_back({1, std::string("1"), duration});
 
-        results.push_back(std::move(data));
+            results.push_back(std::move(data));
+        }
     }
 
     //Measure simple functor (no randomization)
@@ -583,27 +701,29 @@ public:
 
     template<typename Policy = DefaultPolicy, typename Functor, typename Flops>
     void measure_simple(const std::string& o_title, Functor&& functor, Flops&& flops){
-        auto title = check_title(o_title);
+        if(bench_should_run(o_title)){
+            auto title = check_title(o_title);
 
-        if(standard_report){
-            std::cout << std::endl;
-        }
-
-        measure_data data;
-        data.title = title;
-
-        policy_run<Policy>(
-            [&data, &title, functor = std::forward<Functor>(functor), flops = std::forward<Flops>(flops), this](auto sizes){
-                using namespace cpm;
-
-                auto duration = measure_only_simple(*this, functor, flops, sizes);
-                report(title, sizes, duration);
-                data.results.push_back({size_to_eff(sizes), size_to_string(sizes), duration});
-                return duration;
+            if(standard_report){
+                std::cout << std::endl;
             }
-        );
 
-        results.push_back(std::move(data));
+            measure_data data;
+            data.title = title;
+
+            policy_run<Policy>(
+                [&data, &title, functor = std::forward<Functor>(functor), flops = std::forward<Flops>(flops), this](auto sizes){
+                    using namespace cpm;
+
+                    auto duration = measure_only_simple(*this, functor, flops, sizes);
+                    report(title, sizes, duration);
+                    data.results.push_back({size_to_eff(sizes), size_to_string(sizes), duration});
+                    return duration;
+                }
+            );
+
+            results.push_back(std::move(data));
+        }
     }
 
     //Measure with two-pass functors (init and functor)
@@ -615,27 +735,29 @@ public:
 
     template<bool Sizes = true, typename Policy= DefaultPolicy, typename Init, typename Functor, typename Flops>
     void measure_two_pass(const std::string& o_title, Init&& init, Functor&& functor, Flops&& flops){
-        auto title = check_title(o_title);
+        if(bench_should_run(o_title)){
+            auto title = check_title(o_title);
 
-        if(standard_report){
-            std::cout << std::endl;
-        }
-
-        measure_data data;
-        data.title = title;
-
-        policy_run<Policy>(
-            [&data, &title, functor = std::forward<Functor>(functor), init = std::forward<Init>(init), flops = std::forward<Flops>(flops), this](auto sizes){
-                using namespace cpm;
-
-                auto duration = measure_only_two_pass<Sizes>(*this, init, functor, flops, sizes);
-                report(title, sizes, duration);
-                data.results.push_back({size_to_eff(sizes), size_to_string(sizes), duration});
-                return duration;
+            if(standard_report){
+                std::cout << std::endl;
             }
-        );
 
-        results.push_back(std::move(data));
+            measure_data data;
+            data.title = title;
+
+            policy_run<Policy>(
+                [&data, &title, functor = std::forward<Functor>(functor), init = std::forward<Init>(init), flops = std::forward<Flops>(flops), this](auto sizes){
+                    using namespace cpm;
+
+                    auto duration = measure_only_two_pass<Sizes>(*this, init, functor, flops, sizes);
+                    report(title, sizes, duration);
+                    data.results.push_back({size_to_eff(sizes), size_to_string(sizes), duration});
+                    return duration;
+                }
+            );
+
+            results.push_back(std::move(data));
+        }
     }
 
     //measure a function with global references
@@ -647,27 +769,29 @@ public:
 
     template<typename Policy = DefaultPolicy, typename Functor, typename Flops, typename... T>
     void measure_global_flops(const std::string& o_title, Functor&& functor, Flops&& flops, T&... references){
-        auto title = check_title(o_title);
+        if(bench_should_run(o_title)){
+            auto title = check_title(o_title);
 
-        if(standard_report){
-            std::cout << std::endl;
-        }
-
-        measure_data data;
-        data.title = title;
-
-        policy_run<Policy>(
-            [&data, &title, functor = std::forward<Functor>(functor), flops = std::forward<Flops>(flops), &references..., this](auto sizes){
-                using namespace cpm;
-
-                auto duration = measure_only_global(*this, functor, flops, sizes, references...);
-                report(title, sizes, duration);
-                data.results.push_back({size_to_eff(sizes), size_to_string(sizes), duration});
-                return duration;
+            if(standard_report){
+                std::cout << std::endl;
             }
-        );
 
-        results.push_back(std::move(data));
+            measure_data data;
+            data.title = title;
+
+            policy_run<Policy>(
+                [&data, &title, functor = std::forward<Functor>(functor), flops = std::forward<Flops>(flops), &references..., this](auto sizes){
+                    using namespace cpm;
+
+                    auto duration = measure_only_global(*this, functor, flops, sizes, references...);
+                    report(title, sizes, duration);
+                    data.results.push_back({size_to_eff(sizes), size_to_string(sizes), duration});
+                    return duration;
+                }
+            );
+
+            results.push_back(std::move(data));
+        }
     }
 
     //Measure and return the duration of a simple functor
