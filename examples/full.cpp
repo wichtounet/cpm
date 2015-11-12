@@ -30,7 +30,7 @@ void random_init(test&){}
 #define CPM_REPEAT 50
 
 CPM_BENCH() {
-    CPM_SIMPLE("simple_a", [](std::size_t d){ std::this_thread::sleep_for((factor * d) * 1_ns ); });
+    CPM_SIMPLE("simple_a [tag1]", [](std::size_t d){ std::this_thread::sleep_for((factor * d) * 1_ns ); });
     CPM_SIMPLE("simple_b", [](std::size_t d){ std::this_thread::sleep_for((factor * d) * 2_ns ); });
     CPM_SIMPLE("simple_c", [](std::size_t d){ std::this_thread::sleep_for((factor * d) * 2_ns ); }, [](std::size_t d) { return 2 * d; });
 }
