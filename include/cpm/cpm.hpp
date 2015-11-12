@@ -27,7 +27,7 @@
 
 namespace cpm {
 
-std::string& trim(std::string& s) {
+inline std::string& trim(std::string& s) {
     //rtrim
     s.erase(std::find_if(s.rbegin(), s.rend(), std::not1(std::ptr_fun<int, int>(std::isspace))).base(), s.end());
     //ltrim
@@ -35,13 +35,13 @@ std::string& trim(std::string& s) {
     return s;
 }
 
-std::string extract_title(const std::string& title){
+inline std::string extract_title(const std::string& title){
     std::string clean{title.begin(), title.begin() + title.find('[')};
     trim(clean);
     return clean;
 }
 
-std::vector<std::string> extract_tags(const std::string& title, bool strict){
+inline std::vector<std::string> extract_tags(const std::string& title, bool strict){
     std::string filter = title;
     trim(filter);
 
