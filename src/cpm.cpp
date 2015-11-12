@@ -406,7 +406,13 @@ void summary_header(Theme& theme){
     theme << "<tr>\n";
     theme << "<th>Size</th>\n";
     theme << "<th>Time</th>\n";
-    theme << "<th>Throughput</th>\n";
+
+    if(theme.options.count("mflops")){
+        theme << "<th>Throughput [Flops/s]</th>\n";
+    } else {
+        theme << "<th>Throughput [E/s]</th>\n";
+    }
+
     theme << "<th>Previous</th>\n";
     theme << "<th>First</th>\n";
 
@@ -474,7 +480,12 @@ void generate_summary_table(Theme& theme, const rapidjson::Value& base_result, c
 
         theme << "<td>" << r["size"].GetString() << "</td>\n";
         theme << "<td>" << r["mean"].GetDouble() << "</td>\n";
-        theme << "<td>" << cpm::throughput_str(r["throughput"].GetDouble()) << "</td>\n";
+
+        if(theme.options.count("mflops")){
+            theme << "<td>" << cpm::throughput_str(r["throughput_f"].GetDouble()) << "</td>\n";
+        } else {
+            theme << "<td>" << cpm::throughput_str(r["throughput_e"].GetDouble()) << "</td>\n";
+        }
 
         bool previous_found = false;
         double diff = 0.0;
@@ -896,7 +907,12 @@ void generate_section_summary_table(Theme& theme, std::size_t id, json_value bas
             theme << "<tr>\n";
             theme << "<td>" << r["size"].GetString() << "</td>\n";
             theme << "<td>" << r["mean"].GetDouble() << "</td>\n";
-            theme << "<td>" << cpm::throughput_str(r["throughput"].GetDouble()) << "</td>\n";
+
+            if(theme.options.count("mflops")){
+                theme << "<td>" << cpm::throughput_str(r["throughput_f"].GetDouble()) << "</td>\n";
+            } else {
+                theme << "<td>" << cpm::throughput_str(r["throughput_e"].GetDouble()) << "</td>\n";
+            }
 
             bool previous_found = false;
             double diff = 0.0;
@@ -1184,6 +1200,7 @@ int main(int argc, char* argv[]){
             ("input", "Input results", cxxopts::value<std::string>())
             ("s,sort-by-tag", "Sort by tag instaed of time")
             ("p,pages", "General several HTML pages (one per bench/section)")
+            ("m,mflops", "Use MFlops/s instead of E/s in summary")
             ("d,disable-time", "Disable time graphs")
             ("disable-compiler", "Disable compiler graphs")
             ("disable-configuration", "Disable configuration graphs")
