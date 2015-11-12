@@ -36,7 +36,9 @@ std::string& trim(std::string& s) {
 }
 
 std::string extract_title(const std::string& title){
-    return {title.begin(), title.begin() + title.find('[')};
+    std::string clean{title.begin(), title.begin() + title.find('[')};
+    trim(clean);
+    return clean;
 }
 
 std::vector<std::string> extract_tags(const std::string& title, bool strict){
@@ -310,7 +312,12 @@ public:
                 widths[0] = std::max(widths[0], static_cast<int>(s.size()));
             }
 
-            widths[0] = std::max(widths[0], static_cast<int>(data.name.size()));
+            auto name = data.name;
+            trim(name);
+            auto tags = extract_tags(name, false);
+            auto title = tags.empty() ? name : extract_title(name);
+
+            widths[0] = std::max(widths[0], static_cast<int>(title.size()));
 
             for(std::size_t i = 0; i < data.results.size(); ++i){
                 for(auto d : data.results[i]){
@@ -330,7 +337,7 @@ public:
 
             std::cout << " " << std::string(tot_width, '-') << std::endl;;
 
-            printf(" | %*s | ", widths[0], data.name.c_str());
+            printf(" | %*s | ", widths[0], title.c_str());
             for(std::size_t i = 0; i < data.names.size(); ++i){
                 printf("%*s | ", widths[i+1], data.names[i].c_str());
             }
@@ -643,6 +650,10 @@ public:
 
     std::string check_title(const std::string& o_name){
         auto name = o_name;
+        trim(name);
+        auto tags = extract_tags(name, false);
+        name = tags.empty() ? name : extract_title(name);
+
         bool rename = false;
         std::size_t id = 0;
         while(true){
