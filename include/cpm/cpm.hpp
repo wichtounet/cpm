@@ -1009,8 +1009,10 @@ private:
             steps *= 2;
         }
 
-        steps = (cpm::runtime_target * steps) / seconds;
+        steps = std::min(1UL, (cpm::runtime_target * steps) / seconds);
 #else
+        //1. Warmup
+
         for(std::size_t i = 0; i < conf.warmup; ++i){
             call_functor(functor, args...);
         }
@@ -1069,7 +1071,7 @@ private:
             steps *= 2;
         }
 
-        steps = (cpm::runtime_target * steps) / seconds;
+        steps = std::min(1UL, (cpm::runtime_target * steps) / seconds);
 #else
         //1. Warmup
 
@@ -1132,7 +1134,7 @@ private:
             steps *= 2;
         }
 
-        steps = (cpm::runtime_target * steps) / seconds;
+        steps = std::min(1UL, (cpm::runtime_target * steps) / seconds);
 #else
         //1. Warmup
 
