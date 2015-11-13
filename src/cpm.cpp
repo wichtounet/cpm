@@ -421,8 +421,6 @@ double add_compare_cell(Theme& theme, double current, double previous){
                 theme.cell("+0%");
             }
         } else {
-            std::cout << "current:" << current << std::endl;
-            std::cout << "previous:" << previous << std::endl;
             if(current < previous){
                 diff = -1.0 * (100.0 * (static_cast<double>(previous) / current) - 100.0);
                 theme.red_cell(std::to_string(diff) + "%");
@@ -432,7 +430,6 @@ double add_compare_cell(Theme& theme, double current, double previous){
             } else {
                 theme.cell("+0%");
             }
-            std::cout << "diff:" << diff << std::endl;
         }
     } else {
         if(previous == 0.0){
