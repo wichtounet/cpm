@@ -29,32 +29,39 @@ struct bootstrap_tabs_theme : bootstrap_theme {
         stream << "<div role=\"tabpanel\">\n";
         stream << "<ul class=\"nav nav-tabs\" role=\"tablist\">\n";
 
+        std::size_t tab_id = 0;
+
         stream
-            << "<li class =\"active\" role=\"presentation\"><a href=\"#tab_" << uid << "_0\" aria-controls=\"tab_"
-            << uid << "_0\" role=\"tab\" data-toggle=\"tab\">Last results</a></li>\n";
+            << "<li class =\"active\" role=\"presentation\"><a href=\"#tab_" << uid << '_' << tab_id << "\" aria-controls=\"tab_"
+            << uid << '_' << tab_id << "\" role=\"tab\" data-toggle=\"tab\">Last results</a></li>\n";
+        ++tab_id;
 
         if(data.documents.size() > 1 && !options.count("disable-time")){
             stream
-                << "<li role=\"presentation\"><a href=\"#tab_" << uid << "_1\" aria-controls=\"tab_"
-                << uid << "_1\" role=\"tab\" data-toggle=\"tab\">Results over time</a></li>\n";
+                << "<li role=\"presentation\"><a href=\"#tab_" << uid << '_' << tab_id << "\" aria-controls=\"tab_"
+                << uid << '_' << tab_id << "\" role=\"tab\" data-toggle=\"tab\">Results over time</a></li>\n";
+            ++tab_id;
         }
 
         if(data.compilers.size() > 1 && !options.count("disable-compiler")){
             stream
-                << "<li role=\"presentation\"><a href=\"#tab_" << uid << "_2\" aria-controls=\"tab_"
-                << uid << "_2\" role=\"tab\" data-toggle=\"tab\">Compilers</a></li>\n";
+                << "<li role=\"presentation\"><a href=\"#tab_" << uid << '_' << tab_id << "\" aria-controls=\"tab_"
+                << uid << '_' << tab_id << "\" role=\"tab\" data-toggle=\"tab\">Compilers</a></li>\n";
+            ++tab_id;
         }
 
         if(data.configurations.size() > 1 && !options.count("disable-configuration")){
             stream
-                << "<li role=\"presentation\"><a href=\"#tab_" << uid << "_3\" aria-controls=\"tab_"
-                << uid << "_2\" role=\"tab\" data-toggle=\"tab\">Configurations</a></li>\n";
+                << "<li role=\"presentation\"><a href=\"#tab_" << uid << '_' << tab_id << "\" aria-controls=\"tab_"
+                << uid << '_' << tab_id << "\" role=\"tab\" data-toggle=\"tab\">Configurations</a></li>\n";
+            ++tab_id;
         }
 
         if(!options.count("disable-summary")){
             stream
-                << "<li role=\"presentation\"><a href=\"#tab_" << uid << "_4\" aria-controls=\"tab_"
-                << uid << "_3\" role=\"tab\" data-toggle=\"tab\">Summary</a></li>\n";
+                << "<li role=\"presentation\"><a href=\"#tab_" << uid << '_' << tab_id << "\" aria-controls=\"tab_"
+                << uid << '_' << tab_id << "\" role=\"tab\" data-toggle=\"tab\">Summary</a></li>\n";
+            ++tab_id;
         }
 
         stream << "</ul>\n";
