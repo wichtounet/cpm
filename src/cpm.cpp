@@ -176,6 +176,11 @@ void configuration_buttons(Theme& theme){
 }
 
 template<typename Theme>
+void after_buttons(Theme& theme){
+    theme.after_buttons();
+}
+
+template<typename Theme>
 void start_graph(Theme& theme, const std::string& id, const std::string& title){
     theme << "<script>\n";
 
@@ -1089,6 +1094,9 @@ void generate_standard_page(const std::string& target_folder, const std::string&
 
     //Configuration selection
     configuration_buttons(theme);
+
+    //More informations for some theme (navigation list for instance)
+    after_buttons(theme);
 
     std::size_t id = 1;
 

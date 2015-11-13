@@ -100,12 +100,10 @@ struct bootstrap_theme {
     void after_information(){
         stream << "</ul>\n";
         stream << "</div>\n"; //col-xs-3
-        //stream << "</div>\n"; //row
-        //stream << "</div>\n";
-        //stream << "</div>\n";
 
-        stream << "<div class=\"col-xs-9\">\n";
-
+        if(data.compilers.size() > 1 || data.configurations.size() > 1){
+            stream << "<div class=\"col-xs-9\">\n";
+        }
     }
 
     void compiler_buttons(){
@@ -134,10 +132,10 @@ struct bootstrap_theme {
             }
         }
 
-        stream << "</div>\n";
+        stream << "</div>\n"; //btn-group
 
-        stream << "</div>\n";
-        stream << "</div>\n";
+        stream << "</div>\n"; //col-xs-12
+        stream << "</div>\n"; //row
     }
 
     void configuration_buttons(){
@@ -172,14 +170,19 @@ struct bootstrap_theme {
             }
         }
 
-        stream << "</div>\n";
+        stream << "</div>\n"; //btn-group
+        stream << "</div>\n"; //col-xs-12
+        stream << "</div>\n"; //row
+    }
 
-        stream << "</div>\n";
-        stream << "</div>\n";
-        stream << "</div>\n";
-        stream << "</div>\n";
-        stream << "</div>\n";
-        stream << "</div>\n";
+    void after_buttons(){
+        if(data.compilers.size() > 1 || data.configurations.size() > 1){
+            stream << "</div>\n"; //col-xs-9
+        }
+
+        stream << "</div>\n"; //row
+        stream << "</div>\n"; //container-fluid
+        stream << "</div>\n"; //jumbotron
 
         if(options.count("pages")){
             stream << R"=====(

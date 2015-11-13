@@ -21,7 +21,7 @@ struct raw_theme {
     std::string current_compiler;
     std::string current_configuration;
 
-    raw_theme(const reports_data& data, cxxopts::Options& options, std::ostream& stream, std::string compiler, std::string configuration) 
+    raw_theme(const reports_data& data, cxxopts::Options& options, std::ostream& stream, std::string compiler, std::string configuration)
         : data(data), options(options), stream(stream), current_compiler(std::move(compiler)), current_configuration(std::move(configuration)) {}
 
     void include(){}
@@ -53,6 +53,10 @@ struct raw_theme {
             stream << "<a href=\"" << cpm::filify(current_compiler, configuration)  << "\">" << configuration << "</a>\n";
         }
         stream << "</div>\n";
+    }
+
+    void after_buttons(){
+        //Nothing to be done here
     }
 
     void before_graph(std::size_t id){
