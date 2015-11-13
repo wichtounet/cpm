@@ -200,11 +200,21 @@ void end_graph(Theme& theme){
 template<typename Theme>
 void y_axis_configuration(Theme& theme){
     theme << "yAxis: {\n";
-    theme << "title: { text: 'Time [ns]' },\n";
+
+    if(theme.options.count("mflops-graphs")){
+        theme << "title: { text: 'Throughput [MFlops/s]' },\n";
+    } else {
+        theme << "title: { text: 'Time [ns]' },\n";
+    }
+
     theme << "plotLines: [{ value: 0, width: 1, color: '#808080'}]\n";
     theme << "},\n";
 
-    theme << "tooltip: { valueSuffix: 'ns' },\n";
+    if(theme.options.count("mflops-graphs")){
+        theme << "tooltip: { valueSuffix: 'MFlops/s' },\n";
+    } else {
+        theme << "tooltip: { valueSuffix: 'ns' },\n";
+    }
 }
 
 template<typename Theme, typename Elements>
@@ -261,6 +271,15 @@ std::vector<double> double_collect(const T& parent, const char* attr){
 }
 
 template<typename Theme>
+const char* value_key_name(Theme& theme){
+    if(theme.options.count("mflops-graphs")){
+        return "throughput_f";
+    } else {
+        return "mean";
+    }
+}
+
+template<typename Theme>
 void generate_run_graph(Theme& theme, std::size_t& id, const rapidjson::Value& result){
     theme.before_graph(id);
 
@@ -285,7 +304,7 @@ void generate_run_graph(Theme& theme, std::size_t& id, const rapidjson::Value& r
     theme << "name: '',\n";
     theme << "data: ";
 
-    json_array_value(theme, double_collect(result["results"], "mean"));
+    json_array_value(theme, double_collect(result["results"], value_key_name(theme)));
 
     theme << "\n}\n";
     theme << "]\n";
@@ -324,7 +343,7 @@ void generate_compare_graph(Theme& theme, std::size_t& id, json_value base_resul
                     theme << "name: '" << document[attr].GetString() << "',\n";
                     theme << "data: ";
 
-                    json_array_value(theme, double_collect(result["results"], "mean"));
+                    json_array_value(theme, double_collect(result["results"], value_key_name(theme)));
 
                     theme << "\n}\n";
 
@@ -373,12 +392,13 @@ void generate_configuration_graph(Theme& theme, std::size_t& id, const rapidjson
     generate_compare_graph(theme, id, base_result, "Configuration", "configuration", configuration_filter(base));
 }
 
-std::pair<bool, double> find_same_duration(const rapidjson::Value& base_result, const rapidjson::Value& r, const cpm::document_t& doc){
+template<typename Theme>
+std::pair<bool, double> find_same_duration(Theme& theme, const rapidjson::Value& base_result, const rapidjson::Value& r, const cpm::document_t& doc){
     for(auto& p_r : doc["results"]){
         if(str_equal(p_r["title"].GetString(), base_result["title"].GetString())){
             for(auto& p_r_r : p_r["results"]){
                 if(str_equal(p_r_r["size"].GetString(), r["size"].GetString())){
-                    return std::make_pair(true, p_r_r["mean"].GetDouble());
+                    return std::make_pair(true, p_r_r[value_key_name(theme)].GetDouble());
                 }
             }
         }
@@ -391,10 +411,10 @@ template<typename Theme>
 std::pair<bool,double> compare(Theme& theme, const rapidjson::Value& base_result, const rapidjson::Value& r, const cpm::document_t& doc){
     bool found;
     int previous;
-    std::tie(found, previous) = find_same_duration(base_result, r, doc);
+    std::tie(found, previous) = find_same_duration(theme, base_result, r, doc);
 
     if(found){
-        auto current = r["mean"].GetDouble();
+        auto current = r[value_key_name(theme)].GetDouble();
 
         double diff = 0.0;
         if(current < previous){
@@ -491,7 +511,7 @@ void generate_summary_table(Theme& theme, const rapidjson::Value& base_result, c
         theme << "<tr>\n";
 
         theme << "<td>" << r["size"].GetString() << "</td>\n";
-        theme << "<td>" << r["mean"].GetDouble() << "</td>\n";
+        theme << "<td>" << r[value_key_name(theme)].GetDouble() << "</td>\n";
 
         if(theme.options.count("mflops")){
             theme << "<td>" << cpm::throughput_str(r["throughput_f"].GetDouble()) << "</td>\n";
@@ -535,14 +555,14 @@ void generate_summary_table(Theme& theme, const rapidjson::Value& base_result, c
 
         if(theme.data.compilers.size() > 1){
             std::string best_compiler = base["compiler"].GetString();
-            auto best_duration = r["mean"].GetDouble();
-            auto worse_duration = r["mean"].GetDouble();
+            auto best_duration = r[value_key_name(theme)].GetDouble();
+            auto worse_duration = r[value_key_name(theme)].GetDouble();
 
             for(auto& doc : theme.data.documents){
                 if(is_compiler_relevant(base, doc)){
                     bool found;
                     int duration;
-                    std::tie(found, duration) = find_same_duration(base_result, r, doc);
+                    std::tie(found, duration) = find_same_duration(theme, base_result, r, doc);
 
                     if(found){
                         if(duration < best_duration){
@@ -564,14 +584,14 @@ void generate_summary_table(Theme& theme, const rapidjson::Value& base_result, c
 
         if(theme.data.configurations.size() > 1){
             std::string best_configuration = base["configuration"].GetString();
-            auto best_duration = r["mean"].GetDouble();
-            auto worse_duration = r["mean"].GetDouble();
+            auto best_duration = r[value_key_name(theme)].GetDouble();
+            auto worse_duration = r[value_key_name(theme)].GetDouble();
 
             for(auto& doc : theme.data.documents){
                 if(is_configuration_relevant(base, doc)){
                     bool found;
                     int duration;
-                    std::tie(found, duration) = find_same_duration(base_result, r, doc);
+                    std::tie(found, duration) = find_same_duration(theme, base_result, r, doc);
 
                     if(found){
                         if(duration < best_duration){
@@ -638,7 +658,7 @@ void generate_time_graph(Theme& theme, std::size_t& id, const rapidjson::Value& 
                         for(auto& o_rr : o_result["results"]){
                             if(o_rr["size"].GetString() == r["size"].GetString()){
                                 theme << inner_comma << "[" << document["timestamp"].GetInt() * 1000 << ",";
-                                theme << o_rr["mean"].GetDouble() << "]";
+                                theme << o_rr[value_key_name(theme)].GetDouble() << "]";
                                 inner_comma = ",";
                             }
                         }
@@ -665,7 +685,7 @@ void generate_time_graph(Theme& theme, std::size_t& id, const rapidjson::Value& 
                 if(str_equal(o_result["title"].GetString(), result["title"].GetString())){
                     theme << comma << "[" << document["timestamp"].GetInt() * 1000 << ",";
                     auto& o_r_results = o_result["results"];
-                    theme << o_r_results[o_r_results.Size() - 1]["mean"].GetDouble() << "]";
+                    theme << o_r_results[o_r_results.Size() - 1][value_key_name(theme)].GetDouble() << "]";
                     comma = ",";
                 }
             }
@@ -728,7 +748,7 @@ void generate_section_run_graph(Theme& theme, std::size_t& id, const rapidjson::
         theme << "name: '" << r["name"].GetString() << "',\n";
         theme << "data: ";
 
-        json_array_value(theme, double_collect(r["results"], "mean"));
+        json_array_value(theme, double_collect(r["results"], value_key_name(theme)));
 
         theme << "\n}\n";
         comma = ",";
@@ -775,7 +795,7 @@ void generate_section_time_graph(Theme& theme, std::size_t& id, const rapidjson:
                         if(str_equal(r_r["name"].GetString(), r["name"].GetString())){
                             theme << comma_inner << "[" << r_doc["timestamp"].GetInt() * 1000 << ",";
                             auto& r_r_results = r_r["results"];
-                            theme << r_r_results[r_r_results.Size() - 1]["mean"].GetDouble() << "]";
+                            theme << r_r_results[r_r_results.Size() - 1][value_key_name(theme)].GetDouble() << "]";
                             comma_inner = ",";
                         }
                     }
@@ -833,7 +853,7 @@ void generate_section_compare_graph(Theme& theme, std::size_t& id, const rapidjs
                                 theme << "name: '" << document[attr].GetString() << "',\n";
                                 theme << "data: ";
 
-                                json_array_value(theme, double_collect(o_r["results"], "mean"));
+                                json_array_value(theme, double_collect(o_r["results"], value_key_name(theme)));
 
                                 theme << "\n}\n";
 
@@ -867,14 +887,15 @@ void generate_section_configuration_graph(Theme& theme, std::size_t& id, const r
     generate_section_compare_graph(theme, id, section, "Configuration:", "configuration", configuration_filter(base));
 }
 
-std::pair<bool, double> find_same_duration_section(json_value base_result, json_value base_section, json_value r, const cpm::document_t& doc){
+template<typename Theme>
+std::pair<bool, double> find_same_duration_section(Theme& theme, json_value base_result, json_value base_section, json_value r, const cpm::document_t& doc){
     for(auto& section : doc["sections"]){
         if(str_equal(section["name"].GetString(), base_section["name"].GetString())){
             for(auto& result : section["results"]){
                 if(str_equal(result["name"].GetString(), base_result["name"].GetString())){
                     for(auto& p_r_r : result["results"]){
                         if(str_equal(p_r_r["size"].GetString(), r["size"].GetString())){
-                            return std::make_pair(true, p_r_r["mean"].GetDouble());
+                            return std::make_pair(true, p_r_r[value_key_name(theme)].GetDouble());
                         }
                     }
                 }
@@ -889,10 +910,10 @@ template<typename Theme>
 std::pair<bool,double> compare_section(Theme& theme, json_value base_result, json_value base_section, json_value r, const cpm::document_t& doc){
     bool found;
     int previous;
-    std::tie(found, previous) = find_same_duration_section(base_result, base_section, r, doc);
+    std::tie(found, previous) = find_same_duration_section(theme, base_result, base_section, r, doc);
 
     if(found){
-        auto current = r["mean"].GetDouble();
+        auto current = r[value_key_name(theme)].GetDouble();
 
         double diff = 0.0;
         if(current < previous){
@@ -927,7 +948,7 @@ void generate_section_summary_table(Theme& theme, std::size_t id, json_value bas
         for(auto& r : base_result["results"]){
             theme << "<tr>\n";
             theme << "<td>" << r["size"].GetString() << "</td>\n";
-            theme << "<td>" << r["mean"].GetDouble() << "</td>\n";
+            theme << "<td>" << r[value_key_name(theme)].GetDouble() << "</td>\n";
 
             if(theme.options.count("mflops")){
                 theme << "<td>" << cpm::throughput_str(r["throughput_f"].GetDouble()) << "</td>\n";
@@ -971,14 +992,14 @@ void generate_section_summary_table(Theme& theme, std::size_t id, json_value bas
 
             if(theme.data.compilers.size() > 1){
                 std::string best_compiler = base["compiler"].GetString();
-                auto best_duration = r["mean"].GetDouble();
-                auto worse_duration = r["mean"].GetDouble();
+                auto best_duration = r[value_key_name(theme)].GetDouble();
+                auto worse_duration = r[value_key_name(theme)].GetDouble();
 
                 for(auto& doc : theme.data.documents){
                     if(is_compiler_relevant(base, doc)){
                         bool found;
                         int duration;
-                        std::tie(found, duration) = find_same_duration_section(base_result, base_section, r, doc);
+                        std::tie(found, duration) = find_same_duration_section(theme, base_result, base_section, r, doc);
 
                         if(found){
                             if(duration < best_duration){
@@ -1000,14 +1021,14 @@ void generate_section_summary_table(Theme& theme, std::size_t id, json_value bas
 
             if(theme.data.configurations.size() > 1){
                 std::string best_configuration = base["configuration"].GetString();
-                auto best_duration = r["mean"].GetDouble();
-                auto worse_duration = r["mean"].GetDouble();
+                auto best_duration = r[value_key_name(theme)].GetDouble();
+                auto worse_duration = r[value_key_name(theme)].GetDouble();
 
                 for(auto& doc : theme.data.documents){
                     if(is_configuration_relevant(base, doc)){
                         bool found;
                         int duration;
-                        std::tie(found, duration) = find_same_duration_section(base_result, base_section, r, doc);
+                        std::tie(found, duration) = find_same_duration_section(theme, base_result, base_section, r, doc);
 
                         if(found){
                             if(duration < best_duration){
@@ -1225,6 +1246,7 @@ int main(int argc, char* argv[]){
             ("s,sort-by-tag", "Sort by tag instaed of time")
             ("p,pages", "General several HTML pages (one per bench/section)")
             ("m,mflops", "Use MFlops/s instead of E/s in summary")
+            ("g,mflops-graphs", "Use MFlops/s instead of time in graphs")
             ("d,disable-time", "Disable time graphs")
             ("disable-compiler", "Disable compiler graphs")
             ("disable-configuration", "Disable configuration graphs")
