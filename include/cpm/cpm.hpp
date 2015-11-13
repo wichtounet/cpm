@@ -1009,7 +1009,7 @@ private:
             steps *= 2;
         }
 
-        steps = std::min(1UL, std::size_t((cpm::runtime_target * steps) / seconds));
+        steps = std::max(1UL, std::size_t((cpm::runtime_target * steps) / seconds));
 #else
         //1. Warmup
 
@@ -1071,7 +1071,7 @@ private:
             steps *= 2;
         }
 
-        steps = std::min(1UL, std::size_t((cpm::runtime_target * steps) / seconds));
+        steps = std::max(1UL, std::size_t((cpm::runtime_target * steps) / seconds));
 #else
         //1. Warmup
 
@@ -1134,7 +1134,7 @@ private:
             steps *= 2;
         }
 
-        steps = std::min(1UL, std::size_t((cpm::runtime_target * steps) / seconds));
+        steps = std::max(1UL, std::size_t((cpm::runtime_target * steps) / seconds));
 #else
         //1. Warmup
 
