@@ -258,7 +258,11 @@ std::vector<double> double_collect(const T& parent, const char* attr){
 template<typename Theme>
 void generate_run_graph(Theme& theme, std::size_t& id, const rapidjson::Value& result){
     theme.before_graph(id);
-    start_graph(theme, std::string("chart_") + std::to_string(id), std::string("Last run:") + result["title"].GetString());
+
+    std::string title = std::string("Last run") +
+        (theme.options.count("pages") ? std::string() : std::string(": ") + result["title"].GetString());
+
+    start_graph(theme, std::string("chart_") + std::to_string(id), title);
 
     theme << "xAxis: { categories: \n";
 
@@ -289,7 +293,10 @@ void generate_run_graph(Theme& theme, std::size_t& id, const rapidjson::Value& r
 template<typename Theme, typename Filter>
 void generate_compare_graph(Theme& theme, std::size_t& id, json_value base_result, const std::string& title, const char* attr, Filter f){
     theme.before_graph(id);
-    start_graph(theme, std::string("chart_") + std::to_string(id), title + base_result["title"].GetString());
+
+    std::string graph_title = title +
+        (theme.options.count("pages") ? std::string() : std::string(": ") + base_result["title"].GetString());
+    start_graph(theme, std::string("chart_") + std::to_string(id), graph_title);
 
     theme << "xAxis: { categories: \n";
 
@@ -353,12 +360,12 @@ auto configuration_filter(const cpm::document_t& base){
 
 template<typename Theme>
 void generate_compiler_graph(Theme& theme, std::size_t& id, const rapidjson::Value& base_result, const cpm::document_t& base){
-    generate_compare_graph(theme, id, base_result, "Compiler:", "compiler", compiler_filter(base));
+    generate_compare_graph(theme, id, base_result, "Compiler", "compiler", compiler_filter(base));
 }
 
 template<typename Theme>
 void generate_configuration_graph(Theme& theme, std::size_t& id, const rapidjson::Value& base_result, const cpm::document_t& base){
-    generate_compare_graph(theme, id, base_result, "Configuration:", "configuration", configuration_filter(base));
+    generate_compare_graph(theme, id, base_result, "Configuration", "configuration", configuration_filter(base));
 }
 
 std::pair<bool, double> find_same_duration(const rapidjson::Value& base_result, const rapidjson::Value& r, const cpm::document_t& doc){
@@ -593,7 +600,10 @@ void generate_summary_table(Theme& theme, const rapidjson::Value& base_result, c
 template<typename Theme>
 void generate_time_graph(Theme& theme, std::size_t& id, const rapidjson::Value& result, const std::vector<cpm::document_cref>& documents){
     theme.before_graph(id);
-    start_graph(theme, std::string("chart_") + std::to_string(id), std::string("Time:") + result["title"].GetString());
+
+    std::string graph_title = "Time" +
+        (theme.options.count("pages") ? std::string() : std::string(": ") + result["title"].GetString());
+    start_graph(theme, std::string("chart_") + std::to_string(id), graph_title);
 
     theme << "xAxis: { type: 'datetime', title: { text: 'Date' } },\n";
 
@@ -687,7 +697,10 @@ std::vector<std::string> gather_sizes(const rapidjson::Value& section){
 template<typename Theme>
 void generate_section_run_graph(Theme& theme, std::size_t& id, const rapidjson::Value& section){
     theme.before_graph(id);
-    start_graph(theme, std::string("chart_") + std::to_string(id), std::string("Last run:") + section["name"].GetString());
+
+    std::string graph_title = "Last run" +
+        (theme.options.count("pages") ? std::string() : std::string(": ") + section["name"].GetString());
+    start_graph(theme, std::string("chart_") + std::to_string(id), graph_title);
 
     theme << "xAxis: { categories: \n";
 
@@ -726,7 +739,10 @@ void generate_section_run_graph(Theme& theme, std::size_t& id, const rapidjson::
 template<typename Theme>
 void generate_section_time_graph(Theme& theme, std::size_t& id, const rapidjson::Value& section, const std::vector<cpm::document_cref>& documents){
     theme.before_graph(id);
-    start_graph(theme, std::string("chart_") + std::to_string(id), std::string("Time:") + section["name"].GetString());
+
+    std::string graph_title = "Time" +
+        (theme.options.count("pages") ? std::string() : std::string(": ") + section["name"].GetString());
+    start_graph(theme, std::string("chart_") + std::to_string(id), graph_title);
 
     theme << "xAxis: { type: 'datetime', title: { text: 'Date' } },\n";
 
