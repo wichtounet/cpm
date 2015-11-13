@@ -408,6 +408,58 @@ std::pair<bool, double> find_same_duration(Theme& theme, const rapidjson::Value&
 }
 
 template<typename Theme>
+double add_compare_cell(Theme& theme, double current, double previous){
+    double diff = 0.0;
+
+    if(theme.options.count("mflops-graphs")){
+        if(previous == 0.0){
+            if(current < 0.0){
+                theme.red_cell(std::to_string(current) + "%");
+            } else if(current > 0.0){
+                theme.green_cell("+" + std::to_string(current) + "%");
+            } else {
+                theme.cell("+0%");
+            }
+        } else {
+            std::cout << "current:" << current << std::endl;
+            std::cout << "previous:" << previous << std::endl;
+            if(current < previous){
+                diff = -1.0 * (100.0 * (static_cast<double>(previous) / current) - 100.0);
+                theme.red_cell(std::to_string(diff) + "%");
+            } else if(current > previous){
+                diff = 1.0 * (100.0 * (static_cast<double>(current) / previous) - 100.0);
+                theme.green_cell("+" + std::to_string(diff) + "%");
+            } else {
+                theme.cell("+0%");
+            }
+            std::cout << "diff:" << diff << std::endl;
+        }
+    } else {
+        if(previous == 0.0){
+            if(current < 0.0){
+                theme.green_cell(std::to_string(current) + "%");
+            } else if(current > 0.0){
+                theme.red_cell("+" + std::to_string(current) + "%");
+            } else {
+                theme.cell("+0%");
+            }
+        } else {
+            if(current < previous){
+                diff = -1.0 * (100.0 * (static_cast<double>(previous) / current) - 100.0);
+                theme.green_cell(std::to_string(diff) + "%");
+            } else if(current > previous){
+                diff = 1.0 * (100.0 * (static_cast<double>(current) / previous) - 100.0);
+                theme.red_cell("+" + std::to_string(diff) + "%");
+            } else {
+                theme.cell("+0%");
+            }
+        }
+    }
+
+    return diff;
+}
+
+template<typename Theme>
 std::pair<bool,double> compare(Theme& theme, const rapidjson::Value& base_result, const rapidjson::Value& r, const cpm::document_t& doc){
     bool found;
     int previous;
@@ -416,17 +468,7 @@ std::pair<bool,double> compare(Theme& theme, const rapidjson::Value& base_result
     if(found){
         auto current = r[value_key_name(theme)].GetDouble();
 
-        double diff = 0.0;
-        if(current < previous){
-            diff = -1.0 * (100.0 * (static_cast<double>(previous) / current) - 100.0);
-            theme.green_cell(std::to_string(diff) + "%");
-        } else if(current > previous){
-            diff = (100.0 * (static_cast<double>(current) / previous) - 100.0);
-            theme.red_cell("+" + std::to_string(diff) + "%");
-        } else {
-            theme.cell("+0%");
-        }
-
+        double diff = add_compare_cell(theme, current, previous);
         return std::make_pair(true, diff);
     } else {
         return std::make_pair(false, 0.0);
@@ -469,21 +511,8 @@ void summary_footer(Theme& theme, double previous_acc, double first_acc){
     theme << "<td>&nbsp;</td>\n";
     theme << "<td>&nbsp;</td>\n";
 
-    if(previous_acc < 0.0){
-        theme.green_cell(std::to_string(previous_acc) + "%");
-    } else if(previous_acc > 0.0){
-        theme.red_cell("+" + std::to_string(previous_acc) + "%");
-    } else {
-        theme.cell("+0%");
-    }
-
-    if(first_acc < 0.0){
-        theme.green_cell(std::to_string(first_acc) + "%");
-    } else if(first_acc > 0.0){
-        theme.red_cell("+" + std::to_string(first_acc) + "%");
-    } else {
-        theme.cell("+0%");
-    }
+    add_compare_cell(theme, previous_acc, 0.0);
+    add_compare_cell(theme, first_acc, 0.0);
 
     if(theme.data.compilers.size() > 1){
         theme.cell("&nbsp;");
@@ -915,17 +944,7 @@ std::pair<bool,double> compare_section(Theme& theme, json_value base_result, jso
     if(found){
         auto current = r[value_key_name(theme)].GetDouble();
 
-        double diff = 0.0;
-        if(current < previous){
-            diff = -1.0 * (100.0 * (static_cast<double>(previous) / current) - 100.0);
-            theme.green_cell(std::to_string(diff) + "%");
-        } else if(current > previous){
-            diff = 1.0 * (100.0 * (static_cast<double>(current) / previous) - 100.0);
-            theme.red_cell("+" + std::to_string(diff) + "%");
-        } else {
-            theme.cell("+0%");
-        }
-
+        double diff = add_compare_cell(theme, current, previous);
         return std::make_pair(true, diff);
     }
 
