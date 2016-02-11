@@ -563,11 +563,11 @@ public:
             } else {
                 std::cout << "   Results will be saved on-demand in " << final_file << std::endl;
             }
-            std::cout << "   Each test is warmed-up " << warmup << " times" << std::endl;
 
 #ifdef CPM_AUTO_STEPS
             std::cout << "   Number of steps will be automatically computed" << std::endl;
 #else
+            std::cout << "   Each test is warmed-up " << warmup << " times" << std::endl;
             std::cout << "   Each test is repeated " << steps << " times" << std::endl;
 #endif
 
