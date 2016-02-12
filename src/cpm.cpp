@@ -41,12 +41,20 @@ std::string strip_tags(const std::string& name){
     auto open = std::count(name.begin(), name.end(), '[');
     auto close = std::count(name.begin(), name.end(), ']');
 
+    std::string stripped;
     if(open == close && open > 0){
-        return {name.begin(), name.begin() + name.find('[')};
+        stripped = std::string{name.begin(), name.begin() + name.find('[')};
     } else {
-        return name;
+        stripped = name;
     }
+
+    // Trim
+    stripped.erase(std::find_if(stripped.rbegin(), stripped.rend(), std::not1(std::ptr_fun<int, int>(std::isspace))).base(), stripped.end());
+    stripped.erase(stripped.begin(), std::find_if(stripped.begin(), stripped.end(), std::not1(std::ptr_fun<int, int>(std::isspace))));
+
+    return stripped;
 }
+
 
 bool strip_equal(const std::string& lhs, const std::string& rhs){
     return strip_tags(lhs) == strip_tags(rhs);
