@@ -1151,7 +1151,7 @@ void generate_standard_page(const std::string& target_folder, const std::string&
     if(!one || !section){
         for(const auto& result : doc["results"]){
             if(!one || filter == result["title"].GetString()){
-                theme.before_result(strip_tags(result["title"].GetString()));
+                theme.before_result(strip_tags(result["title"].GetString()), false, documents);
 
                 generate_run_graph(theme, id, result);
 
@@ -1179,7 +1179,7 @@ void generate_standard_page(const std::string& target_folder, const std::string&
     if(!one || section){
         for(auto& section : doc["sections"]){
             if(!one || filter == section["name"].GetString()){
-                theme.before_result(strip_tags(section["name"].GetString()), compiler_graphs);
+                theme.before_result(strip_tags(section["name"].GetString()), compiler_graphs, documents);
 
                 generate_section_run_graph(theme, id, section);
 

@@ -267,7 +267,7 @@ struct bootstrap_theme {
         close_column();
     }
 
-    void before_result(const std::string& title, bool sub = false){
+    void before_result(const std::string& title, bool sub, const std::vector<cpm::document_cref>& /*documents*/){
         stream << "<div class=\"page-header\">\n";
         stream << "<h2>" << title << "</h2>\n";
         stream << "</div>\n";

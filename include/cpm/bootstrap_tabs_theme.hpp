@@ -22,8 +22,8 @@ struct bootstrap_tabs_theme : bootstrap_theme {
 
     bootstrap_tabs_theme(const reports_data& data, cxxopts::Options& options, std::ostream& stream, std::string compiler, std::string configuration) : bootstrap_theme(data, options, stream, compiler, configuration) {}
 
-    void before_result(const std::string& title, bool sub = false){
-        bootstrap_theme::before_result(title, sub);
+    void before_result(const std::string& title, bool sub, const std::vector<cpm::document_cref>& documents){
+        bootstrap_theme::before_result(title, sub, documents);
 
         stream << "<div class=\"col-xs-12\">\n";
         stream << "<div role=\"tabpanel\">\n";
@@ -36,7 +36,7 @@ struct bootstrap_tabs_theme : bootstrap_theme {
             << uid << '_' << tab_id << "\" role=\"tab\" data-toggle=\"tab\">Last results</a></li>\n";
         ++tab_id;
 
-        if(data.documents.size() > 1 && !options.count("disable-time")){
+        if(documents.size() > 1 && !options.count("disable-time")){
             stream
                 << "<li role=\"presentation\"><a href=\"#tab_" << uid << '_' << tab_id << "\" aria-controls=\"tab_"
                 << uid << '_' << tab_id << "\" role=\"tab\" data-toggle=\"tab\">Results over time</a></li>\n";

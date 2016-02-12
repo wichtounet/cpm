@@ -65,7 +65,7 @@ struct raw_theme {
 
     void after_graph(){}
 
-    void before_result(const std::string& title, bool /*sub */ = false){
+    void before_result(const std::string& title, bool /*sub */, const std::vector<cpm::document_cref>& /*documents*/){
         stream << "<h2 style=\"clear:both\">" << title << "</h2>\n";
     }
 
