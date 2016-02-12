@@ -37,6 +37,17 @@ std::string dark_unica_theme =
 #include "dark_unica.inc.js"
 ;
 
+std::string strip_tags(const std::string& name){
+    auto open = std::count(name.begin(), name.end(), '[');
+    auto close = std::count(name.begin(), name.end(), ']');
+
+    if(open == close && open > 0){
+        return {name.begin(), name.begin() + name.find('[')};
+    } else {
+        return name;
+    }
+}
+
 cpm::document_t read_document(const std::string& folder, const std::string& file){
     FILE* pFile = fopen((folder + "/" + file).c_str(), "rb");
     char buffer[65536];
@@ -247,7 +258,7 @@ template<typename T>
 std::vector<std::string> string_collect(const T& parent, const char* attr){
     std::vector<std::string> values;
     for(auto& r : parent){
-        values.emplace_back(r[attr].GetString());
+        values.emplace_back(strip_tags(r[attr].GetString()));
     }
     return values;
 }
@@ -284,7 +295,7 @@ void generate_run_graph(Theme& theme, std::size_t& id, const rapidjson::Value& r
     theme.before_graph(id);
 
     std::string title = std::string("Last run") +
-        (theme.options.count("pages") ? std::string() : std::string(": ") + result["title"].GetString());
+        (theme.options.count("pages") ? std::string() : std::string(": ") + strip_tags(result["title"].GetString()));
 
     start_graph(theme, std::string("chart_") + std::to_string(id), title);
 
@@ -319,7 +330,7 @@ void generate_compare_graph(Theme& theme, std::size_t& id, json_value base_resul
     theme.before_graph(id);
 
     std::string graph_title = title +
-        (theme.options.count("pages") ? std::string() : std::string(": ") + base_result["title"].GetString());
+        (theme.options.count("pages") ? std::string() : std::string(": ") + strip_tags(base_result["title"].GetString()));
     start_graph(theme, std::string("chart_") + std::to_string(id), graph_title);
 
     theme << "xAxis: { categories: \n";
@@ -653,7 +664,7 @@ void generate_time_graph(Theme& theme, std::size_t& id, const rapidjson::Value& 
     theme.before_graph(id);
 
     std::string graph_title = "Time" +
-        (theme.options.count("pages") ? std::string() : std::string(": ") + result["title"].GetString());
+        (theme.options.count("pages") ? std::string() : std::string(": ") + strip_tags(result["title"].GetString()));
     start_graph(theme, std::string("chart_") + std::to_string(id), graph_title);
 
     theme << "xAxis: { type: 'datetime', title: { text: 'Date' } },\n";
@@ -750,7 +761,7 @@ void generate_section_run_graph(Theme& theme, std::size_t& id, const rapidjson::
     theme.before_graph(id);
 
     std::string graph_title = "Last run" +
-        (theme.options.count("pages") ? std::string() : std::string(": ") + section["name"].GetString());
+        (theme.options.count("pages") ? std::string() : std::string(": ") + strip_tags(section["name"].GetString()));
     start_graph(theme, std::string("chart_") + std::to_string(id), graph_title);
 
     theme << "xAxis: { categories: \n";
@@ -771,7 +782,7 @@ void generate_section_run_graph(Theme& theme, std::size_t& id, const rapidjson::
     for(auto& r : section["results"]){
         theme << comma << "{\n";
 
-        theme << "name: '" << r["name"].GetString() << "',\n";
+        theme << "name: '" << strip_tags(r["name"].GetString()) << "',\n";
         theme << "data: ";
 
         json_array_value(theme, double_collect(r["results"], value_key_name(theme)));
@@ -792,7 +803,7 @@ void generate_section_time_graph(Theme& theme, std::size_t& id, const rapidjson:
     theme.before_graph(id);
 
     std::string graph_title = "Time" +
-        (theme.options.count("pages") ? std::string() : std::string(": ") + section["name"].GetString());
+        (theme.options.count("pages") ? std::string() : std::string(": ") + strip_tags(section["name"].GetString()));
     start_graph(theme, std::string("chart_") + std::to_string(id), graph_title);
 
     theme << "xAxis: { type: 'datetime', title: { text: 'Date' } },\n";
@@ -807,7 +818,7 @@ void generate_section_time_graph(Theme& theme, std::size_t& id, const rapidjson:
     for(auto& r : section["results"]){
         theme << comma << "{\n";
 
-        theme << "name: '" << r["name"].GetString() << "',\n";
+        theme << "name: '" << strip_tags(r["name"].GetString()) << "',\n";
         theme << "data: [";
 
         std::string comma_inner = "";
@@ -852,7 +863,7 @@ void generate_section_compare_graph(Theme& theme, std::size_t& id, const rapidjs
 
         start_graph(theme,
             std::string("chart_") + std::to_string(id) + "-" + std::to_string(sub_id - 1),
-            title + section["name"].GetString() + "-" + r["name"].GetString());
+            title + strip_tags(section["name"].GetString()) + "-" + strip_tags(r["name"].GetString()));
 
         theme << "xAxis: { categories: \n";
 
@@ -1113,12 +1124,12 @@ void generate_standard_page(const std::string& target_folder, const std::string&
         data.files.clear();
 
         for(const auto& result : doc["results"]){
-            std::string name(result["title"].GetString());
+            std::string name(strip_tags(result["title"].GetString()));
             data.files.emplace_back(name, cpm::filify(doc["compiler"].GetString(), doc["configuration"].GetString(), std::string("bench_") + name));
         }
 
         for(const auto& section : doc["sections"]){
-            std::string name(section["name"].GetString());
+            std::string name(strip_tags(section["name"].GetString()));
             data.files.emplace_back(name, cpm::filify(doc["compiler"].GetString(), doc["configuration"].GetString(), std::string("section_") + name));
         }
     }
@@ -1140,7 +1151,7 @@ void generate_standard_page(const std::string& target_folder, const std::string&
     if(!one || !section){
         for(const auto& result : doc["results"]){
             if(!one || filter == result["title"].GetString()){
-                theme.before_result(result["title"].GetString());
+                theme.before_result(strip_tags(result["title"].GetString()));
 
                 generate_run_graph(theme, id, result);
 
@@ -1168,7 +1179,7 @@ void generate_standard_page(const std::string& target_folder, const std::string&
     if(!one || section){
         for(auto& section : doc["sections"]){
             if(!one || filter == section["name"].GetString()){
-                theme.before_result(section["name"].GetString(), compiler_graphs);
+                theme.before_result(strip_tags(section["name"].GetString()), compiler_graphs);
 
                 generate_section_run_graph(theme, id, section);
 
@@ -1207,7 +1218,7 @@ void generate_pages(const std::string& target_folder, cpm::reports_data& data, c
         //Generate pages for each (bench-section)/configuration/compiler
         std::for_each(data.documents.rbegin(), data.documents.rend(), [&](cpm::document_t& d){
             for(const auto& result : d["results"]){
-                auto file = cpm::filify(d["compiler"].GetString(), d["configuration"].GetString(), std::string("bench_") + result["title"].GetString());
+                auto file = cpm::filify(d["compiler"].GetString(), d["configuration"].GetString(), std::string("bench_") + strip_tags(result["title"].GetString()));
                 if(!pages.count(file)){
                     generate_standard_page<Theme>(target_folder, file, data, d, select_documents(data.documents, d), options, true, false, result["title"].GetString());
 
@@ -1220,7 +1231,7 @@ void generate_pages(const std::string& target_folder, cpm::reports_data& data, c
             }
 
             for(const auto& section : d["sections"]){
-                auto file = cpm::filify(d["compiler"].GetString(), d["configuration"].GetString(), std::string("section_") + section["name"].GetString());
+                auto file = cpm::filify(d["compiler"].GetString(), d["configuration"].GetString(), std::string("section_") + strip_tags(section["name"].GetString()));
                 if(!pages.count(file)){
                     generate_standard_page<Theme>(target_folder, file, data, d, select_documents(data.documents, d), options, true, true, section["name"].GetString());
 
