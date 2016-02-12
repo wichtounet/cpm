@@ -556,13 +556,15 @@ void generate_summary_table(Theme& theme, const rapidjson::Value& base_result, c
     double previous_acc = 0;
     double first_acc = 0;
 
+    bool flops = theme.options.count("mflops");
+
     for(auto& r : base_result["results"]){
         theme << "<tr>\n";
 
         theme << "<td>" << r["size"].GetString() << "</td>\n";
         theme << "<td>" << r[value_key_name(theme)].GetDouble() << "</td>\n";
 
-        if(theme.options.count("mflops")){
+        if(flops){
             theme << "<td>" << cpm::throughput_str(r["throughput_f"].GetDouble()) << "</td>\n";
         } else {
             theme << "<td>" << cpm::throughput_str(r["throughput_e"].GetDouble()) << "</td>\n";
@@ -604,8 +606,8 @@ void generate_summary_table(Theme& theme, const rapidjson::Value& base_result, c
 
         if(theme.data.compilers.size() > 1){
             std::string best_compiler = base["compiler"].GetString();
-            auto best_duration = r[value_key_name(theme)].GetDouble();
-            auto worse_duration = r[value_key_name(theme)].GetDouble();
+            auto best = r[value_key_name(theme)].GetDouble();
+            auto worst = r[value_key_name(theme)].GetDouble();
 
             for(auto& doc : theme.data.documents){
                 if(is_compiler_relevant(base, doc)){
@@ -614,11 +616,20 @@ void generate_summary_table(Theme& theme, const rapidjson::Value& base_result, c
                     std::tie(found, duration) = find_same_duration(theme, base_result, r, doc);
 
                     if(found){
-                        if(duration < best_duration){
-                            best_duration = duration;
-                            best_compiler = doc["compiler"].GetString();
-                        } else if(duration > worse_duration){
-                            worse_duration = duration;
+                        if(flops){
+                            if(duration > best){
+                                best = duration;
+                                best_compiler = doc["compiler"].GetString();
+                            } else if(duration < worst){
+                                worst = duration;
+                            }
+                        } else {
+                            if(duration < best){
+                                best = duration;
+                                best_compiler = doc["compiler"].GetString();
+                            } else if(duration > worst){
+                                worst = duration;
+                            }
                         }
                     }
                 }
@@ -626,15 +637,15 @@ void generate_summary_table(Theme& theme, const rapidjson::Value& base_result, c
 
             theme.cell(best_compiler);
 
-            auto max_diff = (100.0 * (static_cast<double>(worse_duration) / best_duration) - 100.0);
+            auto max_diff = std::abs(100.0 * (static_cast<double>(worst) / best) - 100.0);
 
             theme.cell(std::to_string(max_diff) + "%");
         }
 
         if(theme.data.configurations.size() > 1){
             std::string best_configuration = base["configuration"].GetString();
-            auto best_duration = r[value_key_name(theme)].GetDouble();
-            auto worse_duration = r[value_key_name(theme)].GetDouble();
+            auto best = r[value_key_name(theme)].GetDouble();
+            auto worst = r[value_key_name(theme)].GetDouble();
 
             for(auto& doc : theme.data.documents){
                 if(is_configuration_relevant(base, doc)){
@@ -643,11 +654,20 @@ void generate_summary_table(Theme& theme, const rapidjson::Value& base_result, c
                     std::tie(found, duration) = find_same_duration(theme, base_result, r, doc);
 
                     if(found){
-                        if(duration < best_duration){
-                            best_duration = duration;
-                            best_configuration = doc["configuration"].GetString();
-                        } else if(duration > worse_duration){
-                            worse_duration = duration;
+                        if(flops){
+                            if(duration > best){
+                                best = duration;
+                                best_configuration = doc["configuration"].GetString();
+                            } else if(duration < worst){
+                                worst = duration;
+                            }
+                        } else {
+                            if(duration < best){
+                                best = duration;
+                                best_configuration = doc["configuration"].GetString();
+                            } else if(duration > worst){
+                                worst = duration;
+                            }
                         }
                     }
                 }
@@ -655,7 +675,7 @@ void generate_summary_table(Theme& theme, const rapidjson::Value& base_result, c
 
             theme.cell(best_configuration);
 
-            auto max_diff = (100.0 * (static_cast<double>(worse_duration) / best_duration) - 100.0);
+            auto max_diff = std::abs(100.0 * (static_cast<double>(worst) / best) - 100.0);
 
             theme.cell(std::to_string(max_diff) + "%");
         }
