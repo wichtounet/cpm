@@ -48,6 +48,10 @@ std::string strip_tags(const std::string& name){
     }
 }
 
+bool strip_equal(const std::string& lhs, const std::string& rhs){
+    return strip_tags(lhs) == strip_tags(rhs);
+}
+
 cpm::document_t read_document(const std::string& folder, const std::string& file){
     FILE* pFile = fopen((folder + "/" + file).c_str(), "rb");
     char buffer[65536];
@@ -349,7 +353,7 @@ void generate_compare_graph(Theme& theme, std::size_t& id, json_value base_resul
     for(auto& document : theme.data.documents){
         if(f(document)){
             for(auto& result : document["results"]){
-                if(str_equal(result["title"].GetString(), base_result["title"].GetString())){
+                if(strip_equal(result["title"].GetString(), base_result["title"].GetString())){
                     theme << comma << "{\n";
                     theme << "name: '" << document[attr].GetString() << "',\n";
                     theme << "data: ";
@@ -406,7 +410,7 @@ void generate_configuration_graph(Theme& theme, std::size_t& id, const rapidjson
 template<typename Theme>
 std::pair<bool, double> find_same_duration(Theme& theme, const rapidjson::Value& base_result, const rapidjson::Value& r, const cpm::document_t& doc){
     for(auto& p_r : doc["results"]){
-        if(str_equal(p_r["title"].GetString(), base_result["title"].GetString())){
+        if(strip_equal(p_r["title"].GetString(), base_result["title"].GetString())){
             for(auto& p_r_r : p_r["results"]){
                 if(str_equal(p_r_r["size"].GetString(), r["size"].GetString())){
                     return std::make_pair(true, p_r_r[value_key_name(theme)].GetDouble());
@@ -691,7 +695,7 @@ void generate_time_graph(Theme& theme, std::size_t& id, const rapidjson::Value& 
                 auto& document = static_cast<const cpm::document_t&>(document_r);
 
                 for(auto& o_result : document["results"]){
-                    if(str_equal(o_result["title"].GetString(), result["title"].GetString())){
+                    if(strip_equal(o_result["title"].GetString(), result["title"].GetString())){
                         for(auto& o_rr : o_result["results"]){
                             if(o_rr["size"].GetString() == r["size"].GetString()){
                                 theme << inner_comma << "[" << document["timestamp"].GetInt() * 1000 << ",";
@@ -719,7 +723,7 @@ void generate_time_graph(Theme& theme, std::size_t& id, const rapidjson::Value& 
             auto& document = static_cast<const cpm::document_t&>(document_r);
 
             for(auto& o_result : document["results"]){
-                if(str_equal(o_result["title"].GetString(), result["title"].GetString())){
+                if(strip_equal(o_result["title"].GetString(), result["title"].GetString())){
                     theme << comma << "[" << document["timestamp"].GetInt() * 1000 << ",";
                     auto& o_r_results = o_result["results"];
                     theme << o_r_results[o_r_results.Size() - 1][value_key_name(theme)].GetDouble() << "]";
@@ -827,9 +831,9 @@ void generate_section_time_graph(Theme& theme, std::size_t& id, const rapidjson:
             auto& r_doc = static_cast<const cpm::document_t&>(r_doc_r);
 
             for(auto& r_section : r_doc["sections"]){
-                if(str_equal(r_section["name"].GetString(), section["name"].GetString())){
+                if(strip_equal(r_section["name"].GetString(), section["name"].GetString())){
                     for(auto& r_r : r_section["results"]){
-                        if(str_equal(r_r["name"].GetString(), r["name"].GetString())){
+                        if(strip_equal(r_r["name"].GetString(), r["name"].GetString())){
                             theme << comma_inner << "[" << r_doc["timestamp"].GetInt() * 1000 << ",";
                             auto& r_r_results = r_r["results"];
                             theme << r_r_results[r_r_results.Size() - 1][value_key_name(theme)].GetDouble() << "]";
@@ -883,9 +887,9 @@ void generate_section_compare_graph(Theme& theme, std::size_t& id, const rapidjs
         for(auto& document : theme.data.documents){
             if(f(document)){
                 for(auto& o_section : document["sections"]){
-                    if(str_equal(o_section["name"].GetString(), section["name"].GetString())){
+                    if(strip_equal(o_section["name"].GetString(), section["name"].GetString())){
                         for(auto& o_r : o_section["results"]){
-                            if(str_equal(o_r["name"].GetString(), r["name"].GetString())){
+                            if(strip_equal(o_r["name"].GetString(), r["name"].GetString())){
                                 theme << comma << "{\n";
                                 theme << "name: '" << document[attr].GetString() << "',\n";
                                 theme << "data: ";
@@ -927,9 +931,9 @@ void generate_section_configuration_graph(Theme& theme, std::size_t& id, const r
 template<typename Theme>
 std::pair<bool, double> find_same_duration_section(Theme& theme, json_value base_result, json_value base_section, json_value r, const cpm::document_t& doc){
     for(auto& section : doc["sections"]){
-        if(str_equal(section["name"].GetString(), base_section["name"].GetString())){
+        if(strip_equal(section["name"].GetString(), base_section["name"].GetString())){
             for(auto& result : section["results"]){
-                if(str_equal(result["name"].GetString(), base_result["name"].GetString())){
+                if(strip_equal(result["name"].GetString(), base_result["name"].GetString())){
                     for(auto& p_r_r : result["results"]){
                         if(str_equal(p_r_r["size"].GetString(), r["size"].GetString())){
                             return std::make_pair(true, p_r_r[value_key_name(theme)].GetDouble());
@@ -1150,7 +1154,7 @@ void generate_standard_page(const std::string& target_folder, const std::string&
 
     if(!one || !section){
         for(const auto& result : doc["results"]){
-            if(!one || filter == result["title"].GetString()){
+            if(!one || filter == strip_tags(result["title"].GetString())){
                 theme.before_result(strip_tags(result["title"].GetString()), false, documents);
 
                 generate_run_graph(theme, id, result);
@@ -1178,7 +1182,7 @@ void generate_standard_page(const std::string& target_folder, const std::string&
 
     if(!one || section){
         for(auto& section : doc["sections"]){
-            if(!one || filter == section["name"].GetString()){
+            if(!one || filter == strip_tags(section["name"].GetString())){
                 theme.before_result(strip_tags(section["name"].GetString()), compiler_graphs, documents);
 
                 generate_section_run_graph(theme, id, section);
@@ -1220,10 +1224,10 @@ void generate_pages(const std::string& target_folder, cpm::reports_data& data, c
             for(const auto& result : d["results"]){
                 auto file = cpm::filify(d["compiler"].GetString(), d["configuration"].GetString(), std::string("bench_") + strip_tags(result["title"].GetString()));
                 if(!pages.count(file)){
-                    generate_standard_page<Theme>(target_folder, file, data, d, select_documents(data.documents, d), options, true, false, result["title"].GetString());
+                    generate_standard_page<Theme>(target_folder, file, data, d, select_documents(data.documents, d), options, true, false, strip_tags(result["title"].GetString()));
 
                     if(pages.empty()){
-                        generate_standard_page<Theme>(target_folder, "index.html", data, d, select_documents(data.documents, d), options, true, false, result["title"].GetString());
+                        generate_standard_page<Theme>(target_folder, "index.html", data, d, select_documents(data.documents, d), options, true, false, strip_tags(result["title"].GetString()));
                     }
 
                     pages.insert(file);
@@ -1233,10 +1237,10 @@ void generate_pages(const std::string& target_folder, cpm::reports_data& data, c
             for(const auto& section : d["sections"]){
                 auto file = cpm::filify(d["compiler"].GetString(), d["configuration"].GetString(), std::string("section_") + strip_tags(section["name"].GetString()));
                 if(!pages.count(file)){
-                    generate_standard_page<Theme>(target_folder, file, data, d, select_documents(data.documents, d), options, true, true, section["name"].GetString());
+                    generate_standard_page<Theme>(target_folder, file, data, d, select_documents(data.documents, d), options, true, true, strip_tags(section["name"].GetString()));
 
                     if(pages.empty()){
-                        generate_standard_page<Theme>(target_folder, "index.html", data, d, select_documents(data.documents, d), options, true, true, section["name"].GetString());
+                        generate_standard_page<Theme>(target_folder, "index.html", data, d, select_documents(data.documents, d), options, true, true, strip_tags(section["name"].GetString()));
                     }
 
                     pages.insert(file);
