@@ -511,7 +511,7 @@ public:
         this->filter = trim(filter);
 
         auto open = std::count(filter.begin(), filter.end(), '[');
-        auto close = std::count(filter.begin(), filter.end(), '[');
+        auto close = std::count(filter.begin(), filter.end(), ']');
         if(open == close && open > 0){
             this->filter_tags = extract_tags(filter, true);
 
