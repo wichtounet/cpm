@@ -562,7 +562,7 @@ void generate_summary_table(Theme& theme, const rapidjson::Value& base_result, c
         theme << "<tr>\n";
 
         theme << "<td>" << r["size"].GetString() << "</td>\n";
-        theme << "<td>" << r[value_key_name(theme)].GetDouble() << "</td>\n";
+        theme << "<td>" << r["mean"].GetDouble() << "</td>\n";
 
         if(flops){
             theme << "<td>" << cpm::throughput_str(r["throughput_f"].GetDouble()) << "</td>\n";
@@ -996,6 +996,8 @@ void generate_section_summary_table(Theme& theme, std::size_t id, json_value bas
     std::size_t sub_id = 0;
     theme.before_sub_graphs(id * 1000000, string_collect(base_section["results"], "name"));
 
+    auto flops = theme.options.count("mflops");
+
     for(auto& base_result : base_section["results"]){
         theme.before_sub_summary(id * 1000000, sub_id++);
 
@@ -1007,9 +1009,9 @@ void generate_section_summary_table(Theme& theme, std::size_t id, json_value bas
         for(auto& r : base_result["results"]){
             theme << "<tr>\n";
             theme << "<td>" << r["size"].GetString() << "</td>\n";
-            theme << "<td>" << r[value_key_name(theme)].GetDouble() << "</td>\n";
+            theme << "<td>" << r["mean"].GetDouble() << "</td>\n";
 
-            if(theme.options.count("mflops")){
+            if(flops){
                 theme << "<td>" << cpm::throughput_str(r["throughput_f"].GetDouble()) << "</td>\n";
             } else {
                 theme << "<td>" << cpm::throughput_str(r["throughput_e"].GetDouble()) << "</td>\n";
@@ -1051,8 +1053,8 @@ void generate_section_summary_table(Theme& theme, std::size_t id, json_value bas
 
             if(theme.data.compilers.size() > 1){
                 std::string best_compiler = base["compiler"].GetString();
-                auto best_duration = r[value_key_name(theme)].GetDouble();
-                auto worse_duration = r[value_key_name(theme)].GetDouble();
+                auto best = r[value_key_name(theme)].GetDouble();
+                auto worst = r[value_key_name(theme)].GetDouble();
 
                 for(auto& doc : theme.data.documents){
                     if(is_compiler_relevant(base, doc)){
@@ -1061,11 +1063,20 @@ void generate_section_summary_table(Theme& theme, std::size_t id, json_value bas
                         std::tie(found, duration) = find_same_duration_section(theme, base_result, base_section, r, doc);
 
                         if(found){
-                            if(duration < best_duration){
-                                best_duration = duration;
-                                best_compiler = doc["compiler"].GetString();
-                            } else if(duration > worse_duration){
-                                worse_duration = duration;
+                            if(flops){
+                                if(duration > best){
+                                    best = duration;
+                                    best_compiler = doc["compiler"].GetString();
+                                } else if(duration < worst){
+                                    worst = duration;
+                                }
+                            } else {
+                                if(duration < best){
+                                    best = duration;
+                                    best_compiler = doc["compiler"].GetString();
+                                } else if(duration > worst){
+                                    worst = duration;
+                                }
                             }
                         }
                     }
@@ -1073,15 +1084,15 @@ void generate_section_summary_table(Theme& theme, std::size_t id, json_value bas
 
                 theme.cell(best_compiler);
 
-                auto max_diff = (100.0 * (static_cast<double>(worse_duration) / best_duration) - 100.0);
+                auto max_diff = std::abs(100.0 * (static_cast<double>(worst) / best) - 100.0);
 
                 theme.cell(std::to_string(max_diff) + "%");
             }
 
             if(theme.data.configurations.size() > 1){
                 std::string best_configuration = base["configuration"].GetString();
-                auto best_duration = r[value_key_name(theme)].GetDouble();
-                auto worse_duration = r[value_key_name(theme)].GetDouble();
+                auto best = r[value_key_name(theme)].GetDouble();
+                auto worst = r[value_key_name(theme)].GetDouble();
 
                 for(auto& doc : theme.data.documents){
                     if(is_configuration_relevant(base, doc)){
@@ -1090,11 +1101,20 @@ void generate_section_summary_table(Theme& theme, std::size_t id, json_value bas
                         std::tie(found, duration) = find_same_duration_section(theme, base_result, base_section, r, doc);
 
                         if(found){
-                            if(duration < best_duration){
-                                best_duration = duration;
-                                best_configuration = doc["configuration"].GetString();
-                            } else if(duration > worse_duration){
-                                worse_duration = duration;
+                            if(flops){
+                                if(duration > best){
+                                    best = duration;
+                                    best_configuration = doc["configuration"].GetString();
+                                } else if(duration < worst){
+                                    worst = duration;
+                                }
+                            } else {
+                                if(duration < best){
+                                    best = duration;
+                                    best_configuration = doc["configuration"].GetString();
+                                } else if(duration > worst){
+                                    worst = duration;
+                                }
                             }
                         }
                     }
@@ -1102,7 +1122,7 @@ void generate_section_summary_table(Theme& theme, std::size_t id, json_value bas
 
                 theme.cell(best_configuration);
 
-                auto max_diff = (100.0 * (static_cast<double>(worse_duration) / best_duration) - 100.0);
+                auto max_diff = std::abs(100.0 * (static_cast<double>(worst) / best) - 100.0);
 
                 theme.cell(std::to_string(max_diff) + "%");
             }
