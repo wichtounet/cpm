@@ -726,7 +726,7 @@ void generate_time_graph(Theme& theme, std::size_t& id, const rapidjson::Value& 
                     if(strip_equal(o_result["title"].GetString(), result["title"].GetString())){
                         for(auto& o_rr : o_result["results"]){
                             if(o_rr["size"].GetString() == r["size"].GetString()){
-                                theme << inner_comma << "[" << document["timestamp"].GetInt() * 1000 << ",";
+                                theme << inner_comma << "[" << size_t(document["timestamp"].GetInt()) * 1000 << ",";
                                 theme << o_rr[value_key_name(theme)].GetDouble() << "]";
                                 inner_comma = ",";
                             }
@@ -752,7 +752,7 @@ void generate_time_graph(Theme& theme, std::size_t& id, const rapidjson::Value& 
 
             for(auto& o_result : document["results"]){
                 if(strip_equal(o_result["title"].GetString(), result["title"].GetString())){
-                    theme << comma << "[" << document["timestamp"].GetInt() * 1000 << ",";
+                    theme << comma << "[" << size_t(document["timestamp"].GetInt()) * 1000 << ",";
                     auto& o_r_results = o_result["results"];
                     theme << o_r_results[o_r_results.Size() - 1][value_key_name(theme)].GetDouble() << "]";
                     comma = ",";
@@ -862,7 +862,7 @@ void generate_section_time_graph(Theme& theme, std::size_t& id, const rapidjson:
                 if(strip_equal(r_section["name"].GetString(), section["name"].GetString())){
                     for(auto& r_r : r_section["results"]){
                         if(strip_equal(r_r["name"].GetString(), r["name"].GetString())){
-                            theme << comma_inner << "[" << r_doc["timestamp"].GetInt() * 1000 << ",";
+                            theme << comma_inner << "[" << size_t(r_doc["timestamp"].GetInt()) * 1000 << ",";
                             auto& r_r_results = r_r["results"];
                             theme << r_r_results[r_r_results.Size() - 1][value_key_name(theme)].GetDouble() << "]";
                             comma_inner = ",";
