@@ -154,6 +154,20 @@ void randomize_double(T& container){
 
 //Functions used by the benchmark
 
+#ifdef CPM_NO_RANDOM_INITIALIZATION
+
+template<typename... TT>
+void random_init(TT&&... /*values*/){
+    /* NOP */
+}
+
+template<typename... TT>
+void random_init_each(TT&&... /*values*/){
+    /* NOP */
+}
+
+#else
+
 inline void random_init(){}
 
 template<typename T1, typename std::enable_if_t<std::is_convertible<double, typename T1::value_type>::value, int> = 42 >
@@ -172,6 +186,8 @@ void random_init_each(Tuple& data, std::index_sequence<I...> /*indices*/){
     using cpm::random_init;
     random_init(std::get<I>(data)...);
 }
+
+#endif
 
 #ifdef CPM_NO_RANDOMIZATION
 
