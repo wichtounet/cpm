@@ -27,6 +27,12 @@
 
 namespace cpm {
 
+inline void prologue(){
+#ifdef CPM_PROLOGUE
+CPM_PROLOGUE
+#endif
+}
+
 inline std::string& trim(std::string& s) {
     //rtrim
     s.erase(std::find_if(s.rbegin(), s.rend(), std::not1(std::ptr_fun<int, int>(std::isspace))).base(), s.end());
@@ -811,6 +817,7 @@ public:
     static std::size_t measure_only(Functor functor){
         auto start_time = timer_clock::now();
         functor();
+        prologue();
         auto end_time = timer_clock::now();
         auto duration = std::chrono::duration_cast<clock_resolution>(end_time - start_time);
 
@@ -994,9 +1001,13 @@ private:
 
         while(true){
             auto start_time = timer_clock::now();
+
             for(std::size_t i = 0; i < steps; ++i){
                 call_functor(functor, args...);
             }
+
+            prologue();
+
             auto end_time = timer_clock::now();
             auto duration = std::chrono::duration_cast<clock_resolution>(end_time - start_time);
 
@@ -1017,18 +1028,29 @@ private:
             call_functor(functor, args...);
         }
 
+        prologue();
+
         runs += conf.warmup;
 #endif
 
         std::vector<std::size_t> durations(steps);
 
-        for(std::size_t i = 0; i < steps; ++i){
+        std::size_t i = 0;
+
+        for(; i < steps - 1; ++i){
             auto start_time = timer_clock::now();
             call_functor(functor, args...);
             auto end_time = timer_clock::now();
             auto duration = std::chrono::duration_cast<clock_resolution>(end_time - start_time);
             durations[i] = duration.count();
         }
+
+        auto start_time = timer_clock::now();
+        call_functor(functor, args...);
+        prologue();
+        auto end_time = timer_clock::now();
+        auto duration = std::chrono::duration_cast<clock_resolution>(end_time - start_time);
+        durations[i] = duration.count();
 
         runs += steps;
 
@@ -1056,9 +1078,13 @@ private:
 
         while(true){
             auto start_time = timer_clock::now();
+
             for(std::size_t i = 0; i < steps; ++i){
                 call_with_data<Sizes>(data, functor, sequence, args...);
             }
+
+            prologue();
+
             auto end_time = timer_clock::now();
             auto duration = std::chrono::duration_cast<clock_resolution>(end_time - start_time);
 
@@ -1080,6 +1106,8 @@ private:
             call_with_data<Sizes>(data, functor, sequence, args...);
         }
 
+        prologue();
+
         runs += conf.warmup;
 #endif
 
@@ -1089,7 +1117,9 @@ private:
 
         std::vector<std::size_t> durations(steps);
 
-        for(std::size_t i = 0; i < steps; ++i){
+        std::size_t i = 0;
+
+        for(; i < steps - 1; ++i){
             randomize_each(data, sequence);
             auto start_time = timer_clock::now();
             call_with_data<Sizes>(data, functor, sequence, args...);
@@ -1097,6 +1127,14 @@ private:
             auto duration = std::chrono::duration_cast<clock_resolution>(end_time - start_time);
             durations[i] = duration.count();
         }
+
+        randomize_each(data, sequence);
+        auto start_time = timer_clock::now();
+        call_with_data<Sizes>(data, functor, sequence, args...);
+        prologue();
+        auto end_time = timer_clock::now();
+        auto duration = std::chrono::duration_cast<clock_resolution>(end_time - start_time);
+        durations[i] = duration.count();
 
         runs += steps;
 
@@ -1119,9 +1157,13 @@ private:
 
         while(true){
             auto start_time = timer_clock::now();
+
             for(std::size_t i = 0; i < steps; ++i){
                 call_functor(functor, d);
             }
+
+            prologue();
+
             auto end_time = timer_clock::now();
             auto duration = std::chrono::duration_cast<clock_resolution>(end_time - start_time);
 
@@ -1144,6 +1186,8 @@ private:
             call_functor(functor, d);
         }
 
+        prologue();
+
         runs += conf.warmup;
 #endif
 
@@ -1153,7 +1197,9 @@ private:
 
         std::vector<std::size_t> durations(steps);
 
-        for(std::size_t i = 0; i < steps; ++i){
+        std::size_t i = 0;
+
+        for(; i < steps; ++i){
             using cpm::randomize;
             randomize(references...);
             auto start_time = timer_clock::now();
@@ -1162,6 +1208,15 @@ private:
             auto duration = std::chrono::duration_cast<clock_resolution>(end_time - start_time);
             durations[i] = duration.count();
         }
+
+        using cpm::randomize;
+        randomize(references...);
+        auto start_time = timer_clock::now();
+        call_functor(functor, d);
+        prologue();
+        auto end_time = timer_clock::now();
+        auto duration = std::chrono::duration_cast<clock_resolution>(end_time - start_time);
+        durations[i] = duration.count();
 
         runs += steps;
 
