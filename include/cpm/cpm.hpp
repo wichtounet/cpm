@@ -1228,14 +1228,14 @@ private:
         duration.update(size_to_eff(d));
 
         if(standard_report){
-            std::cout << title << "(" << size_to_string(d) << ") : "
-                << "mean: " << duration_str(duration.mean, 3)
+            std::cout << title << "(" << size_to_string(d) << "): "
+                << "mean:" << duration_str(duration.mean, 3)
                 << " (" << duration_str(duration.mean_lb, 3) << "," << duration_str(duration.mean_ub, 3) << ")"
-                << " stddev: " << duration_str(duration.stddev, 3)
-                << " min: " << duration_str(duration.min, 3)
-                << " max: " << duration_str(duration.max, 3)
-                << " througput: " << throughput_str(duration.throughput_e, 3) << "Es"
-                << ", " << throughput_str(duration.throughput_f, 3) << "Flop/s"
+                << " stddev:" << duration_str(duration.stddev, 3)
+                << " min:" << duration_str(duration.min, 3)
+                << " max:" << duration_str(duration.max, 3)
+                << " (" << throughput_str(duration.throughput_e, 3) << "Es"
+                << "," << throughput_str(duration.throughput_f, 3) << "Flop/s)"
                 << "\n";
         }
     }
