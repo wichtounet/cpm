@@ -8,7 +8,7 @@
 #ifndef CPM_CPM_SUPPORT_HPP
 #define CPM_CPM_SUPPORT_HPP
 
-#include "../../lib/cxxopts/src/cxxopts.hpp"
+#include "../../lib/cxxopts/include/cxxopts.hpp"
 
 namespace cpm {
 
@@ -252,72 +252,72 @@ int main(int argc, char* argv[]){
             ;
 
         options.parse_positional("filter");
-        options.parse(argc, argv);
+        auto result = options.parse(argc, argv);
 
-        if (options.count("help")){
-            std::cout << options.help({""}) << std::endl;
+        if (result.count("help")){
+            std::cout << options.help() << std::endl;
             return 0;
+        }
+
+        std::string output_folder{"./results"};
+
+        if (result.count("output")){
+            output_folder = result["output"].as<std::string>();
+        }
+
+        std::string benchmark_name{CPM_BENCHMARK};
+
+        if (result.count("name")){
+            benchmark_name = result["name"].as<std::string>();
+        }
+
+        std::string tag;
+
+        if (result.count("tag")){
+            tag = result["tag"].as<std::string>();
+        }
+
+        std::string configuration;
+
+        if (result.count("configuration")){
+            configuration = result["configuration"].as<std::string>();
+        }
+
+        cpm::benchmark<> bench(benchmark_name, output_folder, tag, configuration);
+
+#ifdef CPM_WARMUP
+        bench.warmup = CPM_WARMUP;
+#endif
+
+#ifdef CPM_REPEAT
+        bench.steps = CPM_REPEAT;
+#endif
+
+#ifdef CPM_STEPS
+        bench.steps = CPM_STEPS;
+#endif
+
+        if(result.count("filter")){
+            bench.set_filter(result["filter"].as<std::string>());
+        }
+
+        if(result.count("oneshot")){
+            bench.auto_save = false;
+        }
+
+        if(result.count("mflops")){
+            bench.section_mflops = true;
+        }
+
+        bench.begin();
+
+        for(auto f : cpm::cpm_registry::benchs()){
+            f(bench);
         }
 
     } catch (const cxxopts::OptionException& e){
         std::cout << "cpm: error parsing options: " << e.what() << std::endl;
         return -1;
-    }
-
-    std::string output_folder{"./results"};
-
-    if (options.count("output")){
-        output_folder = options["output"].as<std::string>();
-    }
-
-    std::string benchmark_name{CPM_BENCHMARK};
-
-    if (options.count("name")){
-        benchmark_name = options["name"].as<std::string>();
-    }
-
-    std::string tag;
-
-    if (options.count("tag")){
-        tag = options["tag"].as<std::string>();
-    }
-
-    std::string configuration;
-
-    if (options.count("configuration")){
-        configuration = options["configuration"].as<std::string>();
-    }
-
-    cpm::benchmark<> bench(benchmark_name, output_folder, tag, configuration);
-
-#ifdef CPM_WARMUP
-    bench.warmup = CPM_WARMUP;
-#endif
-
-#ifdef CPM_REPEAT
-    bench.steps = CPM_REPEAT;
-#endif
-
-#ifdef CPM_STEPS
-    bench.steps = CPM_STEPS;
-#endif
-
-    if(options.count("filter")){
-        bench.set_filter(options["filter"].as<std::string>());
-    }
-
-    if(options.count("oneshot")){
-        bench.auto_save = false;
-    }
-
-    if(options.count("mflops")){
-        bench.section_mflops = true;
-    }
-
-    bench.begin();
-
-    for(auto f : cpm::cpm_registry::benchs()){
-        f(bench);
     }
 
     return 0;
