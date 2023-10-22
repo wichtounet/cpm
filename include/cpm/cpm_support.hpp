@@ -106,11 +106,11 @@ struct is_section : is_specialization_of<cpm::section, std::decay_t<T>> {};
     bench.steps = R;
 
 //Normal versions for simple bench
-#define CPM_SIMPLE(...) bench.measure_simple(__VA_ARGS__);
-#define CPM_GLOBAL(...) bench.measure_global(__VA_ARGS__);
-#define CPM_GLOBAL_F(...) bench.measure_global_flops(__VA_ARGS__);
-#define CPM_TWO_PASS(...) bench.measure_two_pass(__VA_ARGS__);
-#define CPM_TWO_PASS_NS(...) bench.measure_two_pass<false>(__VA_ARGS__);
+#define CPM_SIMPLE(...) bench.measure_simple(__VA_ARGS__)
+#define CPM_GLOBAL(...) bench.measure_global(__VA_ARGS__)
+#define CPM_GLOBAL_F(...) bench.measure_global_flops(__VA_ARGS__)
+#define CPM_TWO_PASS(...) bench.measure_two_pass(__VA_ARGS__)
+#define CPM_TWO_PASS_NS(...) bench.measure_two_pass<false>(__VA_ARGS__)
 
 //Versions with policies
 
