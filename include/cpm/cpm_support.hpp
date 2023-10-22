@@ -116,23 +116,23 @@ struct is_section : is_specialization_of<cpm::section, std::decay_t<T>> {};
 
 #define CPM_SIMPLE_P(policy, ...)  \
     static_assert(!cpm::is_section<decltype(bench)>::value, "CPM_SIMPLE_P cannot be used inside CPM_SECTION");  \
-    bench.measure_simple<policy>(__VA_ARGS__);
+    bench.measure_simple<policy>(__VA_ARGS__)g 
 
 #define CPM_GLOBAL_P(policy, ...) \
     static_assert(!cpm::is_section<decltype(bench)>::value, "CPM_GLOBAL_P cannot be used inside CPM_SECTION");  \
-    bench.measure_global<policy>(__VA_ARGS__);
+    bench.measure_global<policy>(__VA_ARGS__)
 
 #define CPM_GLOBAL_FP(policy, ...) \
     static_assert(!cpm::is_section<decltype(bench)>::value, "CPM_GLOBAL_FP cannot be used inside CPM_SECTION");  \
-    bench.measure_global_flops<policy>(__VA_ARGS__);
+    bench.measure_global_flops<policy>(__VA_ARGS__)
 
 #define CPM_TWO_PASS_P(policy, ...) \
     static_assert(!cpm::is_section<decltype(bench)>::value, "CPM_TWO_PASS_P cannot be used inside CPM_SECTION");  \
-    bench.measure_two_pass<true, policy>(__VA_ARGS__);
+    bench.measure_two_pass<true, policy>(__VA_ARGS__)
 
 #define CPM_TWO_PASS_NS_P(policy, ...)  \
     static_assert(!cpm::is_section<decltype(bench)>::value, "CPM_TWO_PASS_NS_P cannot be used inside CPM_SECTION");  \
-    bench.measure_two_pass<false, policy>(__VA_ARGS__);
+    bench.measure_two_pass<false, policy>(__VA_ARGS__)
 
 //Direct bench functions
 
